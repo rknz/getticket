@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeTicket Pro Control</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Compact Top Bar -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <img src="../icons/logo_mark_transparent.png" alt="GeTicket Pro Logo">
+        </div>
+        <div>
+          <h1 id="hdrTitle">GeTicket Pro</h1>
+          <div class="stealth-status" id="hdrStatus">● Stealth Safe</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Active Schedules Notification Badge (1, 2, 3...) -->
+        <button class="badge-btn" id="btnActiveSchedules" title="View Active Schedules">
+          📅 <span class="badge-count" id="lblBadgeCount">0</span>
+        </button>
+        <!-- Language Switcher -->
+        <button class="tool-btn" id="btnPopLang" title="Switch Language">EN</button>
+        <!-- Theme Switcher -->
+        <button class="tool-btn" id="btnPopTheme" title="Toggle Theme">☀️</button>
+      </div>
+    </header>
+
+    <!-- Navigation Bar (4 Compact Pages) -->
+    <nav class="app-nav">
+      <button class="nav-tab active" data-page="setup" id="tabSetup">🎯 Setup</button>
+      <button class="nav-tab" data-page="schedules" id="tabSchedules">
+        📅 Lists <span class="tab-mini-badge" id="miniBadgeCount">0</span>
+      </button>
+      <button class="nav-tab" data-page="priority" id="tabPriority">⚡ Priority</button>
+      <button class="nav-tab" data-page="vault" id="tabVault">🔐 Vault</button>
+    </nav>
+
+    <!-- Main Viewport (Bounded Height, Zero Clutter) -->
+    <main class="app-body">
+
+      <!-- PAGE 1: SETUP & SCHEDULER -->
+      <section class="page-view active" id="page-setup">
+        
+        <!-- Booking Mode Selector: Instant Ticket Grab vs Advance Schedule -->
+        <div class="mode-switcher-bar">
+          <button class="mode-tab-btn active" id="btnModeInstant" data-mode="instant">
+            ⚡ <span id="lblModeInstant">Instant Buy Now</span>
+          </button>
+          <button class="mode-tab-btn" id="btnModeSchedule" data-mode="schedule">
+            📅 <span id="lblModeSchedule">Advance 8:00 AM</span>
+          </button>
+        </div>
+
+        <!-- Live Server Status Bar -->
+        <div class="server-status-strip" id="serverStatusStrip">
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <span class="server-status-dot" id="serverStatusDot">●</span>
+            <span id="lblServerStatusText">Live Railway Server Synced</span>
+          </div>
+          <button class="mini-refresh-btn" id="btnRefreshServer" title="Fetch live railway timetable & seats">🔄</button>
+        </div>
+
+        <!-- Quick Day Selector -->
+        <div class="pill-scroll">
+          <button class="day-chip active" data-day="0" id="pillToday">Today</button>
+          <button class="day-chip" data-day="1" id="pillTomorrow">Tomorrow</button>
+          <button class="day-chip" data-day="3" id="pill3Days">3 Days</button>
+          <button class="day-chip" data-day="5" id="pill5Days">5 Days</button>
+          <button class="day-chip" data-day="7" id="pill7Days">7 Days</button>
+          <button class="day-chip" data-day="10" id="pill10Days">10 Days</button>
+        </div>
+
+        <div class="station-selector-row">
+          <div class="field-item">
+            <label id="lblFrom">From Station</label>
+            <div class="station-input-wrap">
+              <input type="text" id="routeFrom" list="stationListFrom" placeholder="Search From..." autocomplete="off">
+              <datalist id="stationListFrom"></datalist>
+              <div class="station-suggest-dropdown" id="suggestFrom"></div>
+            </div>
+          </div>
+          <button type="button" class="btn-swap-stations" id="btnSwapStations" title="Swap From ⇄ To">⇄</button>
+          <div class="field-item">
+            <label id="lblTo">To Station</label>
+            <div class="station-input-wrap">
+              <input type="text" id="routeTo" list="stationListTo" placeholder="Search To..." autocomplete="off">
+              <datalist id="stationListTo"></datalist>
+              <div class="station-suggest-dropdown" id="suggestTo"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="compact-grid">
+          <div class="field-item">
+            <label id="lblDate">Journey Date</label>
+            <input type="date" id="journeyDate">
+          </div>
+          <div class="field-item">
+            <label id="lblPax">Passengers</label>
+            <select id="passengerCount"></select>
+          </div>
+        </div>
+
+        <div class="compact-grid">
+          <div class="field-item">
+            <label id="lblTrain">Train Name</label>
+            <select id="trainName"></select>
+          </div>
+          <div class="field-item">
+            <label id="lblClass">Coach Class</label>
+            <select id="prefClass"></select>
+          </div>
+        </div>
+
+        <!-- Real-Time Train Timetable & Duration -->
+        <div class="mini-timing-box" id="miniTimingBox">
+          <div class="timing-flex">
+            <span class="timing-time" id="timingDep">07:30 AM</span>
+            <span class="timing-arrow">➔</span>
+            <span class="timing-time" id="timingArr">11:50 AM</span>
+          </div>
+          <div class="timing-sub" id="timingMeta">Teesta (707) • 4h 20m • Off: Mon</div>
+        </div>
+
+        <!-- Route Unavailable Warning (When no direct trains exist) -->
+        <div class="route-warning-box" id="routeWarningBox" style="display: none;">
+          <span style="font-size: 16px;">⚠️</span>
+          <div>
+            <b id="lblRouteWarnTitle">No Direct Trains Found</b>
+            <p id="lblRouteWarnDesc">No trains operate directly between these two stations. Please choose another station.</p>
+          </div>
+        </div>
+
+        <!-- Live Fare & bKash Box -->
+        <div class="mini-fare-box">
+          <div class="fare-flex">
+            <span id="lblTotalFareText">Total in bKash:</span>
+            <span class="fare-strong" id="lblTotalFareVal">৳457</span>
+          </div>
+          <div class="fare-sub" id="lblFareAdvice">Keep ৳460 in bKash before 8:00 AM</div>
+        </div>
+
+        <!-- Instant Live Seat Breakdown Panel -->
+        <div class="instant-seats-card" id="instantSeatsCard">
+          <div class="instant-header">
+            <b id="lblInstantSeatsTitle">Live Available Seats</b>
+            <span class="match-badge" id="lblMatchedPriority">🎯 Priority 1 Matched</span>
+          </div>
+          <div class="instant-chips-grid" id="instantSeatsGrid">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Main Action Button -->
+        <button class="action-btn btn-primary" id="btnMainAction">
+          ⚡ <span id="btnMainActionText">Instant Grab & Lock Seats</span>
+        </button>
+      </section>
+
+      <!-- PAGE 2: ACTIVE SCHEDULES LIST (1, 2, 3...) -->
+      <section class="page-view" id="page-schedules">
+        <div class="view-header">
+          <span class="view-title" id="lblSchedTitle">Scheduled Bookings</span>
+          <span class="count-badge" id="lblSchedCount">0 Active</span>
+        </div>
+
+        <div class="schedules-list" id="schedulesContainer">
+          <!-- Populated dynamically via renderSchedulesList() -->
+        </div>
+
+        <div class="empty-state" id="emptyScheduleState" style="display: none;">
+          <div style="font-size: 26px; margin-bottom: 6px;">📅</div>
+          <b id="lblNoSched">No active schedules</b>
+          <p id="lblNoSchedSub">Switch to Advance 8:00 AM mode on Setup tab to arm an automatic ticket alarm.</p>
+        </div>
+      </section>
+
+      <!-- PAGE 3: PRIORITY RULES -->
+      <section class="page-view" id="page-priority">
+        <div class="view-header">
+          <span class="view-title" id="lblPrioTitle">Cascading Rules</span>
+          <span class="badge-hint" id="lblPrioHint">Auto-Shift</span>
+        </div>
+
+        <div class="rule-card p1-card">
+          <div class="rule-top">
+            <span class="rule-tag tag-1" id="tagP1">Priority 1 (First)</span>
+            <span class="rule-status" id="statP1">● Primary Target</span>
+          </div>
+          <div class="rule-row">
+            <select id="p1Class"></select>
+            <select id="p1Dir"></select>
+          </div>
+        </div>
+
+        <div class="rule-card p2-card">
+          <div class="rule-top">
+            <span class="rule-tag tag-2" id="tagP2">Priority 2 (Fallback)</span>
+            <span class="rule-status" id="statP2">● 1ms Failover</span>
+          </div>
+          <div class="rule-row">
+            <select id="p2Class"></select>
+            <select id="p2Dir"></select>
+          </div>
+        </div>
+
+        <div class="rule-card p3-card">
+          <div class="rule-top">
+            <span class="rule-tag tag-3" id="tagP3">Priority 3 (Backup)</span>
+            <span class="rule-status" id="statP3">● Last Resort</span>
+          </div>
+          <div class="rule-row">
+            <select id="p3Class"></select>
+            <select id="p3Dir"></select>
+          </div>
+        </div>
+
+        <button class="action-btn btn-primary" id="btnSavePriority">
+          💾 <span id="btnSavePrioText">Save Priority Rules</span>
+        </button>
+      </section>
+
+      <!-- PAGE 4: ACCOUNT VAULT -->
+      <section class="page-view" id="page-vault">
+        <div class="view-header">
+          <span class="view-title" id="lblVaultTitle">Account Vault</span>
+          <span class="badge-hint" id="lblVaultHint">Encrypted</span>
+        </div>
+
+        <div class="field-item" style="margin-bottom: 8px;">
+          <label id="lblVaultPhone">Railway Mobile</label>
+          <input type="text" id="vaultPhone" placeholder="017XXXXXXXX">
+        </div>
+
+        <div class="field-item" style="margin-bottom: 12px;">
+          <label id="lblVaultPass">Password</label>
+          <input type="password" id="vaultPass" placeholder="••••••••">
+        </div>
+
+        <div class="vault-shield-box">
+          <b id="lblVaultGuardHead">✓ Anti-Logout Guard Active</b>
+          <p id="lblVaultGuardDesc">Keeps your railway session warm from 7:50 AM to prevent unexpected logout during morning peak rush.</p>
+        </div>
+
+        <button class="action-btn btn-primary" id="btnSaveVault" style="margin-top: 10px;">
+          🔒 <span id="btnSaveVaultText">Save to Vault</span>
+        </button>
+
+        <div style="margin-top: 12px; background: rgba(2, 132, 199, 0.06); border: 1px dashed var(--primary); border-radius: 8px; padding: 7px 10px; text-align: center;">
+          <div style="font-size: 10px; font-weight: 700; color: var(--primary);">Designed &amp; Developed by Rukonuzzaman</div>
+          <a href="mailto:rukonuzzaman.dev@gmail.com" style="font-size: 9px; color: var(--text-muted); text-decoration: none; display: block; margin-top: 2px;">✉ rukonuzzaman.dev@gmail.com</a>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Developer Credit Footer -->
+    <footer class="app-dev-footer">
+      <span>Designed &amp; Developed by <strong>Rukonuzzaman</strong></span>
+      <a href="mailto:rukonuzzaman.dev@gmail.com" target="_blank">✉ rukonuzzaman.dev@gmail.com</a>
+    </footer>
+
+    <!-- Compact Footer Toast -->
+    <div id="statusToast" class="mini-toast">Settings Saved!</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
