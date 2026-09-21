@@ -3223,13 +3223,25 @@
     function syncBadgeFromStorage() {
       try {
         const list = JSON.parse(localStorage.getItem('scheduledBookings') || '[]');
-        const count = list.length;
+        const count = Array.isArray(list) ? list.length : 0;
         const valEl = document.getElementById('valPreviewBadgeCount');
         const mockEl = document.getElementById('chromeExtBadgeMock');
         if (valEl) valEl.innerText = String(count);
         if (mockEl) mockEl.innerText = String(count);
       } catch (e) { }
     }
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'scheduledBookings') {
+        syncBadgeFromStorage();
+      }
+    });
+
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'SYNC_SCHEDULES') {
+        syncBadgeFromStorage();
+      }
+    });
 
     function switchMobileTab(tab) {
       document.querySelectorAll('.mob-tab-btn').forEach(b => b.classList.remove('active'));

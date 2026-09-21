@@ -540,7 +540,17 @@ function updateBadgeCount(count) {
 function getScheduledBookings(callback) {
   if (chrome?.storage?.local) {
     chrome.storage.local.get(['scheduledBookings'], (res) => {
-      callback(res.scheduledBookings || []);
+      if (Array.isArray(res?.scheduledBookings)) {
+        try { localStorage.setItem('scheduledBookings', JSON.stringify(res.scheduledBookings)); } catch (e) {}
+        callback(res.scheduledBookings);
+      } else {
+        try {
+          const raw = localStorage.getItem('scheduledBookings') || '[]';
+          callback(JSON.parse(raw));
+        } catch (e) {
+          callback([]);
+        }
+      }
     });
   } else {
     try {
@@ -553,14 +563,24 @@ function getScheduledBookings(callback) {
 }
 
 function saveScheduledBookings(list, callback) {
+  const safeList = Array.isArray(list) ? list : [];
+  try {
+    localStorage.setItem('scheduledBookings', JSON.stringify(safeList));
+  } catch (e) {}
+
+  updateBadgeCount(safeList.length);
+
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'SYNC_SCHEDULES', count: safeList.length }, '*');
+    }
+  } catch (e) {}
+
   if (chrome?.storage?.local) {
-    chrome.storage.local.set({ scheduledBookings: list }, () => {
-      updateBadgeCount(list.length);
+    chrome.storage.local.set({ scheduledBookings: safeList }, () => {
       if (callback) callback();
     });
   } else {
-    localStorage.setItem('scheduledBookings', JSON.stringify(list));
-    updateBadgeCount(list.length);
     if (callback) callback();
   }
 }
@@ -653,9 +673,12 @@ function renderSchedulesList(schedules) {
     const fromStation = getStationName(item.from, currentLang);
     const toStation = getStationName(item.to, currentLang);
     const trainDisplay = getTrainDisplayName(item.trainName, currentLang);
-    const classDisplay = getClassName(item.classCode, currentLang);
-    const paxText = currentLang === 'bn' ? `${item.passengers} জন` : `${item.passengers} Pax`;
-    const alarmTimeText = currentLang === 'bn' ? `⏰ অ্যালার্ম: ০৭:৫০ AM (সক্রিয়)` : `⏰ Alarm: 07:50 AM (Armed)`;
+    const isWestRoute = item.zone === 'west' || ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'].includes(item.to);
+    const alarmTime = item.alarmTime || (isWestRoute ? '07:50 AM' : '01:50 PM');
+    const zoneNameStr = isWestRoute 
+      ? (currentLang === 'bn' ? 'পশ্চিমাঞ্চল' : 'West Zone') 
+      : (currentLang === 'bn' ? 'পূর্বাঞ্চল' : 'East Zone');
+    const alarmTimeText = currentLang === 'bn' ? `⏰ অ্যালার্ম: ${alarmTime} (${zoneNameStr} সক্রিয়)` : `⏰ Alarm: ${alarmTime} (${zoneNameStr} Armed)`;
 
     card.innerHTML = `
       <div style="flex: 1; padding-right: 8px;">
@@ -1428,8 +1451,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     } else {
-      // 📅 ADVANCE 8:00 AM SCHEDULE: Arms alarm and increments notification badge
-      const scheduleId = `geticket_sched_${Date.now()}`;
+      // 📅 ADVANCE SCHEDULE: Arms alarm for exact zone release (08:00 AM West or 02:00 PM East)
+      const WEST_STATIONS = ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'];
+      const isWest = WEST_STATIONS.includes(to) || WEST_STATIONS.includes(from);
+      const scheduleId = `geticket_sched_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
+      const targetTimeSuffix = isWest ? 'T07:50:00' : 'T13:50:00';
+      const targetDay = new Date(date + targetTimeSuffix);
+
       const newBooking = {
         id: scheduleId,
         from,
@@ -1438,15 +1466,18 @@ document.addEventListener('DOMContentLoaded', () => {
         passengers,
         trainName,
         classCode,
+        zone: isWest ? 'west' : 'east',
+        alarmTime: isWest ? '07:50 AM' : '01:50 PM',
+        releaseTime: isWest ? '08:00 AM' : '02:00 PM',
         createdAt: new Date().toISOString()
       };
 
       getScheduledBookings((bookings) => {
-        const updated = [...bookings, newBooking];
+        // Prevent duplicates
+        const updated = [...bookings.filter(b => b.id !== scheduleId), newBooking];
         saveScheduledBookings(updated, () => {
           renderSchedulesList(updated);
 
-          const targetDay = new Date(date + 'T07:50:00');
           if (chrome?.runtime?.sendMessage) {
             chrome.runtime.sendMessage({
               action: 'SCHEDULE_BOOKING',
