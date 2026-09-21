@@ -1062,7 +1062,7 @@
 
 <body>
 
-  <!-- Top Bar -->
+  <!-- Top Bar: Single Clean Row, No Wrapping -->
   <div class="top-bar">
     <div class="brand">
       <div class="brand-logo">
@@ -1071,34 +1071,40 @@
       </div>
       <div class="brand-title">
         <h1 id="appTitle">GeTicket Pro Suite</h1>
-        <p><span class="status-dot"></span> <span id="lblSafeActive">100% Real-Time API Synced & Stealth Guard
-            Active</span> <span style="opacity: 0.4; margin: 0 4px;">•</span> <span
-            style="color: var(--primary); font-weight: 600;">Dev: Rukonuzzaman</span></p>
+        <p><span class="status-dot"></span> <span id="lblSafeActive">100% Real-Time API Synced &amp; Stealth Active</span></p>
       </div>
     </div>
 
+    <!-- Center: Responsive View Switcher Pill Group -->
+    <div class="view-switcher" style="margin: 0 8px;">
+      <button class="view-btn active" id="btnDesktop" onclick="switchDevice('desktop')" title="PC Desktop View">💻 PC</button>
+      <button class="view-btn" id="btnMobile" onclick="switchDevice('mobile')" title="Android Kiwi Browser View">🤖 Android</button>
+      <button class="view-btn" id="btnIphone" onclick="switchDevice('iphone')" title="iPhone iOS View">🍎 iPhone</button>
+      <button class="view-btn" id="btnPopup" onclick="switchDevice('popup')" title="Extension Popup View">🧩 Popup</button>
+    </div>
+
+    <!-- Right: Compact Icon-Only Action Group -->
     <div class="controls-group">
-      <button class="pill-btn" onclick="switchDevice('popup')" title="View Active Schedules in Popup"
-        style="border-color: var(--primary); color: var(--primary);">
-        📅 <span id="lblPreviewBadge">Schedules: <b id="valPreviewBadgeCount">0</b></span>
+      <button class="pill-btn" onclick="switchDevice('popup')" title="Active Schedules / শিডিউল"
+        style="border-color: var(--primary); color: var(--primary); padding: 6px 10px;">
+        📅 <span id="valPreviewBadgeCount" style="font-size: 10.5px; font-weight: 800; background: var(--primary); color: #fff; border-radius: 10px; padding: 1px 5px; margin-left: 2px;">0</span>
       </button>
 
-      <button class="pill-btn" id="btnLang" onclick="toggleLanguage()">
-        🌐 <span id="lblLang">Language: English</span>
+      <button class="pill-btn" id="btnLang" onclick="toggleLanguage()" title="Toggle Language (বাং / EN)" style="padding: 6px 10px; font-size: 14px;">
+        🌐
       </button>
 
-      <button class="pill-btn" id="btnTheme" onclick="toggleTheme()">
-        ☀️ <span id="lblTheme">Light Mode</span>
+      <button class="pill-btn" id="btnTheme" onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="padding: 6px 10px; font-size: 14px;">
+        <span id="lblTheme">☀️</span>
       </button>
 
-      <div class="view-switcher">
-        <button class="view-btn active" id="btnDesktop" onclick="switchDevice('desktop')">💻 PC View</button>
-        <button class="view-btn" id="btnMobile" onclick="switchDevice('mobile')">🤖 Android (Kiwi)</button>
-        <button class="view-btn" id="btnIphone" onclick="switchDevice('iphone')">🍎 iPhone (iOS)</button>
-        <button class="view-btn" id="btnPopup" onclick="switchDevice('popup')">🧩 Popup View</button>
-        <button class="view-btn" id="btnGuide" onclick="openGuideModal()" style="border-color: var(--primary); color: var(--primary); font-weight: 700;">📖 Setup Guide</button>
-        <a class="view-btn" href="Geticket-v1.0.0.zip" download="Geticket-v1.0.0.zip" style="background: var(--success-light); color: var(--success); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">📥 Download ZIP</a>
-      </div>
+      <button class="pill-btn" id="btnGuide" onclick="openGuideModal()" style="border-color: var(--primary); color: var(--primary); font-weight: 700; gap: 4px; padding: 6px 10px;" title="Setup &amp; Booking Guide">
+        📖 <span id="lblGuideBtnText">Guide</span>
+      </button>
+
+      <a class="pill-btn" href="Geticket-v1.0.0.zip" download="Geticket-v1.0.0.zip" style="background: var(--success-light); color: var(--success); font-weight: 700; text-decoration: none; border-color: var(--success); gap: 4px; padding: 6px 10px;" title="Download Universal Extension ZIP">
+        📥 <span>ZIP</span>
+      </a>
     </div>
   </div>
 
@@ -1214,6 +1220,21 @@
             <div id="offdayDesc" style="font-size: 11px; opacity: 0.9;">
               Departs 07:30 AM ➔ Arrives 11:50 AM. Off-day: Monday.
             </div>
+          </div>
+        </div>
+
+        <!-- OFFICIAL RAILWAY ZONE & TICKET RELEASE SCHEDULE BADGE -->
+        <div class="zone-release-card" id="zoneReleaseCard" style="display: flex; align-items: center; justify-content: space-between; background: rgba(2, 132, 199, 0.08); border: 1.5px solid var(--primary); border-radius: 10px; padding: 8px 12px; margin-top: 10px; margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 16px;">🏛️</span>
+            <div>
+              <div style="font-size: 11.5px; font-weight: 700; color: var(--text-main);" id="lblZoneName">Eastern Zone (পূর্বাঞ্চল)</div>
+              <div style="font-size: 10px; color: var(--text-muted);" id="lblZoneDesc">Zone-based online ticket release policy</div>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 9px; font-weight: 700; color: var(--text-muted);" id="lblReleaseTag">ONLINE RELEASE TIME</div>
+            <div style="font-size: 12px; font-weight: 800; color: var(--primary);" id="lblZoneReleaseTime">02:00 PM (14:00)</div>
           </div>
         </div>
 
@@ -2945,6 +2966,26 @@
         document.getElementById('mockTrainTime').innerText = currentLang === 'bn' ? `ছাড়ার সময়: ${train.dep} ➔ পৌঁছানোর সময়: ${train.arr} (${durationText})` : `Departure: ${train.dep} ➔ Arrival: ${train.arr} (${durationText})`;
         document.getElementById('mobTrainName').innerText = `${trainName} (${train.code})`;
         document.getElementById('mobTrainTime').innerText = `Dep: ${train.dep} ➔ Arr: ${train.arr}`;
+      }
+
+      // Official Railway Zone & Ticket Release Time Detection (Verified)
+      const WEST_STATIONS = ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'];
+      const isWest = WEST_STATIONS.includes(to) || WEST_STATIONS.includes(from);
+      const zoneEl = document.getElementById('lblZoneName');
+      const releaseEl = document.getElementById('lblZoneReleaseTime');
+      const cardEl = document.getElementById('zoneReleaseCard');
+      if (zoneEl && releaseEl) {
+        if (isWest) {
+          zoneEl.innerText = currentLang === 'bn' ? 'পশ্চিমাঞ্চল (Western Zone)' : 'Western Zone (পশ্চিমাঞ্চল)';
+          releaseEl.innerText = currentLang === 'bn' ? 'সকাল ০৮:০০:০০ টা' : '08:00:00 AM';
+          releaseEl.style.color = '#0284c7';
+          if (cardEl) cardEl.style.borderColor = '#0284c7';
+        } else {
+          zoneEl.innerText = currentLang === 'bn' ? 'পূর্বাঞ্চল (Eastern Zone)' : 'Eastern Zone (পূর্বাঞ্চল)';
+          releaseEl.innerText = currentLang === 'bn' ? 'দুপুর ০২:০০:০০ টা (14:00)' : '02:00:00 PM (14:00)';
+          releaseEl.style.color = '#8b5cf6';
+          if (cardEl) cardEl.style.borderColor = '#8b5cf6';
+        }
       }
 
       // Fare Calculation with Exact Real Rates

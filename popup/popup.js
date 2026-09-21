@@ -995,6 +995,27 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Update Official Railway Release Zone
+    const WEST_STATIONS = ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'];
+    const isWest = WEST_STATIONS.includes(to) || WEST_STATIONS.includes(from);
+    const zoneNameEl = document.getElementById('lblZoneName');
+    const zoneRelEl = document.getElementById('lblZoneRelease');
+    const schedModeLabel = document.getElementById('lblModeSchedule');
+
+    if (zoneNameEl && zoneRelEl) {
+      if (isWest) {
+        zoneNameEl.innerText = currentLang === 'bn' ? 'পশ্চিমাঞ্চল (West Zone)' : 'Western Zone (পশ্চিমাঞ্চল)';
+        zoneRelEl.innerText = currentLang === 'bn' ? 'সকাল ০৮:০০:০০ টা' : '08:00 AM Sharp';
+        zoneRelEl.style.background = 'var(--primary)';
+        if (schedModeLabel) schedModeLabel.innerText = currentLang === 'bn' ? 'অগ্রিম ০৮:০০ টা' : 'Advance 8:00 AM';
+      } else {
+        zoneNameEl.innerText = currentLang === 'bn' ? 'পূর্বাঞ্চল (East Zone)' : 'Eastern Zone (পূর্বাঞ্চল)';
+        zoneRelEl.innerText = currentLang === 'bn' ? 'দুপুর ০২:০০:০০ টা' : '02:00 PM Sharp';
+        zoneRelEl.style.background = '#8b5cf6';
+        if (schedModeLabel) schedModeLabel.innerText = currentLang === 'bn' ? 'অগ্রিম ০২:০০ টা' : 'Advance 2:00 PM';
+      }
+    }
+
     // Determine Exact Fare: Check Live Server seat_types first, then fallback to FARE_RATES
     let unitPrice = 205;
     if (liveServerData?.trains) {
