@@ -10,5 +10,6 @@ desktop.ini
 
 # Temporary & Scratch
 scratch/
+dist/build/
 *.tmp
 *.log

@@ -926,6 +926,7 @@
       border-bottom: 1px solid var(--card-border);
       border-radius: 14px 14px 0 0;
     }
+
     .mobile-dev-footer {
       padding: 10px 12px;
       text-align: center;
@@ -939,9 +940,10 @@
     .mobile-wrapper.is-iphone-mode .mobile-frame-container {
       border: 10px solid #1e293b;
       border-radius: 44px;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
       position: relative;
     }
+
     .mobile-wrapper.is-iphone-mode .iphone-dynamic-island {
       display: flex !important;
       align-items: center;
@@ -955,6 +957,7 @@
       font-size: 10px;
       gap: 6px;
     }
+
     .mobile-wrapper.is-iphone-mode .iphone-home-bar {
       display: block !important;
       width: 130px;
@@ -963,7 +966,9 @@
       border-radius: 10px;
       margin: 10px auto 4px auto;
     }
-    .iphone-dynamic-island, .iphone-home-bar {
+
+    .iphone-dynamic-island,
+    .iphone-home-bar {
       display: none;
     }
 
@@ -979,9 +984,11 @@
       justify-content: center;
       padding: 16px;
     }
+
     .guide-modal-overlay.open {
       display: flex;
     }
+
     .guide-modal-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -995,10 +1002,19 @@
       overflow: hidden;
       animation: modalSlideIn 0.2s ease-out;
     }
+
     @keyframes modalSlideIn {
-      from { transform: translateY(20px) scale(0.98); opacity: 0; }
-      to { transform: translateY(0) scale(1); opacity: 1; }
+      from {
+        transform: translateY(20px) scale(0.98);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
     }
+
     .guide-header {
       padding: 14px 20px;
       border-bottom: 1px solid var(--card-border);
@@ -1007,6 +1023,7 @@
       justify-content: space-between;
       background: var(--chip-bg);
     }
+
     .guide-tabs {
       display: flex;
       overflow-x: auto;
@@ -1015,6 +1032,7 @@
       background: var(--card-bg);
       border-bottom: 1px solid var(--card-border);
     }
+
     .guide-tab-btn {
       padding: 7px 14px;
       border-radius: 8px;
@@ -1027,11 +1045,13 @@
       white-space: nowrap;
       transition: all 0.15s;
     }
+
     .guide-tab-btn.active {
       background: var(--primary);
       color: #fff;
       border-color: var(--primary);
     }
+
     .guide-body {
       padding: 20px;
       overflow-y: auto;
@@ -1040,6 +1060,7 @@
       line-height: 1.6;
       color: var(--text-main);
     }
+
     .guide-step {
       background: var(--chip-bg);
       border-left: 3.5px solid var(--primary);
@@ -1047,6 +1068,7 @@
       padding: 12px 16px;
       margin-bottom: 12px;
     }
+
     .guide-code-box {
       background: #0f172a;
       color: #38bdf8;
@@ -1071,39 +1093,57 @@
       </div>
       <div class="brand-title">
         <h1 id="appTitle">GeTicket Pro Suite</h1>
-        <p><span class="status-dot"></span> <span id="lblSafeActive">100% Real-Time API Synced &amp; Stealth Active</span></p>
+        <p><span class="status-dot"></span> <span id="lblSafeActive">100% Real-Time API Synced &amp; Stealth
+            Active</span></p>
       </div>
     </div>
 
     <!-- Center: Responsive View Switcher Pill Group -->
     <div class="view-switcher" style="margin: 0 8px;">
-      <button class="view-btn active" id="btnDesktop" onclick="switchDevice('desktop')" title="PC Desktop View">💻 PC</button>
-      <button class="view-btn" id="btnMobile" onclick="switchDevice('mobile')" title="Android Kiwi Browser View">🤖 Android</button>
-      <button class="view-btn" id="btnIphone" onclick="switchDevice('iphone')" title="iPhone iOS View">🍎 iPhone</button>
-      <button class="view-btn" id="btnPopup" onclick="switchDevice('popup')" title="Extension Popup View">🧩 Popup</button>
+      <button class="view-btn active" id="btnDesktop" onclick="switchDevice('desktop')" title="PC Desktop View">💻
+        PC</button>
+      <button class="view-btn" id="btnMobile" onclick="switchDevice('mobile')" title="Android Kiwi Browser View">🤖
+        Android</button>
+      <button class="view-btn" id="btnIphone" onclick="switchDevice('iphone')" title="iPhone iOS View">🍎
+        iPhone</button>
+      <button class="view-btn" id="btnPopup" onclick="switchDevice('popup')" title="Extension Popup View">🧩
+        Popup</button>
     </div>
 
     <!-- Right: Compact Icon-Only Action Group -->
     <div class="controls-group">
       <button class="pill-btn" onclick="switchDevice('popup')" title="Active Schedules / শিডিউল"
         style="border-color: var(--primary); color: var(--primary); padding: 6px 10px;">
-        📅 <span id="valPreviewBadgeCount" style="font-size: 10.5px; font-weight: 800; background: var(--primary); color: #fff; border-radius: 10px; padding: 1px 5px; margin-left: 2px;">0</span>
+        📅 <span id="valPreviewBadgeCount"
+          style="font-size: 10.5px; font-weight: 800; background: var(--primary); color: #fff; border-radius: 10px; padding: 1px 5px; margin-left: 2px;">0</span>
       </button>
 
-      <button class="pill-btn" id="btnLang" onclick="toggleLanguage()" title="Toggle Language (বাং / EN)" style="padding: 6px 10px; font-size: 14px;">
+      <button class="pill-btn" id="btnLang" onclick="toggleLanguage()" title="Toggle Language (বাং / EN)"
+        style="padding: 6px 10px; font-size: 14px;">
         🌐
       </button>
 
-      <button class="pill-btn" id="btnTheme" onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="padding: 6px 10px; font-size: 14px;">
+      <button class="pill-btn" id="btnTheme" onclick="toggleTheme()" title="Toggle Dark/Light Mode"
+        style="padding: 6px 10px; font-size: 14px;">
         <span id="lblTheme">☀️</span>
       </button>
 
-      <button class="pill-btn" id="btnGuide" onclick="openGuideModal()" style="border-color: var(--primary); color: var(--primary); font-weight: 700; gap: 4px; padding: 6px 10px;" title="Setup &amp; Booking Guide">
-        📖 <span id="lblGuideBtnText">Guide</span>
-      </button>
+      <a class="pill-btn" href="dist/geticket-chrome-windows-v1.0.0.zip" download="geticket-chrome-windows-v1.0.0.zip"
+        style="background: rgba(2, 132, 199, 0.1); color: var(--primary); font-weight: 700; text-decoration: none; border-color: var(--primary); gap: 4px; padding: 6px 9px;"
+        title="Download for Google Chrome (PC Windows / Mac)">
+        💻 <span>Chrome</span>
+      </a>
 
-      <a class="pill-btn" href="Geticket-v1.0.0.zip" download="Geticket-v1.0.0.zip" style="background: var(--success-light); color: var(--success); font-weight: 700; text-decoration: none; border-color: var(--success); gap: 4px; padding: 6px 10px;" title="Download Universal Extension ZIP">
-        📥 <span>ZIP</span>
+      <a class="pill-btn" href="dist/geticket-android-kiwi-v1.0.0.zip" download="geticket-android-kiwi-v1.0.0.zip"
+        style="background: rgba(16, 185, 129, 0.1); color: var(--success); font-weight: 700; text-decoration: none; border-color: var(--success); gap: 4px; padding: 6px 9px;"
+        title="Download for Kiwi Browser (Android Mobile)">
+        🤖 <span>Kiwi</span>
+      </a>
+
+      <a class="pill-btn" href="dist/geticket-ios-apple-v1.0.0.zip" download="geticket-ios-apple-v1.0.0.zip"
+        style="background: rgba(148, 163, 184, 0.15); color: var(--text-main); font-weight: 700; text-decoration: none; border-color: var(--card-border); gap: 4px; padding: 6px 9px;"
+        title="Download for iPhone / iOS (Orion & Safari)">
+        🍎 <span>iOS</span>
       </a>
     </div>
   </div>
@@ -1224,17 +1264,22 @@
         </div>
 
         <!-- OFFICIAL RAILWAY ZONE & TICKET RELEASE SCHEDULE BADGE -->
-        <div class="zone-release-card" id="zoneReleaseCard" style="display: flex; align-items: center; justify-content: space-between; background: rgba(2, 132, 199, 0.08); border: 1.5px solid var(--primary); border-radius: 10px; padding: 8px 12px; margin-top: 10px; margin-bottom: 10px;">
+        <div class="zone-release-card" id="zoneReleaseCard"
+          style="display: flex; align-items: center; justify-content: space-between; background: rgba(2, 132, 199, 0.08); border: 1.5px solid var(--primary); border-radius: 10px; padding: 8px 12px; margin-top: 10px; margin-bottom: 10px;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 16px;">🏛️</span>
             <div>
-              <div style="font-size: 11.5px; font-weight: 700; color: var(--text-main);" id="lblZoneName">Eastern Zone (পূর্বাঞ্চল)</div>
-              <div style="font-size: 10px; color: var(--text-muted);" id="lblZoneDesc">Zone-based online ticket release policy</div>
+              <div style="font-size: 11.5px; font-weight: 700; color: var(--text-main);" id="lblZoneName">Eastern Zone
+                (পূর্বাঞ্চল)</div>
+              <div style="font-size: 10px; color: var(--text-muted);" id="lblZoneDesc">Zone-based online ticket release
+                policy</div>
             </div>
           </div>
           <div style="text-align: right;">
-            <div style="font-size: 9px; font-weight: 700; color: var(--text-muted);" id="lblReleaseTag">ONLINE RELEASE TIME</div>
-            <div style="font-size: 12px; font-weight: 800; color: var(--primary);" id="lblZoneReleaseTime">02:00 PM (14:00)</div>
+            <div style="font-size: 9px; font-weight: 700; color: var(--text-muted);" id="lblReleaseTag">ONLINE RELEASE
+              TIME</div>
+            <div style="font-size: 12px; font-weight: 800; color: var(--primary);" id="lblZoneReleaseTime">02:00 PM
+              (14:00)</div>
           </div>
         </div>
 
@@ -1500,9 +1545,12 @@
         <div style="display: flex; align-items: center; gap: 8px;">
           <img src="icons/logo_mark_transparent.png" alt="Logo" style="width: 20px; height: 20px; object-fit: contain;">
           <span style="font-weight: 700; font-size: 12.5px; color: var(--text-main);">GeTicket Pro</span>
-          <span style="font-size: 9.5px; background: var(--success-light); color: var(--success); padding: 1px 6px; border-radius: 6px; font-weight: 700;">🟢 Armed</span>
+          <span
+            style="font-size: 9.5px; background: var(--success-light); color: var(--success); padding: 1px 6px; border-radius: 6px; font-weight: 700;">🟢
+            Armed</span>
         </div>
-        <div style="font-size: 11px; font-family: monospace; font-weight: 700; color: var(--primary);" id="mobClock">07:59:58.740</div>
+        <div style="font-size: 11px; font-family: monospace; font-weight: 700; color: var(--primary);" id="mobClock">
+          07:59:58.740</div>
       </div>
 
       <div class="mobile-app-tabs">
@@ -1731,8 +1779,11 @@
 
       <!-- Universal Permanent Developer Credit Footer for Mobile -->
       <div class="mobile-dev-footer">
-        <div style="font-size: 11px; font-weight: 700; color: var(--text-main);">Designed &amp; Developed by <strong style="color: var(--primary);">Rukonuzzaman</strong></div>
-        <a href="mailto:rukonuzzaman.dev@gmail.com" style="font-size: 9.5px; color: var(--text-muted); text-decoration: none; display: block; margin-top: 2px;">✉ rukonuzzaman.dev@gmail.com</a>
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-main);">Designed &amp; Developed by <strong
+            style="color: var(--primary);">Rukonuzzaman</strong></div>
+        <a href="mailto:rukonuzzaman.dev@gmail.com"
+          style="font-size: 9.5px; color: var(--text-muted); text-decoration: none; display: block; margin-top: 2px;">✉
+          rukonuzzaman.dev@gmail.com</a>
       </div>
 
       <!-- iPhone Home Swipe Indicator Bar -->
@@ -1770,130 +1821,7 @@
     <span id="toastMsg">Seats locked successfully in 92ms!</span>
   </div>
 
-  <!-- Interactive Setup & Installation Guide Modal -->
-  <div class="guide-modal-overlay" id="guideModal" onclick="if(event.target===this) closeGuideModal()">
-    <div class="guide-modal-card">
-      <div class="guide-header">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <img src="icons/logo_mark_transparent.png" alt="Logo" style="width: 24px; height: 24px; object-fit: contain;">
-          <b style="font-size: 15px;" id="lblModalTitle">GeTicket Pro - Complete Setup &amp; Booking Guide</b>
-        </div>
-        <button onclick="closeGuideModal()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); line-height: 1;">&times;</button>
-      </div>
 
-      <div class="guide-tabs">
-        <button class="guide-tab-btn active" id="gtabWindows" onclick="switchGuideTab('windows')">🪟 Windows (PC)</button>
-        <button class="guide-tab-btn" id="gtabAndroid" onclick="switchGuideTab('android')">🤖 Android (Kiwi)</button>
-        <button class="guide-tab-btn" id="gtabIphone" onclick="switchGuideTab('iphone')">🍎 iPhone (iOS)</button>
-        <button class="guide-tab-btn" id="gtabRush" onclick="switchGuideTab('rush')">⏰ 8 AM &amp; 10 AM Masterclass</button>
-        <button class="guide-tab-btn" id="gtabPayment" onclick="switchGuideTab('payment')">💳 5-Min Hold &amp; bKash</button>
-      </div>
-
-      <div class="guide-body">
-        <!-- Windows Tab -->
-        <div id="gsecWindows">
-          <h3 style="margin-bottom: 8px; color: var(--primary);">🪟 How to Install on Windows (Chrome, Brave, Edge, Opera)</h3>
-          <div class="guide-step">
-            <b>Step 1: Download Extension ZIP or Unpack</b>
-            <p>Download <code>Geticket-v1.0.0.zip</code> and extract it to any folder on your PC.</p>
-            <div style="margin-top: 6px;">
-              <a href="Geticket-v1.0.0.zip" download="Geticket-v1.0.0.zip" class="view-btn" style="background: var(--success); color: #fff; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; font-weight: 700; border-radius: 6px;">📥 Download Extension ZIP (v1.0.0)</a>
-            </div>
-          </div>
-          <div class="guide-step">
-            <b>Step 2: Open Extensions Page</b>
-            <p>Paste the following URL into your Chrome address bar:</p>
-            <div class="guide-code-box">chrome://extensions/</div>
-          </div>
-          <div class="guide-step">
-            <b>Step 3: Enable Developer Mode &amp; Load Unpacked</b>
-            <p>Toggle ON <b>Developer mode</b> in the top-right corner. Then click <b>Load unpacked</b> at top-left and select the extracted folder.</p>
-          </div>
-          <div class="guide-step">
-            <b>Step 4: Pin &amp; Configure</b>
-            <p>Click the puzzle piece icon (🧩) on your browser toolbar and pin 📌 <b>GeTicket Pro</b>. Configure your route and morning schedule.</p>
-          </div>
-        </div>
-
-        <!-- Android Tab -->
-        <div id="gsecAndroid" style="display: none;">
-          <h3 style="margin-bottom: 8px; color: var(--primary);">🤖 How to Install on Android (Kiwi Browser / Lemur Browser)</h3>
-          <div class="guide-step">
-            <b>Step 1: Install Kiwi Browser</b>
-            <p>Install <b>Kiwi Browser</b> from Google Play Store. It uses the Chrome engine and runs desktop extensions natively on mobile.</p>
-          </div>
-          <div class="guide-step">
-            <b>Step 2: Download the ZIP</b>
-            <p>Download <code>Geticket-v1.0.0.zip</code> onto your Android device.</p>
-            <div style="margin-top: 6px;">
-              <a href="Geticket-v1.0.0.zip" download="Geticket-v1.0.0.zip" class="view-btn" style="background: var(--success); color: #fff; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; font-weight: 700; border-radius: 6px;">📥 Download Extension ZIP (v1.0.0)</a>
-            </div>
-          </div>
-          <div class="guide-step">
-            <b>Step 3: Install Extension in Kiwi</b>
-            <p>Tap three dots (⋮) $\rightarrow$ <b>Extensions</b> $\rightarrow$ Turn ON <b>Developer mode</b> $\rightarrow$ Tap <b>+(from .zip / .crx / folder)</b> and select the ZIP file.</p>
-          </div>
-          <div class="guide-step">
-            <b>Step 4: Open eticket.railway.gov.bd &amp; Book</b>
-            <p>Login to your Bangladesh Railway account. Tap three-dot menu (⋮) $\rightarrow$ scroll down $\rightarrow$ <b>GeTicket Pro Control</b>. The floating HUD bubble will appear on the booking site!</p>
-          </div>
-        </div>
-
-        <!-- iPhone Tab -->
-        <div id="gsecIphone" style="display: none;">
-          <h3 style="margin-bottom: 8px; color: var(--primary);">🍎 How to Use on iPhone / iOS (Orion Browser &amp; Safari Web App)</h3>
-          <div class="guide-step">
-            <b>Method 1: Orion Browser for iOS (Native Chrome Extension Support)</b>
-            <p>Install <b>Orion Browser by Kagi</b> from the Apple App Store. Orion is built on WebKit and natively runs desktop Chrome extensions directly on iPhone/iPad!</p>
-            <ul style="padding-left: 20px; margin-top: 6px;">
-              <li>Open Orion $\rightarrow$ Settings $\rightarrow$ Extensions $\rightarrow$ Enable Chrome Extensions.</li>
-              <li>Load GeTicket Pro or add from zip.</li>
-              <li>Visit <code>eticket.railway.gov.bd</code> — the extension runs and locks seats natively on your iPhone!</li>
-            </ul>
-          </div>
-          <div class="guide-step">
-            <b>Method 2: Install as iPhone Web App (PWA)</b>
-            <p>Open this dashboard in Safari on your iPhone, tap the <b>Share</b> button (square with arrow) $\rightarrow$ tap <b>Add to Home Screen</b>. It creates a full-screen, standalone app on your iPhone home screen!</p>
-          </div>
-        </div>
-
-        <!-- Rush Strategy Tab -->
-        <div id="gsecRush" style="display: none;">
-          <h3 style="margin-bottom: 8px; color: var(--primary);">⏰ Bangladesh Railway 8:00 AM &amp; 10:00 AM Rush Strategy</h3>
-          <div class="guide-step">
-            <b>Official Release Windows</b>
-            <p>• <b>08:00 AM Sharp:</b> AC Classes (Snigdha, AC Seat, AC Berth) + First Class release for Eastern/Western zones.</p>
-            <p>• <b>10:00 AM Sharp:</b> Non-AC Classes (Shovon Chair, Shovon) release.</p>
-          </div>
-          <div class="guide-step">
-            <b>10-Minute Pre-Warm Cycle (07:50 AM)</b>
-            <p>GeTicket Pro wakes up at 07:50 AM, sends an alarm notification, and keeps your login session warm so you are never logged out when tickets drop!</p>
-          </div>
-          <div class="guide-step">
-            <b>Zero-Ban Humanized Stealth Speed</b>
-            <p>At 07:59:58 AM, GeTicket syncs with atomic server time and executes sub-second seat lock (75ms–135ms natural jitter) without triggering bot bans.</p>
-          </div>
-        </div>
-
-        <!-- Payment Tab -->
-        <div id="gsecPayment" style="display: none;">
-          <h3 style="margin-bottom: 8px; color: var(--primary);">💳 5-Minute Seat Hold &amp; Instant bKash Checkout</h3>
-          <div class="guide-step">
-            <b>The Critical 5-Minute Window</b>
-            <p>Once GeTicket Pro locks your seat, Bangladesh Railway reserves it for precisely <b>5 minutes (300 seconds)</b>. The HUD displays an active countdown timer.</p>
-          </div>
-          <div class="guide-step">
-            <b>Automatic bKash &amp; Terms Selection</b>
-            <p>GeTicket Pro immediately auto-selects <b>bKash</b> payment option, checks the required "Terms &amp; Conditions" box, and alerts you with a sweet chime.</p>
-          </div>
-          <div class="guide-step">
-            <b>Instant OTP Auto-Focus</b>
-            <p>When bKash sends the SMS OTP, GeTicket automatically focuses on the OTP input box. Simply paste your OTP and enter your PIN to finalize your confirmed ticket!</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Developer Credit Footer -->
   <footer
@@ -3154,30 +3082,7 @@
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    function openGuideModal(defaultTab) {
-      const m = document.getElementById('guideModal');
-      if (m) m.classList.add('open');
-      if (defaultTab) switchGuideTab(defaultTab);
-    }
 
-    function closeGuideModal() {
-      const m = document.getElementById('guideModal');
-      if (m) m.classList.remove('open');
-    }
-
-    function switchGuideTab(tab) {
-      const tabs = ['windows', 'android', 'iphone', 'rush', 'payment'];
-      tabs.forEach(t => {
-        const btn = document.getElementById('gtab' + t.charAt(0).toUpperCase() + t.slice(1));
-        const sec = document.getElementById('gsec' + t.charAt(0).toUpperCase() + t.slice(1));
-        if (btn) btn.classList.remove('active');
-        if (sec) sec.style.display = 'none';
-      });
-      const activeBtn = document.getElementById('gtab' + tab.charAt(0).toUpperCase() + tab.slice(1));
-      const activeSec = document.getElementById('gsec' + tab.charAt(0).toUpperCase() + tab.slice(1));
-      if (activeBtn) activeBtn.classList.add('active');
-      if (activeSec) activeSec.style.display = 'block';
-    }
 
     function switchDevice(mode) {
       const deskWrap = document.getElementById('desktopViewContainer');

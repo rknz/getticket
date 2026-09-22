@@ -54,7 +54,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
       }
 
       // Auto Open Railway Tab at 7:50 AM
-      chrome.tabs.create({ url: `${RAILWAY_URL}/booking/train-search`, active: true });
+      if (chrome?.tabs?.create) {
+        chrome.tabs.create({ url: `${RAILWAY_URL}/booking/train-search`, active: true });
+      }
     });
   } else if (alarm.name === 'geticket_session_keepalive') {
     // Ping to keep session warm
