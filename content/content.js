@@ -286,24 +286,47 @@
 
   // 5-Minute Seat Hold & bKash Auto-Assister
   let paymentAssisted = false;
+  let seatLockToastShown = false;
   function initPaymentAutoAssister() {
     const path = window.location.pathname.toLowerCase();
     const isPaymentPage = path.includes('/booking') || 
                           path.includes('/payment') ||
+                          path.includes('/checkout') ||
+                          path.includes('/purchase') ||
                           document.querySelector('.payment-options') || 
                           document.querySelector('#bkash') ||
                           document.querySelector('input[value*="bkash" i]');
 
+    // Only run payment assistant when actually on a payment/booking page!
+    if (!isPaymentPage) {
+      paymentAssisted = false;
+      seatLockToastShown = false;
+      return;
+    }
+
     // 1. Detect 5-Minute Reservation / Seat Hold Countdown
-    const timerElements = Array.from(document.querySelectorAll('*')).filter(el => {
-      return el.children.length === 0 && /\b0?[0-5]:[0-5][0-9]\b/.test(el.innerText);
+    // Strictly ignore any GeTicket HUD, toast banners, or dropdowns
+    const timerElements = Array.from(
+      document.querySelectorAll('.booking-time, .timer-count, .reservation-timer, [class*="timer"], [class*="countdown"], span, div, p')
+    ).filter(el => {
+      if (el.closest('#geticket-hud-root') || el.closest('#gtToastBanner')) return false;
+      if (el.id && el.id.startsWith('gt')) return false;
+      if (el.children.length > 0) return false;
+      const txt = el.innerText.trim();
+      return /^[0-5]?:?[0-5][0-9]$/.test(txt) && txt.length <= 6;
     });
 
     if (timerElements.length > 0 || isPaymentPage) {
-      const timerStr = timerElements[0] ? timerElements[0].innerText.trim() : '05:00';
-      setHudStatus(currentLang === 'bn' 
-        ? `🎉 সিট ৫ মিনিটের জন্য সংরক্ষিত! (${timerStr}) বিকাশ পেমেন্ট সম্পন্ন করুন` 
-        : `🎉 Seat Locked for 5 Minutes! (${timerStr}) Complete bKash payment`, '#10b981');
+      const timerStr = (timerElements[0] && timerElements[0].innerText.trim().length <= 6) 
+        ? timerElements[0].innerText.trim() 
+        : '05:00';
+
+      if (!seatLockToastShown) {
+        seatLockToastShown = true;
+        setHudStatus(currentLang === 'bn' 
+          ? `🎉 সিট ৫ মিনিটের জন্য সংরক্ষিত! (${timerStr}) বিকাশ পেমেন্ট সম্পন্ন করুন` 
+          : `🎉 Seat Locked for 5 Minutes! (${timerStr}) Complete bKash payment`, '#10b981');
+      }
 
       if (!paymentAssisted) {
         paymentAssisted = true;
@@ -319,6 +342,7 @@
                           document.querySelector('input[id*="bkash" i]') ||
                           document.querySelector('label[for*="bkash" i]') ||
                           Array.from(document.querySelectorAll('label, div, button')).find(el => {
+                            if (el.closest('#geticket-hud-root') || el.closest('#gtToastBanner')) return false;
                             const txt = el.innerText.trim().toLowerCase();
                             return (txt === 'bkash' || txt.includes('bkash')) && !el.querySelector('input');
                           });
@@ -644,7 +668,16 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
 // 4. Strict Single-Language UI Dictionary
 
 
-  function showHudToast(message, duration = 4500) {
+  let lastToastMsg = '';
+  let lastToastTime = 0;
+  function showHudToast(message, duration = 4000) {
+    if (!message) return;
+    const now = Date.now();
+    // Ignore duplicate messages sent within 3 seconds
+    if (message === lastToastMsg && (now - lastToastTime) < 3000) return;
+    lastToastMsg = message;
+    lastToastTime = now;
+
     let toast = document.getElementById('gtToastBanner');
     if (!toast) {
       toast = document.createElement('div');
@@ -654,16 +687,14 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
     toast.innerText = message;
     toast.classList.add('show');
     if (toast.__timeout) clearTimeout(toast.__timeout);
-    toast.__timeout = setTimeout(() => toast.classList.remove('show'), duration);
+    toast.__timeout = setTimeout(() => {
+      toast.classList.remove('show');
+      lastToastMsg = '';
+    }, duration);
   }
 
   function setHudStatus(message, color = '#0284c7') {
     showHudToast(message);
-    const clockLabel = document.getElementById('gtClockLabel');
-    if (clockLabel) {
-      clockLabel.innerText = message;
-      if (color) clockLabel.style.color = color;
-    }
     const stealthNote = document.getElementById('gtStealthNote');
     if (stealthNote) {
       stealthNote.innerHTML = `<span style="color: ${color || 'var(--gt-success)'}; font-weight: 700;">${message}</span>`;
