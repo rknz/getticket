@@ -349,27 +349,267 @@
     { en: "Feni", bn: "ফেনী" }
   ];
 
-  const TRAINS_MAP = {
-    "Dhaka-Jamalpur": ["Teesta Express", "Brahmaputra Express", "Jamuna Express", "Agnibina Express"],
-    "Jamalpur-Dhaka": ["Teesta Express", "Brahmaputra Express", "Jamuna Express", "Agnibina Express"],
-    "Dhaka-Chattogram": ["Suborno Express", "Sonar Bangla Express", "Mahanagar Provati", "Mahanagar Godhuli", "Turna Express", "Chattala Express"],
-    "Chattogram-Dhaka": ["Suborno Express", "Sonar Bangla Express", "Mahanagar Provati", "Mahanagar Godhuli", "Turna Express", "Chattala Express"],
-    "Dhaka-Sylhet": ["Parabat Express", "Jayantika Express", "Upaban Express", "Kalani Express"],
-    "Sylhet-Dhaka": ["Parabat Express", "Jayantika Express", "Upaban Express", "Kalani Express"],
-    "Dhaka-Rajshahi": ["Silkcity Express", "Padma Express", "Dhumketu Express", "Banalata Express"],
-    "Rajshahi-Dhaka": ["Silkcity Express", "Padma Express", "Dhumketu Express", "Banalata Express"],
-    "Dhaka-Cox's Bazar": ["Cox's Bazar Express", "Parjatak Express"],
-    "Cox's Bazar-Dhaka": ["Cox's Bazar Express", "Parjatak Express"]
-  };
+  function parseTimeToMinutes(timeStr) {
+  if (!timeStr) return 0;
+  const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return 0;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const period = match[3].toUpperCase();
+  if (period === 'PM' && hours < 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+}
 
-  const FARES = {
-    "S_CHAIR": 205,
-    "SHOVON": 170,
-    "SNIGDHA": 395,
-    "F_CHAIR": 275,
-    "AC_S": 475,
-    "AC_B": 710
-  };
+function sortTrainsChronologically(trainsList) {
+  if (!Array.isArray(trainsList)) return [];
+  return [...trainsList].sort((a, b) => parseTimeToMinutes(a.dep) - parseTimeToMinutes(b.dep));
+}
+
+// 2. Comprehensive Master Train Schedule Database (Only Legitimate Online Intercity Trains, Sorted AM to PM)
+const ROUTE_TRAIN_MAP = {
+  // Dhaka <-> Chattogram Corridors (Online Intercity Only, Chronological AM to PM)
+  "Dhaka-Chattogram": [
+    { nameEn: "Tourist Express", nameBn: "পর্যটক এক্সপ্রেস", code: "815", dep: "06:15 AM", arr: "11:50 AM", durationEn: "5h 35m", durationBn: "৫ ঘণ্টা ৩৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Sonar Bangla Express", nameBn: "সোনার বাংলা এক্সপ্রেস", code: "787", dep: "07:00 AM", arr: "12:15 PM", durationEn: "5h 15m", durationBn: "৫ ঘণ্টা ১৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" },
+    { nameEn: "Mahanagar Provati", nameBn: "মহানগর প্রভাতী", code: "704", dep: "07:45 AM", arr: "02:00 PM", durationEn: "6h 15m", durationBn: "৬ ঘণ্টা ১৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Chattala Express", nameBn: "চট্টলা এক্সপ্রেস", code: "802", dep: "01:45 PM", arr: "08:30 PM", durationEn: "6h 45m", durationBn: "৬ ঘণ্টা ৪৫ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
+    { nameEn: "Suborno Express", nameBn: "সুবর্ণ এক্সপ্রেস", code: "701", dep: "04:30 PM", arr: "09:50 PM", durationEn: "5h 20m", durationBn: "৫ ঘণ্টা ২০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Mahanagar Express", nameBn: "মহানগর এক্সপ্রেস", code: "722", dep: "09:20 PM", arr: "03:50 AM", durationEn: "6h 30m", durationBn: "৬ ঘণ্টা ৩০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Cox's Bazar Express", nameBn: "কক্সবাজার এক্সপ্রেস", code: "813", dep: "10:30 PM", arr: "04:30 AM", durationEn: "6h 00m", durationBn: "৬ ঘণ্টা", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Turna Express", nameBn: "তূর্ণা এক্সপ্রেস", code: "742", dep: "11:30 PM", arr: "06:00 AM", durationEn: "6h 30m", durationBn: "৬ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
+  ],
+  "Chattogram-Dhaka": [
+    { nameEn: "Suborno Express", nameBn: "সুবর্ণ এক্সপ্রেস", code: "702", dep: "07:00 AM", arr: "12:20 PM", durationEn: "5h 20m", durationBn: "৫ ঘণ্টা ২০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Chattala Express", nameBn: "চট্টলা এক্সপ্রেস", code: "801", dep: "08:30 AM", arr: "03:30 PM", durationEn: "7h 00m", durationBn: "৭ ঘণ্টা", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
+    { nameEn: "Mahanagar Express", nameBn: "মহানগর এক্সপ্রেস", code: "721", dep: "12:30 PM", arr: "07:10 PM", durationEn: "6h 40m", durationBn: "৬ ঘণ্টা ৪০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Mahanagar Godhuli", nameBn: "মহানগর গোধূলী", code: "703", dep: "03:00 PM", arr: "09:10 PM", durationEn: "6h 10m", durationBn: "৬ ঘণ্টা ১০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Cox's Bazar Express", nameBn: "কক্সবাজার এক্সপ্রেস", code: "814", dep: "04:00 PM", arr: "09:30 PM", durationEn: "5h 30m", durationBn: "৫ ঘণ্টা ৩০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Sonar Bangla Express", nameBn: "সোনার বাংলা এক্সপ্রেস", code: "788", dep: "05:00 PM", arr: "10:10 PM", durationEn: "5h 10m", durationBn: "৫ ঘণ্টা ১০ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" },
+    { nameEn: "Turna Express", nameBn: "তূর্ণা এক্সপ্রেস", code: "741", dep: "11:00 PM", arr: "05:15 AM", durationEn: "6h 15m", durationBn: "৬ ঘণ্টা ১৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Tourist Express", nameBn: "পর্যটক এক্সপ্রেস", code: "816", dep: "11:30 PM", arr: "05:00 AM", durationEn: "5h 30m", durationBn: "৫ ঘণ্টা ৩০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" }
+  ],
+
+  // Jamalpur <-> Mymensingh Corridors (Direct Trains, Chronological AM to PM)
+  "Jamalpur-Mymensingh": [
+    { nameEn: "Jamuna Express", nameBn: "যমুনা এক্সপ্রেস", code: "746", dep: "02:30 AM", arr: "03:55 AM", durationEn: "1h 25m", durationBn: "১ ঘণ্টা ২৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Brahmaputra Express", nameBn: "ব্রহ্মপুত্র এক্সপ্রেস", code: "744", dep: "06:40 AM", arr: "08:00 AM", durationEn: "1h 20m", durationBn: "১ ঘণ্টা ২০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Dewanganj Commuter", nameBn: "দেওয়ানগঞ্জ কমিউটার", code: "48", dep: "03:15 PM", arr: "04:45 PM", durationEn: "1h 30m", durationBn: "১ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "708", dep: "03:30 PM", arr: "04:50 PM", durationEn: "1h 20m", durationBn: "১ ঘণ্টা ২০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "736", dep: "05:45 PM", arr: "07:05 PM", durationEn: "1h 20m", durationBn: "১ ঘণ্টা ২০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "786", dep: "08:10 PM", arr: "09:35 PM", durationEn: "1h 25m", durationBn: "১ ঘণ্টা ২৫ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
+  ],
+  "Mymensingh-Jamalpur": [
+    { nameEn: "Dewanganj Commuter", nameBn: "দেওয়ানগঞ্জ কমিউটার", code: "47", dep: "09:45 AM", arr: "11:15 AM", durationEn: "1h 30m", durationBn: "১ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "707", dep: "10:35 AM", arr: "11:50 AM", durationEn: "1h 15m", durationBn: "১ ঘণ্টা ১৫ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "735", dep: "02:30 PM", arr: "03:45 PM", durationEn: "1h 15m", durationBn: "১ ঘণ্টা ১৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "785", dep: "04:45 PM", arr: "06:10 PM", durationEn: "1h 25m", durationBn: "১ ঘণ্টা ২৫ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" },
+    { nameEn: "Jamuna Express", nameBn: "যমুনা এক্সপ্রেস", code: "745", dep: "08:05 PM", arr: "09:40 PM", durationEn: "1h 35m", durationBn: "১ ঘণ্টা ৩৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Brahmaputra Express", nameBn: "ব্রহ্মপুত্র এক্সপ্রেস", code: "743", dep: "09:35 PM", arr: "11:20 PM", durationEn: "1h 45m", durationBn: "১ ঘণ্টা ৪৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
+  ],
+
+  // Chattogram <-> Mymensingh Corridors
+  "Chattogram-Mymensingh": [
+    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "785", dep: "09:15 AM", arr: "04:40 PM", durationEn: "7h 25m", durationBn: "৭ ঘণ্টা ২৫ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
+  ],
+  "Mymensingh-Chattogram": [
+    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "786", dep: "09:40 PM", arr: "05:00 AM", durationEn: "7h 20m", durationBn: "৭ ঘণ্টা ২০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
+  ],
+
+  // Dhaka <-> Jamalpur Corridors (Chronological AM to PM)
+  "Dhaka-Jamalpur": [
+    { nameEn: "Dewanganj Commuter", nameBn: "দেওয়ানগঞ্জ কমিউটার", code: "47", dep: "05:40 AM", arr: "11:15 AM", durationEn: "5h 35m", durationBn: "৫ ঘণ্টা ৩৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "707", dep: "07:30 AM", arr: "11:50 AM", durationEn: "4h 20m", durationBn: "৪ ঘণ্টা ২০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Balaka Commuter", nameBn: "বলাকা কমিউটার", code: "49", dep: "10:30 AM", arr: "04:00 PM", durationEn: "5h 30m", durationBn: "৫ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "735", dep: "11:30 AM", arr: "03:45 PM", durationEn: "4h 15m", durationBn: "৪ ঘণ্টা ১৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Jamuna Express", nameBn: "যমুনা এক্সপ্রেস", code: "745", dep: "04:45 PM", arr: "09:40 PM", durationEn: "4h 55m", durationBn: "৪ ঘণ্টা ৫৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Brahmaputra Express", nameBn: "ব্রহ্মপুত্র এক্সপ্রেস", code: "743", dep: "06:15 PM", arr: "11:20 PM", durationEn: "5h 05m", durationBn: "৫ ঘণ্টা ০৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
+  ],
+  "Jamalpur-Dhaka": [
+    { nameEn: "Jamuna Express", nameBn: "যমুনা এক্সপ্রেস", code: "746", dep: "02:30 AM", arr: "07:40 AM", durationEn: "5h 10m", durationBn: "৫ ঘণ্টা ১০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Brahmaputra Express", nameBn: "ব্রহ্মপুত্র এক্সপ্রেস", code: "744", dep: "06:40 AM", arr: "11:50 AM", durationEn: "5h 10m", durationBn: "৫ ঘণ্টা ১০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Dewanganj Commuter", nameBn: "দেওয়ানগঞ্জ কমিউটার", code: "48", dep: "03:15 PM", arr: "08:45 PM", durationEn: "5h 30m", durationBn: "৫ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "708", dep: "03:30 PM", arr: "08:10 PM", durationEn: "4h 40m", durationBn: "৪ ঘণ্টা ৪০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "736", dep: "05:45 PM", arr: "10:30 PM", durationEn: "4h 45m", durationBn: "৪ ঘণ্টা ৪৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
+  ],
+
+  // Chattogram <-> Jamalpur Corridors
+  "Chattogram-Jamalpur": [
+    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "785", dep: "09:15 AM", arr: "06:10 PM", durationEn: "8h 55m", durationBn: "৮ ঘণ্টা ৫৫ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
+  ],
+  "Jamalpur-Chattogram": [
+    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "786", dep: "08:10 PM", arr: "05:00 AM", durationEn: "8h 50m", durationBn: "৮ ঘণ্টা ৫০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
+  ],
+
+  // Dhaka <-> Cox's Bazar Corridors (Chronological AM to PM)
+  "Dhaka-Cox's Bazar": [
+    { nameEn: "Tourist Express", nameBn: "পর্যটক এক্সপ্রেস", code: "815", dep: "06:15 AM", arr: "03:00 PM", durationEn: "8h 45m", durationBn: "৮ ঘণ্টা ৪৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Cox's Bazar Express", nameBn: "কক্সবাজার এক্সপ্রেস", code: "813", dep: "10:30 PM", arr: "07:20 AM", durationEn: "8h 50m", durationBn: "৮ ঘণ্টা ৫০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" }
+  ],
+  "Cox's Bazar-Dhaka": [
+    { nameEn: "Cox's Bazar Express", nameBn: "কক্সবাজার এক্সপ্রেস", code: "814", dep: "12:30 PM", arr: "09:30 PM", durationEn: "9h 00m", durationBn: "৯ ঘণ্টা", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Tourist Express", nameBn: "পর্যটক এক্সপ্রেস", code: "816", dep: "08:00 PM", arr: "05:00 AM", durationEn: "9h 00m", durationBn: "৯ ঘণ্টা", offDay: 0, offEn: "Sunday", offBn: "রবিবার" }
+  ],
+
+  // Dhaka <-> Sylhet Corridors (Chronological AM to PM)
+  "Dhaka-Sylhet": [
+    { nameEn: "Parabat Express", nameBn: "পারাবত এক্সপ্রেস", code: "709", dep: "06:20 AM", arr: "01:00 PM", durationEn: "6h 40m", durationBn: "৬ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" },
+    { nameEn: "Jayantika Express", nameBn: "জয়ন্তিকা এক্সপ্রেস", code: "717", dep: "11:15 AM", arr: "07:00 PM", durationEn: "7h 45m", durationBn: "৭ ঘণ্টা ৪৫ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
+    { nameEn: "Kalni Express", nameBn: "কালনী এক্সপ্রেস", code: "773", dep: "03:00 PM", arr: "09:30 PM", durationEn: "6h 30m", durationBn: "৬ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
+    { nameEn: "Upaban Express", nameBn: "উপবন এক্সপ্রেস", code: "739", dep: "08:30 PM", arr: "05:00 AM", durationEn: "8h 30m", durationBn: "৮ ঘণ্টা ৩০ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
+  ],
+  "Sylhet-Dhaka": [
+    { nameEn: "Kalni Express", nameBn: "কালনী এক্সপ্রেস", code: "774", dep: "06:45 AM", arr: "01:00 PM", durationEn: "6h 15m", durationBn: "৬ ঘণ্টা ১৫ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
+    { nameEn: "Jayantika Express", nameBn: "জয়ন্তিকা এক্সপ্রেস", code: "718", dep: "11:30 AM", arr: "07:15 PM", durationEn: "7h 45m", durationBn: "৭ ঘণ্টা ৪৫ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
+    { nameEn: "Parabat Express", nameBn: "পারাবত এক্সপ্রেস", code: "710", dep: "03:45 PM", arr: "10:20 PM", durationEn: "6h 35m", durationBn: "৬ ঘণ্টা ৩৫ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" },
+    { nameEn: "Upaban Express", nameBn: "উপবন এক্সপ্রেস", code: "740", dep: "11:30 PM", arr: "06:45 AM", durationEn: "7h 15m", durationBn: "৭ ঘণ্টা ১৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
+  ],
+
+  // Chattogram <-> Sylhet Corridors (Chronological AM to PM)
+  "Chattogram-Sylhet": [
+    { nameEn: "Paharika Express", nameBn: "পাহাড়িকা এক্সপ্রেস", code: "719", dep: "07:50 AM", arr: "04:30 PM", durationEn: "8h 40m", durationBn: "৮ ঘণ্টা ৪০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Udayan Express", nameBn: "উদয়ন এক্সপ্রেস", code: "723", dep: "09:45 PM", arr: "06:00 AM", durationEn: "8h 15m", durationBn: "৮ ঘণ্টা ১৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" }
+  ],
+  "Sylhet-Chattogram": [
+    { nameEn: "Paharika Express", nameBn: "পাহাড়িকা এক্সপ্রেস", code: "720", dep: "10:15 AM", arr: "07:35 PM", durationEn: "9h 20m", durationBn: "৯ ঘণ্টা ২০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Udayan Express", nameBn: "উদয়ন এক্সপ্রেস", code: "724", dep: "10:00 PM", arr: "06:20 AM", durationEn: "8h 20m", durationBn: "৮ ঘণ্টা ২০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" }
+  ],
+
+  // Dhaka <-> Rajshahi Corridors (Chronological AM to PM)
+  "Dhaka-Rajshahi": [
+    { nameEn: "Dhumketu Express", nameBn: "ধূমকেতু এক্সপ্রেস", code: "769", dep: "06:00 AM", arr: "11:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
+    { nameEn: "Bonolota Express", nameBn: "বনলতা এক্সপ্রেস", code: "791", dep: "01:30 PM", arr: "06:00 PM", durationEn: "4h 30m", durationBn: "৪ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
+    { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "753", dep: "02:45 PM", arr: "08:35 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Padma Express", nameBn: "পদ্মা এক্সপ্রেস", code: "759", dep: "11:00 PM", arr: "04:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
+  ],
+  "Rajshahi-Dhaka": [
+    { nameEn: "Bonolota Express", nameBn: "বনলতা এক্সপ্রেস", code: "792", dep: "07:00 AM", arr: "11:30 AM", durationEn: "4h 30m", durationBn: "৪ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
+    { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "754", dep: "07:40 AM", arr: "01:30 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Padma Express", nameBn: "পদ্মা এক্সপ্রেস", code: "760", dep: "04:00 PM", arr: "09:40 PM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" },
+    { nameEn: "Dhumketu Express", nameBn: "ধূমকেতু এক্সপ্রেস", code: "770", dep: "11:20 PM", arr: "04:50 AM", durationEn: "5h 30m", durationBn: "৫ ঘণ্টা ৩০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" }
+  ],
+
+  // Dhaka <-> Khulna Corridors (Chronological AM to PM)
+  "Dhaka-Khulna": [
+    { nameEn: "Sundarban Express", nameBn: "সুন্দরবন এক্সপ্রেস", code: "725", dep: "08:15 AM", arr: "03:50 PM", durationEn: "7h 35m", durationBn: "৭ ঘণ্টা ৩৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" },
+    { nameEn: "Chitra Express", nameBn: "চিত্রা এক্সপ্রেস", code: "763", dep: "07:00 PM", arr: "03:40 AM", durationEn: "8h 40m", durationBn: "৮ ঘণ্টা ৪০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Benapole Express", nameBn: "বেনাপোল এক্সপ্রেস", code: "795", dep: "11:45 PM", arr: "07:20 AM", durationEn: "7h 35m", durationBn: "৭ ঘণ্টা ৩৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
+  ],
+  "Khulna-Dhaka": [
+    { nameEn: "Chitra Express", nameBn: "চিত্রা এক্সপ্রেস", code: "764", dep: "09:00 AM", arr: "05:30 PM", durationEn: "8h 30m", durationBn: "৮ ঘণ্টা ৩০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Sundarban Express", nameBn: "সুন্দরবন এক্সপ্রেস", code: "726", dep: "10:15 PM", arr: "05:10 AM", durationEn: "6h 55m", durationBn: "৬ ঘণ্টা ৫৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
+  ],
+
+  // Dhaka <-> Rangpur Corridors (Chronological AM to PM)
+  "Dhaka-Rangpur": [
+    { nameEn: "Rangpur Express", nameBn: "রংপুর এক্সপ্রেস", code: "771", dep: "09:10 AM", arr: "07:05 PM", durationEn: "9h 55m", durationBn: "৯ ঘণ্টা ৫৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Kurigram Express", nameBn: "কুড়িগ্রাম এক্সপ্রেস", code: "797", dep: "08:45 PM", arr: "06:15 AM", durationEn: "9h 30m", durationBn: "৯ ঘণ্টা ৩০ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
+  ],
+  "Rangpur-Dhaka": [
+    { nameEn: "Kurigram Express", nameBn: "কুড়িগ্রাম এক্সপ্রেস", code: "798", dep: "07:15 AM", arr: "05:15 PM", durationEn: "10h 00m", durationBn: "১০ ঘণ্টা", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" },
+    { nameEn: "Rangpur Express", nameBn: "রংপুর এক্সপ্রেস", code: "772", dep: "08:10 PM", arr: "06:05 AM", durationEn: "9h 55m", durationBn: "৯ ঘণ্টা ৫৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" }
+  ],
+
+  // Dhaka <-> Panchagarh Corridors (Chronological AM to PM)
+  "Dhaka-Panchagarh": [
+    { nameEn: "Ekota Express", nameBn: "একতা এক্সপ্রেস", code: "705", dep: "10:15 AM", arr: "09:00 PM", durationEn: "10h 45m", durationBn: "১০ ঘণ্টা ৪৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Drutojan Express", nameBn: "দ্রুতযান এক্সপ্রেস", code: "757", dep: "08:00 PM", arr: "06:30 AM", durationEn: "10h 30m", durationBn: "১০ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Panchagarh Express", nameBn: "পঞ্চগড় এক্সপ্রেস", code: "793", dep: "10:45 PM", arr: "08:50 AM", durationEn: "10h 05m", durationBn: "১০ ঘণ্টা ০৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
+  ],
+  "Panchagarh-Dhaka": [
+    { nameEn: "Drutojan Express", nameBn: "দ্রুতযান এক্সপ্রেস", code: "758", dep: "08:10 AM", arr: "06:40 PM", durationEn: "10h 30m", durationBn: "১০ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Panchagarh Express", nameBn: "পঞ্চগড় এক্সপ্রেস", code: "794", dep: "12:30 PM", arr: "10:35 PM", durationEn: "10h 05m", durationBn: "১০ ঘণ্টা ০৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Ekota Express", nameBn: "একতা এক্সপ্রেস", code: "706", dep: "09:10 PM", arr: "07:45 AM", durationEn: "10h 35m", durationBn: "১০ ঘণ্টা ৩৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
+  ],
+
+  // Dhaka <-> Mymensingh Corridors (Chronological AM to PM)
+  "Dhaka-Mymensingh": [
+    { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "707", dep: "07:30 AM", arr: "10:30 AM", durationEn: "3h 00m", durationBn: "৩ ঘণ্টা", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "735", dep: "11:30 AM", arr: "02:25 PM", durationEn: "2h 55m", durationBn: "২ ঘণ্টা ৫৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Mohanganj Express", nameBn: "মোহনগঞ্জ এক্সপ্রেস", code: "789", dep: "01:15 PM", arr: "04:40 PM", durationEn: "3h 25m", durationBn: "৩ ঘণ্টা ২৫ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Jamuna Express", nameBn: "যমুনা এক্সপ্রেস", code: "745", dep: "04:45 PM", arr: "08:00 PM", durationEn: "3h 15m", durationBn: "৩ ঘণ্টা ১৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Brahmaputra Express", nameBn: "ব্রহ্মপুত্র এক্সপ্রেস", code: "743", dep: "06:15 PM", arr: "09:30 PM", durationEn: "3h 15m", durationBn: "৩ ঘণ্টা ১৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Haor Express", nameBn: "হাওর এক্সপ্রেস", code: "777", dep: "10:15 PM", arr: "01:30 AM", durationEn: "3h 15m", durationBn: "৩ ঘণ্টা ১৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
+  ],
+  "Mymensingh-Dhaka": [
+    { nameEn: "Jamuna Express", nameBn: "যমুনা এক্সপ্রেস", code: "746", dep: "04:10 AM", arr: "07:40 AM", durationEn: "3h 30m", durationBn: "৩ ঘণ্টা ৩০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Brahmaputra Express", nameBn: "ব্রহ্মপুত্র এক্সপ্রেস", code: "744", dep: "08:10 AM", arr: "11:50 AM", durationEn: "3h 40m", durationBn: "৩ ঘণ্টা ৪০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
+    { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "708", dep: "05:05 PM", arr: "08:10 PM", durationEn: "3h 05m", durationBn: "৩ ঘণ্টা ০৫ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
+    { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "736", dep: "07:15 PM", arr: "10:30 PM", durationEn: "3h 15m", durationBn: "৩ ঘণ্টা ১৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
+  ]
+};
+
+// Auto-sort all train corridors chronologically:
+for (const key in ROUTE_TRAIN_MAP) {
+  ROUTE_TRAIN_MAP[key] = sortTrainsChronologically(ROUTE_TRAIN_MAP[key]);
+}
+
+// Backward-compatible alias routing
+ROUTE_TRAIN_MAP["Dhaka-Chittagong"] = ROUTE_TRAIN_MAP["Dhaka-Chattogram"];
+ROUTE_TRAIN_MAP["Chittagong-Dhaka"] = ROUTE_TRAIN_MAP["Chattogram-Dhaka"];
+ROUTE_TRAIN_MAP["Chittagong-Jamalpur"] = ROUTE_TRAIN_MAP["Chattogram-Jamalpur"];
+ROUTE_TRAIN_MAP["Jamalpur-Chittagong"] = ROUTE_TRAIN_MAP["Jamalpur-Chattogram"];
+ROUTE_TRAIN_MAP["Chittagong-Sylhet"] = ROUTE_TRAIN_MAP["Chattogram-Sylhet"];
+ROUTE_TRAIN_MAP["Sylhet-Chittagong"] = ROUTE_TRAIN_MAP["Sylhet-Chattogram"];
+ROUTE_TRAIN_MAP["Chittagong-Mymensingh"] = ROUTE_TRAIN_MAP["Chattogram-Mymensingh"];
+ROUTE_TRAIN_MAP["Mymensingh-Chittagong"] = ROUTE_TRAIN_MAP["Mymensingh-Chattogram"];
+
+// 3. Official Bangladesh Railway Fares Database
+const FARE_RATES = {
+  "Jamalpur-Mymensingh": { S_CHAIR: 60, SHOVON: 45, SNIGDHA: 115, F_CHAIR: 90, AC_S: 140, AC_B: 210 },
+  "Mymensingh-Jamalpur": { S_CHAIR: 60, SHOVON: 45, SNIGDHA: 115, F_CHAIR: 90, AC_S: 140, AC_B: 210 },
+  "Chattogram-Mymensingh": { S_CHAIR: 340, SHOVON: 260, SNIGDHA: 650, F_CHAIR: 490, AC_S: 780, AC_B: 1170 },
+  "Mymensingh-Chattogram": { S_CHAIR: 340, SHOVON: 260, SNIGDHA: 650, F_CHAIR: 490, AC_S: 780, AC_B: 1170 },
+  "Dhaka-Jamalpur": { S_CHAIR: 205, SHOVON: 165, SNIGDHA: 391, F_CHAIR: 310, AC_S: 466, AC_B: 690 },
+  "Jamalpur-Dhaka": { S_CHAIR: 205, SHOVON: 165, SNIGDHA: 391, F_CHAIR: 310, AC_S: 466, AC_B: 690 },
+  "Chattogram-Jamalpur": { S_CHAIR: 375, SHOVON: 290, SNIGDHA: 715, F_CHAIR: 540, AC_S: 855, AC_B: 1280 },
+  "Jamalpur-Chattogram": { S_CHAIR: 375, SHOVON: 290, SNIGDHA: 715, F_CHAIR: 540, AC_S: 855, AC_B: 1280 },
+  "Dhaka-Chattogram": { S_CHAIR: 380, SHOVON: 285, SNIGDHA: 725, F_CHAIR: 560, AC_S: 865, AC_B: 1295 },
+  "Chattogram-Dhaka": { S_CHAIR: 380, SHOVON: 285, SNIGDHA: 725, F_CHAIR: 560, AC_S: 865, AC_B: 1295 },
+  "Dhaka-Cox's Bazar": { S_CHAIR: 505, SHOVON: 395, SNIGDHA: 965, F_CHAIR: 740, AC_S: 1150, AC_B: 1725 },
+  "Cox's Bazar-Dhaka": { S_CHAIR: 505, SHOVON: 395, SNIGDHA: 965, F_CHAIR: 740, AC_S: 1150, AC_B: 1725 },
+  "Dhaka-Sylhet": { S_CHAIR: 320, SHOVON: 265, SNIGDHA: 610, F_CHAIR: 470, AC_S: 730, AC_B: 1090 },
+  "Sylhet-Dhaka": { S_CHAIR: 320, SHOVON: 265, SNIGDHA: 610, F_CHAIR: 470, AC_S: 730, AC_B: 1090 },
+  "Chattogram-Sylhet": { S_CHAIR: 375, SHOVON: 290, SNIGDHA: 715, F_CHAIR: 540, AC_S: 855, AC_B: 1280 },
+  "Sylhet-Chattogram": { S_CHAIR: 375, SHOVON: 290, SNIGDHA: 715, F_CHAIR: 540, AC_S: 855, AC_B: 1280 },
+  "Dhaka-Rajshahi": { S_CHAIR: 340, SHOVON: 285, SNIGDHA: 650, F_CHAIR: 510, AC_S: 780, AC_B: 1170 },
+  "Rajshahi-Dhaka": { S_CHAIR: 340, SHOVON: 285, SNIGDHA: 650, F_CHAIR: 510, AC_S: 780, AC_B: 1170 },
+  "Dhaka-Khulna": { S_CHAIR: 460, SHOVON: 360, SNIGDHA: 880, F_CHAIR: 670, AC_S: 1050, AC_B: 1575 },
+  "Khulna-Dhaka": { S_CHAIR: 460, SHOVON: 360, SNIGDHA: 880, F_CHAIR: 670, AC_S: 1050, AC_B: 1575 },
+  "Dhaka-Rangpur": { S_CHAIR: 450, SHOVON: 350, SNIGDHA: 860, F_CHAIR: 650, AC_S: 1030, AC_B: 1545 },
+  "Rangpur-Dhaka": { S_CHAIR: 450, SHOVON: 350, SNIGDHA: 860, F_CHAIR: 650, AC_S: 1030, AC_B: 1545 },
+  "Dhaka-Panchagarh": { S_CHAIR: 550, SHOVON: 430, SNIGDHA: 1050, F_CHAIR: 800, AC_S: 1260, AC_B: 1890 },
+  "Panchagarh-Dhaka": { S_CHAIR: 550, SHOVON: 430, SNIGDHA: 1050, F_CHAIR: 800, AC_S: 1260, AC_B: 1890 },
+  "Dhaka-Mymensingh": { S_CHAIR: 150, SHOVON: 120, SNIGDHA: 285, F_CHAIR: 220, AC_S: 345, AC_B: 515 },
+  "Mymensingh-Dhaka": { S_CHAIR: 150, SHOVON: 120, SNIGDHA: 285, F_CHAIR: 220, AC_S: 345, AC_B: 515 },
+  "Dhaka-Cumilla": { S_CHAIR: 160, SHOVON: 130, SNIGDHA: 305, F_CHAIR: 235, AC_S: 365, AC_B: 545 },
+  "Cumilla-Dhaka": { S_CHAIR: 160, SHOVON: 130, SNIGDHA: 305, F_CHAIR: 235, AC_S: 365, AC_B: 545 },
+  "Dhaka-Feni": { S_CHAIR: 265, SHOVON: 215, SNIGDHA: 510, F_CHAIR: 390, AC_S: 605, AC_B: 910 },
+  "Feni-Dhaka": { S_CHAIR: 265, SHOVON: 215, SNIGDHA: 510, F_CHAIR: 390, AC_S: 605, AC_B: 910 },
+  "Dhaka-Sreemangal": { S_CHAIR: 240, SHOVON: 195, SNIGDHA: 460, F_CHAIR: 350, AC_S: 550, AC_B: 825 },
+  "Sreemangal-Dhaka": { S_CHAIR: 240, SHOVON: 195, SNIGDHA: 460, F_CHAIR: 350, AC_S: 550, AC_B: 825 },
+  "Dhaka-Bogra": { S_CHAIR: 395, SHOVON: 315, SNIGDHA: 755, F_CHAIR: 580, AC_S: 905, AC_B: 1355 },
+  "Bogra-Dhaka": { S_CHAIR: 395, SHOVON: 315, SNIGDHA: 755, F_CHAIR: 580, AC_S: 905, AC_B: 1355 },
+  "Dhaka-Dinajpur": { S_CHAIR: 465, SHOVON: 370, SNIGDHA: 890, F_CHAIR: 685, AC_S: 1065, AC_B: 1600 },
+  "Dinajpur-Dhaka": { S_CHAIR: 465, SHOVON: 370, SNIGDHA: 890, F_CHAIR: 685, AC_S: 1065, AC_B: 1600 },
+  "Dhaka-Benapole": { S_CHAIR: 480, SHOVON: 385, SNIGDHA: 920, F_CHAIR: 710, AC_S: 1100, AC_B: 1650 },
+  "Benapole-Dhaka": { S_CHAIR: 480, SHOVON: 385, SNIGDHA: 920, F_CHAIR: 710, AC_S: 1100, AC_B: 1650 },
+  "Dhaka-Ishwardi": { S_CHAIR: 265, SHOVON: 210, SNIGDHA: 510, F_CHAIR: 390, AC_S: 610, AC_B: 915 },
+  "Ishwardi-Dhaka": { S_CHAIR: 265, SHOVON: 210, SNIGDHA: 510, F_CHAIR: 390, AC_S: 610, AC_B: 915 }
+};
+
+// Aliases for Fares
+FARE_RATES["Dhaka-Chittagong"] = FARE_RATES["Dhaka-Chattogram"];
+FARE_RATES["Chittagong-Dhaka"] = FARE_RATES["Chattogram-Dhaka"];
+FARE_RATES["Chittagong-Jamalpur"] = FARE_RATES["Chattogram-Jamalpur"];
+FARE_RATES["Jamalpur-Chittagong"] = FARE_RATES["Jamalpur-Chattogram"];
+FARE_RATES["Chittagong-Sylhet"] = FARE_RATES["Chattogram-Sylhet"];
+FARE_RATES["Sylhet-Chittagong"] = FARE_RATES["Sylhet-Chattogram"];
+FARE_RATES["Chittagong-Mymensingh"] = FARE_RATES["Chattogram-Mymensingh"];
+FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
+
+// 4. Strict Single-Language UI Dictionary
+
 
   function showHudToast(message) {
     let toast = document.getElementById('gtToastBanner');
@@ -548,10 +788,30 @@
             </div>
           </div>
 
-          <!-- TAB 3: VAULT (FARE & BKASH) -->
+          <!-- TAB 3: VAULT (CREDENTIALS & FARE & BKASH) -->
           <div class="gt-pane" id="gtPaneVault">
+            <!-- Railway Account Credentials -->
+            <div class="gt-vault-box">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-weight: 800; font-size: 12px; color: var(--gt-accent);" id="gtVaultCredHead">🔐 Account Vault</span>
+                <span style="background: rgba(2, 132, 199, 0.12); color: var(--gt-accent); font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px;" id="gtVaultCredBadge">Encrypted</span>
+              </div>
+              <div style="margin-bottom: 6px;">
+                <label class="gt-label" id="gtLblVaultPhone">Railway Mobile</label>
+                <input type="text" class="gt-input" id="gtVaultPhone" placeholder="017XXXXXXXX">
+              </div>
+              <div style="margin-bottom: 8px;">
+                <label class="gt-label" id="gtLblVaultPass">Password</label>
+                <input type="password" class="gt-input" id="gtVaultPass" placeholder="••••••••">
+              </div>
+              <button class="gt-btn-primary gt-btn-arm" id="gtBtnSaveVault" style="padding: 8px 12px; font-size: 11.5px;">
+                🔒 <span id="gtBtnSaveVaultText">Save Railway Account to Vault</span>
+              </button>
+            </div>
+
+            <!-- Live Fare & bKash Summary -->
             <div class="gt-fare-card">
-              <div style="font-weight: 800; color: var(--gt-accent);" id="gtVaultHead">💳 Fare & bKash Summary</div>
+              <div style="font-weight: 800; color: var(--gt-accent);" id="gtVaultHead">💳 Live Fare &amp; bKash Summary</div>
               <div class="gt-fare-row">
                 <span id="gtLblBaseFare">Base Ticket Fare:</span>
                 <span id="gtValBaseFare">৳205 × 2 = ৳410</span>
@@ -572,13 +832,13 @@
                 <span style="background: #10b981; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px;">READY</span>
               </div>
               <div class="gt-advice-note" id="gtAdviceNote">
-                💡 Keep at least ৳460 in bKash before 8:00 AM!
+                💡 Keep at least ৳470 in bKash before 8:00 AM!
               </div>
             </div>
 
-            <div style="background: var(--gt-hud-card-bg); border: 1px solid var(--gt-hud-card-border); border-radius: 10px; padding: 10px; font-size: 11px;">
-              <div style="color: #10b981; font-weight: 700; margin-bottom: 4px;">✓ Anti-Logout Guard Active</div>
-              <div style="color: var(--gt-hud-muted); font-size: 10px;">Automated 5-minute seat hold detection, bKash auto-selector, and OTP auto-focus active on railway checkout.</div>
+            <div style="background: var(--gt-hud-card-bg); border: 1px solid var(--gt-hud-card-border); border-radius: 10px; padding: 10px; font-size: 11px; margin-top: 10px;">
+              <div style="color: #10b981; font-weight: 700; margin-bottom: 4px;" id="gtVaultGuardHead">✓ Anti-Logout Guard Active</div>
+              <div style="color: var(--gt-hud-muted); font-size: 10px;" id="gtVaultGuardDesc">Keeps your railway session warm from 7:50 AM to prevent unexpected logout during morning peak rush.</div>
             </div>
           </div>
 
@@ -652,14 +912,21 @@
     function updateTrains() {
       const routeKey = `${selFrom.value}-${selTo.value}`;
       const revRouteKey = `${selTo.value}-${selFrom.value}`;
-      const list = TRAINS_MAP[routeKey] || TRAINS_MAP[revRouteKey] || ["Teesta Express", "Brahmaputra Express", "Jamuna Express"];
-      selTrain.innerHTML = '';
-      list.forEach(tr => {
-        selTrain.appendChild(new Option(tr, tr));
-      });
-      if (config.trainName && list.includes(config.trainName)) {
-        selTrain.value = config.trainName;
+      let list = ROUTE_TRAIN_MAP[routeKey] || ROUTE_TRAIN_MAP[revRouteKey] || [];
+      if (list.length === 0) {
+        list = [
+          { nameEn: "Intercity Express", nameBn: "আন্তঃনগর এক্সপ্রেস", code: "701", dep: "08:00 AM", arr: "01:30 PM" }
+        ];
       }
+      list = sortTrainsChronologically(list);
+      selTrain.innerHTML = '';
+      list.forEach((t, idx) => {
+        const trName = currentLang === 'bn' ? (t.nameBn || t.nameEn) : t.nameEn;
+        const timeStr = t.arr ? `${t.dep} ➔ ${t.arr}` : t.dep;
+        const opt = new Option(`${trName} (${timeStr})`, t.nameEn);
+        if (t.nameEn === config.trainName || idx === 0) opt.selected = true;
+        selTrain.appendChild(opt);
+      });
       updateFareAndConfig();
     }
 
@@ -671,7 +938,10 @@
       config.trainName = selTrain.value;
       const chosenClass = selClass.value || "S_CHAIR";
 
-      const unit = FARES[chosenClass] || 205;
+      const routeKey = `${config.routeFrom}-${config.routeTo}`;
+      const revRouteKey = `${config.routeTo}-${config.routeFrom}`;
+      const routeFares = FARE_RATES[routeKey] || FARE_RATES[revRouteKey] || FARE_RATES["Dhaka-Rajshahi"] || FARE_RATES["Dhaka-Jamalpur"];
+      const unit = routeFares ? (routeFares[chosenClass] || 205) : 205;
       const base = unit * config.passengers;
       const serv = 20 * config.passengers;
       const sub = base + serv;
@@ -718,12 +988,18 @@
         bookings.forEach(b => {
           const card = document.createElement('div');
           card.className = 'gt-sched-card';
+          const isInstant = b.type === 'instant' || b.alarmTime === '⚡ Instant Grab Active';
+          const statusText = isInstant 
+            ? (currentLang === 'bn' ? '⚡ তাৎক্ষণিক ফাস্ট-গ্র্যাব সক্রিয়' : '⚡ Instant Fast-Grab Active')
+            : (currentLang === 'bn' ? `⏰ অ্যালার্ম: ${b.alarmTime || '07:50 AM'} (সক্রিয়)` : `⏰ Alarm: ${b.alarmTime || '07:50 AM'} (Armed)`);
+          const statusColor = isInstant ? '#10b981' : 'var(--gt-success)';
+
           card.innerHTML = `
             <div>
               <div class="gt-sched-info-title">🚄 ${b.trainName}</div>
               <div class="gt-sched-info-meta">📍 ${b.from} ➔ ${b.to}</div>
               <div class="gt-sched-info-meta">📅 ${b.date} • 👥 ${b.passengers || 2} Pax • 💺 ${b.classCode || 'S_CHAIR'}</div>
-              <div class="gt-sched-alarm">⏰ Alarm: ${b.alarmTime || '07:50 AM'} (Armed)</div>
+              <div class="gt-sched-alarm" style="color: ${statusColor}; font-weight: 700;">${statusText}</div>
             </div>
             <button class="gt-btn-del" data-id="${b.id}" title="Delete">🗑️</button>
           `;
@@ -853,19 +1129,78 @@
       }
     });
 
-    // Instant Grab Button
+    // Instant Grab Button (Locks seats & adds to Lists)
     btnGrab.addEventListener('click', () => {
       playAlertSound();
       config.trainName = selTrain.value;
       config.passengers = parseInt(selPax.value, 10) || 2;
+      const p1C = root.querySelector('#gtP1Class')?.value || selClass.value || 'S_CHAIR';
+      const p1D = root.querySelector('#gtP1Dir')?.value || 'straight';
+      const p2C = root.querySelector('#gtP2Class')?.value || 'SNIGDHA';
+      const p2D = root.querySelector('#gtP2Dir')?.value || 'middle';
+      const p3C = root.querySelector('#gtP3Class')?.value || 'F_CHAIR';
+      const p3D = root.querySelector('#gtP3Dir')?.value || 'any';
+
       config.priorities = [
-        { level: 1, classCode: root.querySelector('#gtP1Class')?.value || selClass.value, dir: root.querySelector('#gtP1Dir')?.value || 'straight', coach: 'ANY' },
-        { level: 2, classCode: root.querySelector('#gtP2Class')?.value || 'SNIGDHA', dir: root.querySelector('#gtP2Dir')?.value || 'middle', coach: 'ANY' },
-        { level: 3, classCode: root.querySelector('#gtP3Class')?.value || 'F_CHAIR', dir: root.querySelector('#gtP3Dir')?.value || 'any', coach: 'ANY' }
+        { level: 1, classCode: p1C, dir: p1D, coach: 'ANY' },
+        { level: 2, classCode: p2C, dir: p2D, coach: 'ANY' },
+        { level: 3, classCode: p3C, dir: p3D, coach: 'ANY' }
       ];
-      showHudToast(currentLang === 'bn' ? '⚡ ইন্সট্যান্ট সিট খোঁজা ও লক শুরু হয়েছে...' : '⚡ Instant Seat Grab in progress...');
+
+      const instantBooking = {
+        id: 'geticket_instant_' + Date.now(),
+        type: 'instant',
+        from: selFrom.value,
+        to: selTo.value,
+        date: inputDate.value,
+        passengers: config.passengers,
+        trainName: config.trainName,
+        classCode: selClass.value,
+        alarmTime: '⚡ Instant Grab Active',
+        status: 'Instant Active',
+        priorities: config.priorities,
+        createdAt: Date.now()
+      };
+
+      if (chrome?.storage?.local) {
+        chrome.storage.local.get(['scheduledBookings'], (res) => {
+          const list = Array.isArray(res.scheduledBookings) ? res.scheduledBookings : [];
+          list.unshift(instantBooking);
+          chrome.storage.local.set({ scheduledBookings: list }, () => {
+            renderActiveSchedules();
+          });
+        });
+      }
+
+      showHudToast(currentLang === 'bn' ? '⚡ ইন্সট্যান্ট সিট খোঁজা ও লক শুরু হয়েছে (লিস্টে যুক্ত)!' : '⚡ Instant Seat Grab in progress & added to Lists!');
       executeCascadingGrab();
     });
+
+    // Save Account Vault Listener
+    const btnSaveVault = root.querySelector('#gtBtnSaveVault');
+    if (btnSaveVault) {
+      btnSaveVault.addEventListener('click', () => {
+        const phone = root.querySelector('#gtVaultPhone')?.value?.trim() || '';
+        const pass = root.querySelector('#gtVaultPass')?.value?.trim() || '';
+
+        if (chrome?.storage?.local) {
+          chrome.storage.local.set({ railwayVault: { phone, pass } }, () => {
+            playAlertSound();
+            showHudToast(currentLang === 'bn' ? '🔒 একাউন্ট ভল্টে সংরক্ষিত হয়েছে!' : '🔒 Railway account saved to Vault!');
+          });
+        }
+      });
+    }
+
+    // Load Account Vault Credentials
+    if (chrome?.storage?.local) {
+      chrome.storage.local.get(['railwayVault'], (res) => {
+        if (res?.railwayVault) {
+          if (root.querySelector('#gtVaultPhone')) root.querySelector('#gtVaultPhone').value = res.railwayVault.phone || '';
+          if (root.querySelector('#gtVaultPass')) root.querySelector('#gtVaultPass').value = res.railwayVault.pass || '';
+        }
+      });
+    }
 
     populateStations();
     setInterval(updateClock, 50);

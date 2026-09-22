@@ -538,7 +538,18 @@
   font-size: 11.5px;
 }
 
-/* Vault (Fare & bKash) */
+/* Vault (Credentials & Fare & bKash) */
+.gt-vault-box {
+  background: var(--gt-hud-card-bg);
+  border: 1px solid var(--gt-hud-card-border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .gt-fare-card {
   background: var(--gt-hud-card-bg);
   border: 1px solid var(--gt-hud-card-border);
