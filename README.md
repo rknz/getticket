@@ -181,7 +181,7 @@
 ## 📦 ৭. গিটহাব রিপোজিটরি ও জিপ ডাউনলোড নির্দেশিকা
 
 ### সরাসরি জিপ ডাউনলোড:
-আপনি এই রিপোজিটরির রুট ডিরেক্টরিতে থাকা **`Geticket-v1.0.0.zip`** ফাইলটি সরাসরি ডাউনলোড করে ব্যবহার করতে পারবেন।
+আপনি এই রিপোজিটরির রুট ডিরেক্টরিতে থাকা **`Geticket-v2.6.zip`** ফাইলটি সরাসরি ডাউনলোড করে ব্যবহার করতে পারবেন।
 
 ### গিট ক্লোন (Git Clone):
 ```bash
@@ -192,10 +192,10 @@ cd getticket
 ### প্রজেক্ট ফাইল স্ট্রাকচার:
 ```text
 Geticket/
-├── manifest.json              # Chrome Manifest V3 configuration
+├── manifest.json              # Chrome Manifest V3 configuration (v2.6.0)
 ├── README.md                  # Complete documentation & user guide
 ├── ui_preview.html            # Standalone interactive dashboard & simulator
-├── Geticket-v1.0.0.zip        # Production ready-to-install extension archive
+├── Geticket-v2.6.zip          # Production ready-to-install extension archive
 ├── background/
 │   └── background.js          # Service worker (alarms, live Shohoz API, notifications)
 ├── content/
