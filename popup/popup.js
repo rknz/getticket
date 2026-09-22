@@ -229,7 +229,8 @@ const ROUTE_TRAIN_MAP = {
   "Dhaka-Rajshahi": [
     { nameEn: "Dhumketu Express", nameBn: "ধূমকেতু এক্সপ্রেস", code: "769", dep: "06:00 AM", arr: "11:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
     { nameEn: "Bonolota Express", nameBn: "বনলতা এক্সপ্রেস", code: "791", dep: "01:30 PM", arr: "06:00 PM", durationEn: "4h 30m", durationBn: "৪ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
-    { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "753", dep: "02:45 PM", arr: "08:35 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "753", dep: "02:30 PM", arr: "08:20 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Madhumati Express", nameBn: "মধুমতি এক্সপ্রেস", code: "755", dep: "03:00 PM", arr: "10:30 PM", durationEn: "7h 30m", durationBn: "৭ ঘণ্টা ৩০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
     { nameEn: "Padma Express", nameBn: "পদ্মা এক্সপ্রেস", code: "759", dep: "11:00 PM", arr: "04:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
   ],
   "Rajshahi-Dhaka": [
@@ -411,7 +412,13 @@ const UI_TEXT = {
     dbActive: "Master Railway Database Active",
     searchingLive: "Querying Live Railway API...",
     noDirectTrain: "No direct trains operate between these two stations.",
-    soldOut: "Sold Out (0 Seats Available)"
+    soldOut: "Sold Out (0 Seats Available)",
+    liveAvail: "avail.",
+    liveSold: "Sold Out",
+    liveBookBtn: "Book Now",
+    liveChkFailed: "Live check failed",
+    lblLiveEmpty: "No live data. Try again.",
+    scanningLive: "Scanning live availability..."
   },
   bn: {
     hdrTitle: "জি-টিকিট প্রো",
@@ -464,7 +471,13 @@ const UI_TEXT = {
     dbActive: "রেলওয়ে মাস্টার ডাটাবেজ সক্রিয়",
     searchingLive: "রেলওয়ে লাইভ সার্ভার খোঁজা হচ্ছে...",
     noDirectTrain: "এই রুটে কোনো সরাসরি ট্রেন চলাচল করে না।",
-    soldOut: "বুকিং শেষ (০ টি সিট খালি)"
+    soldOut: "বুকিং শেষ (০ টি সিট খালি)",
+    liveAvail: "খালি",
+    liveSold: "বুকড",
+    liveBookBtn: "এখনই বুক করুন",
+    liveChkFailed: "লাইভ চেক ব্যর্থ",
+    lblLiveEmpty: "লাইভ তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।",
+    scanningLive: "লাইভ সিট স্ক্যান হচ্ছে..."
   }
 };
 
@@ -1139,6 +1152,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const lblVaultGuardDesc = document.getElementById('lblVaultGuardDesc');
     if (lblVaultGuardDesc) lblVaultGuardDesc.innerText = t.lblVaultGuardDesc;
 
+    // Live Availability Scanner
+    const btnScanText = document.getElementById('btnScanText');
+    if (btnScanText) btnScanText.innerText = currentLang === 'bn' ? 'লাইভ সিট স্ক্যান' : 'Scan Live Availability';
+    const lblLiveResultsTitle = document.getElementById('lblLiveResultsTitle');
+    if (lblLiveResultsTitle) lblLiveResultsTitle.innerText = currentLang === 'bn' ? '🚄 লাইভ সিট তথ্য' : '🚄 Live Availability';
+    const lblLiveEmpty = document.getElementById('lblLiveEmpty');
+    if (lblLiveEmpty) lblLiveEmpty.innerText = currentLang === 'bn' ? 'লাইভ তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।' : 'No live data. Try again.';
+
     populateDropdowns();
     onRouteChanged();
 
@@ -1355,11 +1376,172 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
 
-        const trainDisp = getTrainDisplayName(cfg.trainName, currentLang);
+const trainDisp = getTrainDisplayName(cfg.trainName, currentLang);
         showToast(currentLang === 'bn'
-          ? `⚡ (${trainDisp}) সিট তাৎক্ষণিক লক ও লাইভ ওয়াচডগ শুরু হয়েছে (লিস্টে যুক্ত)! `
+          ? `⚡ (${trainDisp}) সিট তাৎক্ষণিক লক ও লাইভ ওয়াচডগ শুরু হয়েছে (লিস্টে যুক্ত)! `
           : `⚡ (${trainDisp}) Instant Grab & Live Watchdog active (added to Lists)!`);
       });
+    });
+  }
+
+  // LIVE AVAILABILITY SCANNER: Fetches live API trains and renders per-class
+  // seat availability with a Book Now action that reuses the Instant Grab flow.
+  async function handleScanLive() {
+    const btnScan = document.getElementById('btnScanLive');
+    const panel = document.getElementById('liveResultsPanel');
+    const listEl = document.getElementById('liveResultsList');
+    const emptyEl = document.getElementById('liveResultsEmpty');
+    const metaEl = document.getElementById('lblLiveResultsMeta');
+    if (!btnScan || !panel || !listEl) return;
+
+    btnScan.disabled = true;
+    btnScan.innerText = UI_TEXT[currentLang].scanningLive || 'Scanning...';
+    panel.style.display = 'flex';
+    listEl.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (metaEl) metaEl.innerText = '';
+
+    // Force a fresh server fetch for the current route/date, then render.
+    liveServerData = null;
+    await onRouteChanged(true);
+
+    btnScan.disabled = false;
+    const btnScanText = document.getElementById('btnScanText');
+    if (btnScanText) {
+      btnScanText.innerText = currentLang === 'bn' ? 'লাইভ সিট স্ক্যান' : 'Scan Live Availability';
+    }
+
+    const rawFrom = document.getElementById('routeFrom')?.value || 'Dhaka';
+    const rawTo = document.getElementById('routeTo')?.value || 'Rajshahi';
+    const dateVal = document.getElementById('journeyDate')?.value || new Date().toISOString().split('T')[0];
+    const from = resolveStationValue(rawFrom);
+    const to = resolveStationValue(rawTo);
+
+    if (!liveServerData || !Array.isArray(liveServerData.trains) || liveServerData.trains.length === 0) {
+      if (metaEl) metaEl.innerText = UI_TEXT[currentLang].liveChkFailed || 'Live check failed';
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+
+    const trains = liveServerData.trains;
+    const routeKey = `${from}-${to}`;
+    const revKey = `${to}-${from}`;
+    if (metaEl) {
+      metaEl.innerText = currentLang === 'bn'
+        ? `${trains.length} টি ট্রেন • ${dateVal}`
+        : `${trains.length} trains • ${dateVal}`;
+    }
+
+    const CLASS_LABELS = {};
+    (CLASSES_OPTS[currentLang] || CLASSES_OPTS.en).forEach(c => { CLASS_LABELS[c.value] = c.text; });
+
+    trains.forEach(train => {
+      const trainName = currentLang === 'bn'
+        ? (train.train_name_bn || train.train_name || train.name)
+        : (train.train_name || train.name);
+      const trainCode = train.train_model || train.train_id || '';
+      const dep = train.departure_time || '';
+      const arr = train.arrival_time || '';
+      const trainKey = train.train_name || train.name || '';
+
+      const card = document.createElement('div');
+      card.className = 'live-train-card';
+
+      const header = document.createElement('div');
+      header.className = 'live-train-name';
+      header.innerHTML = `<span>🚄 ${trainName || 'Train'}${trainCode ? ` (${trainCode})` : ''}</span>`;
+
+      const timeRow = document.createElement('div');
+      timeRow.className = 'live-train-time';
+      if (dep && arr) timeRow.textContent = `🕐 ${dep} ➔ ${arr}`;
+      else if (dep) timeRow.textContent = `🕐 Departs ${dep}`;
+
+      const chipsWrap = document.createElement('div');
+      chipsWrap.className = 'live-seat-chips';
+
+      const seatTypes = train.seat_types || [];
+      if (seatTypes.length === 0) {
+        const routeFares = FARE_RATES[routeKey] || FARE_RATES[revKey] || {};
+        Object.entries(routeFares).forEach(([code, fare]) => {
+          const chip = document.createElement('div');
+          chip.className = 'live-seat-chip';
+          chip.innerHTML = `
+            <div class="live-seat-chip-name">${CLASS_LABELS[code] || code}</div>
+            <div class="live-seat-chip-fare">৳${fare}</div>
+            <div class="live-seat-chip-count unknown">--</div>
+          `;
+          chipsWrap.appendChild(chip);
+        });
+      } else {
+        seatTypes.forEach(st => {
+          const code = st.type || st.class || st.seat_class || '';
+          const fare = st.fare || st.price || '';
+          const totalSeats = parseInt(st.total_seat, 10) || parseInt(st.count, 10);
+          const assignedSeats = parseInt(st.assigned_seat, 10) || parseInt(st.booked, 10);
+          const remainingFromField = parseInt(st.remaining_seat, 10) || parseInt(st.remaining, 10) || parseInt(st.available_seat, 10);
+
+          let countText = '';
+          let countClass = 'unknown';
+          if (!isNaN(remainingFromField) && remainingFromField >= 0) {
+            countText = `${remainingFromField} ${UI_TEXT[currentLang].liveAvail}`;
+            countClass = remainingFromField > 0 ? 'available' : 'sold';
+          } else if (!isNaN(totalSeats) && !isNaN(assignedSeats)) {
+            const rem = Math.max(0, totalSeats - assignedSeats);
+            countText = `${rem} ${UI_TEXT[currentLang].liveAvail}`;
+            countClass = rem > 0 ? 'available' : 'sold';
+          } else {
+            const isAvail = st.is_available;
+            const isDis = st.disable;
+            if (isDis === true || isAvail === false || isAvail === 'N' || isAvail === 0 || isAvail === 'false') {
+              countText = UI_TEXT[currentLang].liveSold;
+              countClass = 'sold';
+            } else {
+              countText = UI_TEXT[currentLang].liveAvail;
+              countClass = 'available';
+            }
+          }
+
+          const chip = document.createElement('div');
+          chip.className = 'live-seat-chip';
+          chip.title = (CLASS_LABELS[code] || code) + ' - ' + countText;
+          chip.innerHTML = `
+            <div class="live-seat-chip-name">${CLASS_LABELS[code] || code || '--'}</div>
+            <div class="live-seat-chip-fare">${fare ? `৳${fare}` : '--'}</div>
+            <div class="live-seat-chip-count ${countClass}">${countText}</div>
+          `;
+
+          // Clicking a class chip selects it as the preferred grab class.
+          chip.addEventListener('click', () => {
+            const prefClass = document.getElementById('prefClass');
+            if (prefClass && code) {
+              prefClass.value = code;
+              prefClass.dispatchEvent(new Event('change'));
+            }
+            chipsWrap.querySelectorAll('.live-seat-chip').forEach(c => c.classList.remove('live-seat-chip-selected'));
+            chip.classList.add('live-seat-chip-selected');
+          });
+
+          chipsWrap.appendChild(chip);
+        });
+      }
+
+      // Book Now: reuse the Instant Grab pipeline on the selected train/class.
+      const bookBtn = document.createElement('button');
+      bookBtn.className = 'live-train-book';
+      bookBtn.textContent = UI_TEXT[currentLang].liveBookBtn || 'Book Now';
+      bookBtn.addEventListener('click', () => {
+        const trainNameSel = document.getElementById('trainName');
+        if (trainNameSel && trainKey) {
+          trainNameSel.value = trainKey;
+        }
+        handleInstantGrab();
+      });
+
+      card.appendChild(header);
+      if (timeRow.textContent) card.appendChild(timeRow);
+      card.appendChild(chipsWrap);
+      card.appendChild(bookBtn);
+      listEl.appendChild(card);
     });
   }
 
@@ -1369,6 +1551,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const btnGrab = document.getElementById('btnGrabNow');
   if (btnGrab) btnGrab.addEventListener('click', handleInstantGrab);
+
+  const btnScan = document.getElementById('btnScanLive');
+  if (btnScan) btnScan.addEventListener('click', handleScanLive);
 
   // Form Inputs Listeners
   document.getElementById('routeFrom')?.addEventListener('change', () => onRouteChanged());

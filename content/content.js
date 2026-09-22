@@ -1,3 +1,44 @@
+
+  // Live DOM Scraper for Bangladesh Railway Search Results
+  function scrapeLiveRailwayPage() {
+    const isSearchPage = window.location.pathname.includes('/booking/train/search') ||
+                         window.location.search.includes('fromcity=') ||
+                         document.querySelector('.all-trip-boxes, app-single-trip, .single-trip');
+    if (!isSearchPage) return null;
+
+    const trips = [];
+    const tripElements = Array.from(document.querySelectorAll('app-single-trip, .single-trip, .trip-item, .train-item, [class*="trip-wrapper"], [class*="train-card"], .trip-row'));
+    
+    tripElements.forEach(el => {
+      const txt = el.innerText;
+      const nameMatch = txt.match(/([A-Z\s]+(?:EXPRESS|COMMUTER|MAIL|INTERCITY)[^\n\(]*)/i);
+      const codeMatch = txt.match(/\((\d{3})\)/);
+      const timeMatches = txt.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))/gi);
+
+      const trainName = nameMatch ? nameMatch[1].trim() : (el.querySelector('h1, h2, h3, h4, strong')?.innerText?.trim() || '');
+      const code = codeMatch ? codeMatch[1] : '';
+      const dep = timeMatches?.[0] || '08:00 AM';
+      const arr = timeMatches?.[1] || '';
+
+      if (trainName) {
+        trips.push({
+          nameEn: trainName,
+          nameBn: trainName,
+          code,
+          dep,
+          arr,
+          durationEn: '6h 00m',
+          durationBn: '৬ ঘণ্টা'
+        });
+      }
+    });
+
+    if (trips.length > 0 && chrome?.storage?.local) {
+      chrome.storage.local.set({ liveScrapedTrains: trips });
+    }
+    return trips;
+  }
+
 /**
  * GeTicket Pro - Merged Content Engine
  * Strict Single-Language Purity, Light/Dark HUD, Cascading Priority Solver & Watchdog
@@ -169,10 +210,104 @@
     return pool.slice(0, count).map(s => s.el);
   }
 
+    // Precision Live Button & Seat Finder for Railway Search Page
+  function findAvailableTrainClassButton(targetTrain, targetClass, paxCount) {
+    // 1. Gather all potential train cards or containers on the page
+    let trainCards = Array.from(document.querySelectorAll('app-single-trip, .single-trip, .trip-item, .train-item, [class*="trip-wrapper"], [class*="train-card"], [class*="trip-box"], [class*="single-trip"], .all-trip-boxes > div, .trip-row'));
+    
+    // If no standard containers found, find all headings containing train names and get their common parent container
+    if (trainCards.length === 0) {
+      const allHeadings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, div, span, b, strong')).filter(el => {
+        const txt = el.innerText.trim().toUpperCase();
+        return (txt.includes('EXPRESS') || txt.includes('COMMUTER') || txt.includes('INTERCITY') || txt.includes('MAIL') || /\(\d{3}\)/.test(txt)) && el.children.length === 0;
+      });
+      trainCards = allHeadings.map(h => h.closest('.trip-row') || h.closest('.all-trip-boxes') || h.closest('section') || h.parentElement?.parentElement || h.parentElement).filter(Boolean);
+    }
+
+    trainCards = Array.from(new Set(trainCards));
+    if (trainCards.length === 0) trainCards = [document.body];
+
+    for (const card of trainCards) {
+      const cardText = card.innerText.toUpperCase();
+      
+      // If targetTrain is specified and NOT ANY_TRAIN, ensure this card matches the train name
+      if (targetTrain && targetTrain !== 'ANY_TRAIN') {
+        const cleanTrain = targetTrain.toUpperCase().replace(/\s*\(.*?\)\s*/g, '').trim();
+        if (!cardText.includes(cleanTrain)) continue;
+      }
+
+      // Find all class boxes inside this train card
+      const classBoxes = Array.from(card.querySelectorAll('[class*="seat-class"], [class*="class-item"], [class*="seat-item"], [class*="class-box"], [class*="trip-seat"], div, li')).filter(box => {
+        const txt = box.innerText.toUpperCase();
+        const hasClassCode = txt.includes('S_CHAIR') || txt.includes('SNIGDHA') || txt.includes('AC_S') || txt.includes('F_CHAIR') || txt.includes('SHOVON') || txt.includes('AC_B');
+        const hasPriceOrBook = txt.includes('৳') || txt.includes('TK') || txt.includes('BOOK') || txt.includes('AVAILABLE') || txt.includes('খালি');
+        return hasClassCode && hasPriceOrBook && box.children.length >= 1;
+      });
+
+      for (const box of classBoxes) {
+        const boxText = box.innerText.toUpperCase();
+
+        // Check if targetClass matches
+        const isClassMatch = (targetClass === 'ANY') ||
+                             boxText.includes(targetClass) ||
+                             (targetClass === 'S_CHAIR' && (boxText.includes('SHOVON') || boxText.includes('শোভন'))) ||
+                             (targetClass === 'SNIGDHA' && (boxText.includes('SNIGDHA') || boxText.includes('স্নিগ্ধা'))) ||
+                             (targetClass === 'F_CHAIR' && (boxText.includes('FIRST') || boxText.includes('১ম')));
+        if (!isClassMatch) continue;
+
+        // Check seat availability:
+        const countMatch = boxText.match(/AVAILABLE\s*TICKETS[^\d]*(\d+)/i) || 
+                           boxText.match(/(\d+)\s*(SEATS?|TICKETS?|টি)/i) ||
+                           boxText.match(/\b([1-9]\d*)\b/);
+        const availCount = countMatch ? parseInt(countMatch[1], 10) : null;
+
+        // Find the Book Now button inside this box
+        const bookBtn = box.querySelector('button, a, [role="button"], .btn, [class*="book"]');
+        const isBtnActive = bookBtn && !bookBtn.disabled && !bookBtn.classList.contains('disabled') && !bookBtn.classList.contains('btn-disabled');
+
+        const isSoldOut = boxText.includes('0 SEAT') || boxText.includes('০ টি') || boxText.includes('0 AVAILABLE') || (availCount === 0);
+
+        if (isBtnActive && !isSoldOut) {
+          return {
+            card,
+            box,
+            bookBtn,
+            trainName: card.querySelector('h1, h2, h3, h4, [class*="train-name"], strong, b')?.innerText?.trim() || targetTrain,
+            classCode: targetClass
+          };
+        }
+      }
+
+      // Direct fallback: check any active BOOK NOW button inside this card
+      const allBookBtns = Array.from(card.querySelectorAll('button, a.btn, [role="button"]')).filter(b => {
+        const t = b.innerText.trim().toUpperCase();
+        return (t.includes('BOOK NOW') || t.includes('বুক') || t.includes('BOOK')) && !b.disabled && !b.classList.contains('disabled');
+      });
+
+      for (const btn of allBookBtns) {
+        const parentBox = btn.closest('[class*="seat"], [class*="class"], div') || btn.parentElement;
+        const pText = parentBox ? parentBox.innerText.toUpperCase() : '';
+        if (targetClass === 'ANY' || pText.includes(targetClass) || (targetClass === 'S_CHAIR' && pText.includes('SHOVON'))) {
+          return {
+            card,
+            box: parentBox,
+            bookBtn: btn,
+            trainName: card.querySelector('h1, h2, h3, h4, [class*="train-name"], strong, b')?.innerText?.trim() || targetTrain,
+            classCode: targetClass
+          };
+        }
+      }
+    }
+
+    return null;
+  }
+
   let isExecutingGrab = false;
+  let isEngineRunning = true;
 
   function executeCascadingGrab() {
     if (isExecutingGrab) return;
+    if (!isEngineRunning) return;
     isExecutingGrab = true;
 
     const priorities = config.priorities || [];
@@ -182,7 +317,7 @@
     const fromInput = document.querySelector('input[name="from_station"], #from_station, input[placeholder*="From" i]');
     const toInput = document.querySelector('input[name="to_station"], #to_station, input[placeholder*="To" i]');
     const searchBtn = document.querySelector('button[type="submit"], button.search-btn, button.btn-search, [class*="search-btn"]');
-    const hasSearchResults = document.querySelectorAll('.single-trip, .trip-item, .train-item, [class*="trip-wrapper"], [class*="train-card"]').length > 0;
+    const hasSearchResults = document.querySelectorAll('.single-trip, .trip-item, .train-item, [class*="trip-wrapper"], [class*="train-card"], app-single-trip').length > 0;
     
     if (!hasSearchResults && fromInput && toInput && searchBtn) {
       setHudStatus(currentLang === 'bn' ? '🔍 রেলওয়ে পোর্টালে সার্চ শুরু করা হচ্ছে...' : '🔍 Initiating train search on Railway Portal...', '#0284c7');
@@ -223,57 +358,11 @@
       const targetClass = (rule.classCode || 'S_CHAIR').toUpperCase();
       setHudStatus(currentLang === 'bn' ? `প্রায়োরিটি ${rule.level} (${targetClass === 'ANY' ? 'যেকোনো শ্রেণি' : targetClass}) চেক করা হচ্ছে...` : `Checking Priority ${rule.level} (${targetClass})...`, '#0284c7');
 
-      // 1. Get all train trip cards on Railway search page
-      const tripCards = Array.from(document.querySelectorAll('.single-trip, .trip-item, .train-item, [class*="trip-wrapper"], [class*="train-card"]'));
-      let targetClassEl = null;
+      const match = findAvailableTrainClassButton(config.trainName, targetClass, config.passengers);
 
-      if (tripCards.length > 0) {
-        for (const card of tripCards) {
-          const cardText = card.innerText.toUpperCase();
-          // Filter by specific train name if not ANY_TRAIN
-          if (config.trainName && config.trainName !== 'ANY_TRAIN') {
-            const cleanTrainName = config.trainName.toUpperCase();
-            if (!cardText.includes(cleanTrainName)) continue;
-          }
-
-          const classButtons = card.querySelectorAll('.class-btn, .trip-btn, [class*="trip-seat"], [class*="class-name"], button');
-          for (const btn of classButtons) {
-            const txt = btn.innerText.toUpperCase();
-            const isAvailable = !txt.includes('0 SEAT') && !txt.includes('০ টি') && !txt.includes('BOOKED') && !txt.includes('বুকড') && !btn.classList.contains('disabled');
-            if (!isAvailable) continue;
-
-            if (targetClass === 'ANY' ||
-                txt.includes(targetClass) || 
-                (targetClass === 'S_CHAIR' && (txt.includes('SHOVON') || txt.includes('শোভন'))) ||
-                (targetClass === 'SNIGDHA' && (txt.includes('SNIGDHA') || txt.includes('স্নিগ্ধা'))) ||
-                (targetClass === 'F_CHAIR' && (txt.includes('FIRST') || txt.includes('১ম')))) {
-              targetClassEl = btn;
-              break;
-            }
-          }
-          if (targetClassEl) break;
-        }
-      } else {
-        // Fallback: search across all buttons on page
-        const classButtons = document.querySelectorAll('.class-btn, .trip-btn, [class*="trip-seat"], [class*="class-name"], button');
-        for (const btn of classButtons) {
-          const txt = btn.innerText.toUpperCase();
-          const isAvailable = !txt.includes('0 SEAT') && !txt.includes('০ টি') && !txt.includes('BOOKED') && !txt.includes('বুকড') && !btn.classList.contains('disabled');
-          if (!isAvailable) continue;
-
-          if (targetClass === 'ANY' ||
-              txt.includes(targetClass) || 
-              (targetClass === 'S_CHAIR' && (txt.includes('SHOVON') || txt.includes('শোভন'))) ||
-              (targetClass === 'SNIGDHA' && (txt.includes('SNIGDHA') || txt.includes('স্নিগ্ধা'))) ||
-              (targetClass === 'F_CHAIR' && (txt.includes('FIRST') || txt.includes('১ম')))) {
-            targetClassEl = btn;
-            break;
-          }
-        }
-      }
-
-      if (targetClassEl) {
-        safeHumanClick(targetClassEl, () => {
+      if (match && match.bookBtn) {
+        setHudStatus(currentLang === 'bn' ? `⚡ সিট পাওয়া গেছে (${match.trainName})! বুকিং হচ্ছে...` : `⚡ Seats found (${match.trainName})! Booking now...`, '#10b981');
+        safeHumanClick(match.bookBtn, () => {
           setTimeout(() => {
             const seatElements = document.querySelectorAll('.seat-btn, .seat, [class*="seat-item"], button[aria-label*="Seat"]');
             const targetSeats = findBestContiguousSeats(seatElements, config.passengers, rule.dir);
@@ -284,7 +373,7 @@
               currentRuleIdx++;
               setTimeout(tryNextRule, 80);
             }
-          }, 150);
+          }, 250);
         });
       } else {
         currentRuleIdx++;
@@ -574,7 +663,8 @@ const ROUTE_TRAIN_MAP = {
   "Dhaka-Rajshahi": [
     { nameEn: "Dhumketu Express", nameBn: "ধূমকেতু এক্সপ্রেস", code: "769", dep: "06:00 AM", arr: "11:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
     { nameEn: "Bonolota Express", nameBn: "বনলতা এক্সপ্রেস", code: "791", dep: "01:30 PM", arr: "06:00 PM", durationEn: "4h 30m", durationBn: "৪ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
-    { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "753", dep: "02:45 PM", arr: "08:35 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "753", dep: "02:30 PM", arr: "08:20 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Madhumati Express", nameBn: "মধুমতি এক্সপ্রেস", code: "755", dep: "03:00 PM", arr: "10:30 PM", durationEn: "7h 30m", durationBn: "৭ ঘণ্টা ৩০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
     { nameEn: "Padma Express", nameBn: "পদ্মা এক্সপ্রেস", code: "759", dep: "11:00 PM", arr: "04:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
   ],
   "Rajshahi-Dhaka": [
@@ -706,12 +796,11 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
 // 4. Strict Single-Language UI Dictionary
 
 
-  let lastToastMsg = '';
+    let lastToastMsg = '';
   let lastToastTime = 0;
   function showHudToast(message, duration = 4000) {
     if (!message) return;
     const now = Date.now();
-    // Ignore duplicate messages sent within 3 seconds
     if (message === lastToastMsg && (now - lastToastTime) < 3000) return;
     lastToastMsg = message;
     lastToastTime = now;
@@ -722,7 +811,21 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
       toast.id = 'gtToastBanner';
       document.body.appendChild(toast);
     }
-    toast.innerText = message;
+    toast.innerHTML = `
+      <span style="flex: 1;">${message}</span>
+      <button class="gt-toast-close" id="gtToastClose" title="Stop/Close">&times;</button>
+    `;
+    
+    toast.querySelector('#gtToastClose')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toast.classList.remove('show');
+      if (watchdogIntervalTimer) {
+        clearInterval(watchdogIntervalTimer);
+        watchdogIntervalTimer = null;
+      }
+      lastToastMsg = '';
+    });
+
     toast.classList.add('show');
     if (toast.__timeout) clearTimeout(toast.__timeout);
     toast.__timeout = setTimeout(() => {
@@ -793,6 +896,7 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
             <span class="gt-version-pill">v2.6</span>
           </div>
           <div class="gt-header-tools">
+            <button class="gt-ctrl-btn gt-power-btn active" id="gtPowerBtn" title="Engine Toggle">🟢 Active</button>
             <button class="gt-ctrl-btn" id="gtLangToggle">EN</button>
             <button class="gt-ctrl-btn" id="gtThemeToggle">☀️</button>
             <button class="gt-close-btn" id="gtCloseBtn">&times;</button>
@@ -1015,6 +1119,41 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
     const btnArm = root.querySelector('#gtBtnArmSchedule');
     const btnGrab = root.querySelector('#gtBtnGrabNow');
 
+    const powerBtn = root.querySelector('#gtPowerBtn');
+    if (powerBtn) {
+      powerBtn.addEventListener('click', () => {
+        isEngineRunning = !isEngineRunning;
+        if (isEngineRunning) {
+          powerBtn.classList.remove('paused');
+          powerBtn.classList.add('active');
+          powerBtn.innerText = currentLang === 'bn' ? '🟢 সক্রিয়' : '🟢 Active';
+          showHudToast(currentLang === 'bn' ? '⚡ ইঞ্জিন সক্রিয় করা হয়েছে' : '⚡ Automation Engine Active');
+          startWatchdog();
+        } else {
+          powerBtn.classList.remove('active');
+          powerBtn.classList.add('paused');
+          powerBtn.innerText = currentLang === 'bn' ? '🔴 বন্ধ' : '🔴 Paused';
+          if (watchdogIntervalTimer) {
+            clearInterval(watchdogIntervalTimer);
+            watchdogIntervalTimer = null;
+          }
+          if (watchdogTimer) {
+            clearInterval(watchdogTimer);
+            watchdogTimer = null;
+          }
+          const toast = document.getElementById('gtToastBanner');
+          if (toast) toast.classList.remove('show');
+          showHudToast(currentLang === 'bn' ? '⏸️ অটোমেশন ইঞ্জিন বন্ধ করা হয়েছে' : '⏸️ Automation Engine Paused');
+          const stealthNote = root.querySelector('#gtStealthNote');
+          if (stealthNote) {
+            stealthNote.innerHTML = currentLang === 'bn' 
+              ? '<span>⏸️ ইঞ্জিন বন্ধ রয়েছে • স্লিপ মোড</span>' 
+              : '<span>⏸️ Engine Paused • Sleep Mode</span>';
+          }
+        }
+      });
+    }
+
     // Populate Stations
     function populateStations() {
       selFrom.innerHTML = '';
@@ -1056,9 +1195,13 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
     }
 
     function updateTrains() {
+      const liveScraped = scrapeLiveRailwayPage();
       const routeKey = `${selFrom.value}-${selTo.value}`;
       const revRouteKey = `${selTo.value}-${selFrom.value}`;
-      let list = ROUTE_TRAIN_MAP[routeKey] || ROUTE_TRAIN_MAP[revRouteKey] || [];
+      let list = (liveScraped && liveScraped.length > 0)
+        ? liveScraped
+        : (ROUTE_TRAIN_MAP[routeKey] || ROUTE_TRAIN_MAP[revRouteKey] || []);
+
       if (list.length === 0) {
         list = [
           { nameEn: "Intercity Express", nameBn: "আন্তঃনগর এক্সপ্রেস", code: "701", dep: "08:00 AM", arr: "01:30 PM" }
@@ -1136,6 +1279,12 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
 
         if (bookings.length === 0) {
           if (empty) empty.style.display = 'block';
+          if (watchdogIntervalTimer) {
+            clearInterval(watchdogIntervalTimer);
+            watchdogIntervalTimer = null;
+          }
+          const toast = document.getElementById('gtToastBanner');
+          if (toast) toast.classList.remove('show');
           return;
         }
 

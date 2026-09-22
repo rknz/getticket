@@ -144,6 +144,27 @@ h1 {
   color: var(--primary);
 }
 
+.power-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+
+.power-btn.active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.power-btn.paused {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
 /* Clock Strip */
 .server-clock-bar {
   display: flex;
@@ -661,4 +682,239 @@ h1 {
 
 .mini-toast.show {
   transform: translateX(-50%) translateY(0);
+}
+
+/* === Responsive (Mobile & iPhone/Orion) ===
+   Desktop keeps the fixed 440px popup ratio. On narrow screens the fixed
+   min-width was clipping content horizontally on every phone; these rules
+   make the popup fluid to the real viewport while keeping internal scrolling. */
+@media (max-width: 430px) {
+  body {
+    width: 100%;
+    min-width: 0;
+    max-width: 100vw;
+    min-height: 100vh;
+    height: 100vh;
+    max-height: none;
+  }
+
+  .app-container {
+    padding: 8px 10px 6px;
+  }
+
+  .station-selector-row {
+    gap: 4px;
+  }
+
+  .btn-swap-stations {
+    height: 32px;
+    width: 32px;
+    font-size: 14px;
+  }
+
+  .compact-grid {
+    gap: 4px;
+  }
+
+  .rule-card {
+    gap: 3px;
+  }
+
+  .action-btn {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .app-nav {
+    gap: 3px;
+    padding: 2px;
+  }
+
+  .nav-tab {
+    font-size: 11px;
+    padding: 5px 3px;
+  }
+
+  .fare-data-row {
+    font-size: 11px;
+  }
+
+  .view-header {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 360px) {
+  .station-selector-row {
+    grid-template-columns: 1fr 30px 1fr;
+  }
+
+  .compact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rule-card .flex-1-2,
+  .rule-card .flex-1 {
+    font-size: 10px;
+    padding: 2px 4px;
+  }
+}
+
+/* === Live Availability Scanner & Results (Setup Page) === */
+.btn-scan {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.btn-scan:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.btn-scan:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.live-results-panel {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.live-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.live-results-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 12px 0;
+}
+
+.live-train-card {
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: border-color 0.15s;
+}
+
+.live-train-card:hover {
+  border-color: var(--primary);
+}
+
+.live-train-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.live-train-time {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.live-seat-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 3px;
+}
+
+.live-seat-chip {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px;
+  text-align: center;
+  font-size: 9px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.live-seat-chip:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1.5px var(--primary-light);
+}
+
+.live-seat-chip-selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1.5px var(--primary-light);
+  background: var(--primary-light);
+}
+
+.live-seat-chip-name {
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.live-seat-chip-fare {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.live-seat-chip-count {
+  font-weight: 800;
+  font-size: 10px;
+}
+
+.live-seat-chip-count.available {
+  color: #10b981;
+}
+
+.live-seat-chip-count.sold {
+  color: #ef4444;
+}
+
+.live-seat-chip-count.unknown {
+  color: var(--text-muted);
+}
+
+.live-train-book {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: opacity 0.15s;
+}
+
+.live-train-book:hover {
+  opacity: 0.9;
 }
