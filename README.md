@@ -47,17 +47,17 @@
 ## 🪟 ১. পিসি (Windows Chrome / Edge / Brave / Opera) গাইড
 
 ### ইনস্টলেশন পদ্ধতি:
-### 📥 সরাসরি ডাউনলোড (GitHub Releases):
-- 🪟 **পিসি ক্রোম:** [`geticket-chrome-windows-v1.0.0.zip`](https://github.com/rknz/getticket/releases/download/v1.0.0-chrome-pc/geticket-chrome-windows-v1.0.0.zip)
-- 🤖 **অ্যান্ড্রয়েড কিউই:** [`geticket-android-kiwi-v1.0.0.zip`](https://github.com/rknz/getticket/releases/download/v1.0.0-android-kiwi/geticket-android-kiwi-v1.0.0.zip)
-- 🍎 **আইফোন ওরিয়ন:** [`geticket-ios-apple-v1.0.0.zip`](https://github.com/rknz/getticket/releases/download/v1.0.0-ios-apple/geticket-ios-apple-v1.0.0.zip)
+### 📥 সরাসরি ডাউনলোড (GitHub Releases v2.6):
+- 🪟 **পিসি ক্রোম:** [`geticket-chrome-windows-v2.6.zip`](https://github.com/rknz/getticket/releases/download/v2.6-chrome-pc/geticket-chrome-windows-v2.6.zip)
+- 🤖 **অ্যান্ড্রয়েড কিউই:** [`geticket-android-kiwi-v2.6.zip`](https://github.com/rknz/getticket/releases/download/v2.6-android-kiwi/geticket-android-kiwi-v2.6.zip)
+- 🍎 **আইফোন ওরিয়ন:** [`geticket-ios-apple-v2.6.zip`](https://github.com/rknz/getticket/releases/download/v2.6-ios-apple/geticket-ios-apple-v2.6.zip)
 
 ---
 
 ## 🪟 ১. কম্পিউটার ও ল্যাপটপ (Google Chrome / Edge / Brave) গাইড
 
 ### ইনস্টলেশন পদ্ধতি:
-1. GitHub Releases থেকে **`geticket-chrome-windows-v1.0.0.zip`** ফাইলটি ডাউনলোড করে আপনার কম্পিউটারের যেকোনো ফোল্ডারে আনজিপ (Extract) করুন।
+1. GitHub Releases থেকে **`geticket-chrome-windows-v2.6.zip`** ফাইলটি ডাউনলোড করে আপনার কম্পিউটারের যেকোনো ফোল্ডারে আনজিপ (Extract) করুন।
 2. গুগল ক্রোম বা এজ ব্রাউজার ওপেন করে অ্যাড্রেস বারে লিখুন:
    ```text
    chrome://extensions/
@@ -76,9 +76,9 @@
    - **Passengers:** যাত্রী সংখ্যা (১ থেকে ৪ জন)
    - **Train Name:** আপনার পছন্দের ট্রেন
    - **Coach Class:** পছন্দের ক্লাস (যেমন: `Shovon Chair (শোভন চেয়ার)`)
-3. **Priority ট্যাবে:** ১ম, ২য় ও ৩য় পছন্দের সিটের দিক (সোজা মুখ, উল্টা মুখ, যেকোনো) সেট করুন।
-4. **Advance Mode** সিলেক্ট করে **"Arm Schedule & Set Alarm"** বাটনে ক্লিক করুন।
-5. স্বয়ংক্রিয়ভাবে জোন অনুযায়ী নির্ধারিত সময়ে টিকিট ছাড়ার ১০ মিনিট আগে অ্যালার্ম বাজবে এবং টিকিট ছাড়ার ০২ সেকেন্ড পূর্বে অটোমেশন প্রস্তুত হয়ে চোখের পলকে সিট লক করে দেবে।
+   - **Priority Rules:** ১ম, ২য় ও ৩য় পছন্দের সিট দিক ও ক্লাস (একই সেটআপ পেজে পেয়ে যাবেন!)
+3. **"Arm Schedule & Set Alarm"** বাটনে ক্লিক করলেই সাথে সাথে শিডিউল সক্রিয় হয়ে যাবে এবং সাউন্ড ও নোটিফিকেশন কনফার্মেশন পাবেন।
+4. স্বয়ংক্রিয়ভাবে জোন অনুযায়ী নির্ধারিত সময়ে টিকিট ছাড়ার ১০ মিনিট আগে অ্যালার্ম বাজবে এবং টিকিট ছাড়ার ০২ সেকেন্ড পূর্বে অটোমেশন প্রস্তুত হয়ে চোখের পলকে সিট লক করে দেবে।
 
 ---
 
@@ -88,10 +88,10 @@
 
 ### ইনস্টলেশন পদ্ধতি:
 1. গুগল প্লে স্টোর (Google Play Store) থেকে **Kiwi Browser** ইনস্টল করুন।
-2. আপনার ফোনে GitHub Releases থেকে **`geticket-android-kiwi-v1.0.0.zip`** ফাইলটি ডাউনলোড করুন।
+2. আপনার ফোনে GitHub Releases থেকে **`geticket-android-kiwi-v2.6.zip`** ফাইলটি ডাউনলোড করুন।
 3. কিউই ব্রাউজার ওপেন করে উপরে ডানদিকের **থ্রি-ডট (⋮) মেনু** ➔ **Extensions**-এ প্রবেশ করুন।
 4. উপরে ডানদিকের **Developer mode** চালু (Toggle ON) করুন।
-5. **+(from .zip / .crx / folder)** অপশনে চাপুন এবং ডাউনলোড করা `geticket-android-kiwi-v1.0.0.zip` ফাইলটি নির্বাচন করুন।
+5. **+(from .zip / .crx / folder)** অপশনে চাপুন এবং ডাউনলোড করা `geticket-android-kiwi-v2.6.zip` ফাইলটি নির্বাচন করুন।
 6. ইনস্টলেশন সাথে সাথে সম্পন্ন হবে এবং এক্সটেনশন তালিকায় চলে আসবে।
 
 ### মোবাইল থেকে টিকিট কাটার নিয়ম:
@@ -109,7 +109,7 @@
 ### মেথড ১: Orion Browser (আইফোনে নেটিভ ক্রোম এক্সটেনশন)
 1. অ্যাপল অ্যাপ স্টোর (Apple App Store) থেকে **Orion Browser by Kagi** ইনস্টল করুন। এটি একটি ফ্রি এবং অত্যন্ত দ্রুতগতির ওয়েবকিট ব্রাউজার যা আইফোনে ডেস্কটপ ক্রোম এক্সটেনশন সাপোর্ট করে।
 2. ওরিয়ন ওপেন করে **Settings ➔ Extensions ➔ Chrome Extensions Support** অন করুন।
-3. Add Extension ➔ **`geticket-ios-apple-v1.0.0.zip`** নির্বাচন করুন।
+3. Add Extension ➔ **`geticket-ios-apple-v2.6.zip`** নির্বাচন করুন।
 4. `eticket.railway.gov.bd` ওপেন করলে পিসির মতোই আইফোনেও অটোমেশন কাজ করবে।
 
 ### মেথড ২: সাফারি ওয়েব অ্যাপ (Standalone PWA)

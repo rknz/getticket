@@ -667,37 +667,45 @@ function renderSchedulesList(schedules) {
   if (empty) empty.style.display = 'none';
 
   schedules.forEach((item) => {
-    const card = document.createElement('div');
-    card.className = 'schedule-card-item';
+    try {
+      const card = document.createElement('div');
+      card.className = 'schedule-card-item';
 
-    const fromStation = getStationName(item.from, currentLang);
-    const toStation = getStationName(item.to, currentLang);
-    const trainDisplay = getTrainDisplayName(item.trainName, currentLang);
-    const isWestRoute = item.zone === 'west' || ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'].includes(item.to);
-    const alarmTime = item.alarmTime || (isWestRoute ? '07:50 AM' : '01:50 PM');
-    const zoneNameStr = isWestRoute 
-      ? (currentLang === 'bn' ? 'পশ্চিমাঞ্চল' : 'West Zone') 
-      : (currentLang === 'bn' ? 'পূর্বাঞ্চল' : 'East Zone');
-    const alarmTimeText = currentLang === 'bn' ? `⏰ অ্যালার্ম: ${alarmTime} (${zoneNameStr} সক্রিয়)` : `⏰ Alarm: ${alarmTime} (${zoneNameStr} Armed)`;
+      const fromStation = getStationName(item.from, currentLang);
+      const toStation = getStationName(item.to, currentLang);
+      const trainDisplay = getTrainDisplayName(item.trainName, currentLang);
+      const isWestRoute = item.zone === 'west' || ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'].includes(item.to);
+      const alarmTime = item.alarmTime || (isWestRoute ? '07:50 AM' : '01:50 PM');
+      const zoneNameStr = isWestRoute 
+        ? (currentLang === 'bn' ? 'পশ্চিমাঞ্চল' : 'West Zone') 
+        : (currentLang === 'bn' ? 'পূর্বাঞ্চল' : 'East Zone');
+      const alarmTimeText = currentLang === 'bn' ? `⏰ অ্যালার্ম: ${alarmTime} (${zoneNameStr} সক্রিয়)` : `⏰ Alarm: ${alarmTime} (${zoneNameStr} Armed)`;
 
-    card.innerHTML = `
-      <div style="flex: 1; padding-right: 8px;">
-        <div class="sched-info-title">🚄 ${trainDisplay}</div>
-        <div class="sched-info-meta">📍 ${fromStation} ➔ ${toStation}</div>
-        <div class="sched-info-meta">📅 ${item.date} • ${paxText} • ${classDisplay}</div>
-        <div class="sched-info-meta" style="color: var(--success); font-weight: 600;">${alarmTimeText}</div>
-      </div>
-      <div>
-        <button class="btn-del-sched" data-id="${item.id}" title="${currentLang === 'bn' ? 'মুছে ফেলুন' : 'Delete'}">🗑️</button>
-      </div>
-    `;
+      const paxCount = item.passengers || 1;
+      const paxText = currentLang === 'bn' ? `${paxCount} জন যাত্রী` : `${paxCount} Pax`;
+      const classDisplay = (CLASSES_OPTS[currentLang] || CLASSES_OPTS.en).find(c => c.value === item.classCode)?.text || item.classCode || 'Shovon Chair';
 
-    card.querySelector('.btn-del-sched').addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteSchedule(item.id);
-    });
+      card.innerHTML = `
+        <div style="flex: 1; padding-right: 8px;">
+          <div class="sched-info-title">🚄 ${trainDisplay}</div>
+          <div class="sched-info-meta">📍 ${fromStation} ➔ ${toStation}</div>
+          <div class="sched-info-meta">📅 ${item.date} • 👥 ${paxText} • 💺 ${classDisplay}</div>
+          <div class="sched-info-meta" style="color: var(--success); font-weight: 700; margin-top: 4px;">${alarmTimeText}</div>
+        </div>
+        <div>
+          <button class="btn-del-sched" data-id="${item.id}" title="${currentLang === 'bn' ? 'মুছে ফেলুন' : 'Delete'}">🗑️</button>
+        </div>
+      `;
 
-    container.appendChild(card);
+      card.querySelector('.btn-del-sched').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteSchedule(item.id);
+      });
+
+      container.appendChild(card);
+    } catch(err) {
+      console.error('Error rendering schedule card:', err);
+    }
   });
 }
 
@@ -1239,8 +1247,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabSched = document.getElementById('tabSchedules');
     tabSched.childNodes[0].nodeValue = t.tabSchedules + ' ';
 
-    document.getElementById('tabPriority').innerText = t.tabPriority;
-    document.getElementById('tabVault').innerText = t.tabVault;
+    const tabPrio = document.getElementById('tabPriority');
+    if (tabPrio) tabPrio.innerText = t.tabPriority;
+    const tabVault = document.getElementById('tabVault');
+    if (tabVault) tabVault.innerText = t.tabVault;
 
     // Page 1: Setup
     document.getElementById('pillToday').innerText = t.pillToday;
@@ -1487,7 +1497,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }).catch(() => {});
           }
 
-          const configUpdate = { routeFrom: from, routeTo: to, targetDate: date, passengers, trainName, prefClass: classCode };
+          // Auto-save priority rules from Setup
+          const p1Class = document.getElementById('p1Class')?.value || classCode;
+          const p1Dir = document.getElementById('p1Dir')?.value || 'straight';
+          const p2Class = document.getElementById('p2Class')?.value || 'SNIGDHA';
+          const p2Dir = document.getElementById('p2Dir')?.value || 'middle';
+          const p3Class = document.getElementById('p3Class')?.value || 'F_CHAIR';
+          const p3Dir = document.getElementById('p3Dir')?.value || 'any';
+
+          const priorities = [
+            { level: 1, classCode: p1Class, dir: p1Dir, coach: 'ANY' },
+            { level: 2, classCode: p2Class, dir: p2Dir, coach: 'ANY' },
+            { level: 3, classCode: p3Class, dir: p3Dir, coach: 'ANY' }
+          ];
+
+          const configUpdate = { routeFrom: from, routeTo: to, targetDate: date, passengers, trainName, prefClass: classCode, priorities };
           if (chrome?.storage?.local) {
             chrome.storage.local.get(['geTicketConfig'], (res) => {
               const full = { ...(res.geTicketConfig || {}), ...configUpdate };
@@ -1495,7 +1519,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           }
 
-          showToast(UI_TEXT[currentLang].toastSchedSaved);
+          playChime();
+          const trainDisp = getTrainDisplayName(trainName, currentLang);
+          const confirmMsg = currentLang === 'bn'
+            ? `🎉 সফল! (${trainDisp}) ট্রেনের অগ্রিম শিডিউল সক্রিয় করা হয়েছে! (${alarmTime} এ অ্যালার্ম বাজবে)`
+            : `🎉 Success! (${trainDisp}) Advance Schedule Armed! (Alarm: ${alarmTime})`;
+          showToast(confirmMsg);
 
           setTimeout(() => {
             switchPage('schedules');
@@ -1505,30 +1534,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Save Priority Rules
-  document.getElementById('btnSavePriority').addEventListener('click', () => {
-    const p1Val = document.getElementById('p1Class').value;
-    const prefClassEl = document.getElementById('prefClass');
-    if (prefClassEl) prefClassEl.value = p1Val;
-    updateCalculations();
+  // Save Priority Rules (if button exists)
+  const btnSavePriority = document.getElementById('btnSavePriority');
+  if (btnSavePriority) {
+    btnSavePriority.addEventListener('click', () => {
+      const p1Val = document.getElementById('p1Class').value;
+      const prefClassEl = document.getElementById('prefClass');
+      if (prefClassEl) prefClassEl.value = p1Val;
+      updateCalculations();
 
-    const priorities = [
-      { level: 1, classCode: document.getElementById('p1Class').value, dir: document.getElementById('p1Dir').value, coach: 'ANY' },
-      { level: 2, classCode: document.getElementById('p2Class').value, dir: document.getElementById('p2Dir').value, coach: 'ANY' },
-      { level: 3, classCode: document.getElementById('p3Class').value, dir: document.getElementById('p3Dir').value, coach: 'ANY' }
-    ];
+      const priorities = [
+        { level: 1, classCode: document.getElementById('p1Class').value, dir: document.getElementById('p1Dir').value, coach: 'ANY' },
+        { level: 2, classCode: document.getElementById('p2Class').value, dir: document.getElementById('p2Dir').value, coach: 'ANY' },
+        { level: 3, classCode: document.getElementById('p3Class').value, dir: document.getElementById('p3Dir').value, coach: 'ANY' }
+      ];
 
-    if (chrome?.storage?.local) {
-      chrome.storage.local.get(['geTicketConfig'], (res) => {
-        const full = { ...(res.geTicketConfig || {}), priorities };
-        chrome.storage.local.set({ geTicketConfig: full }, () => {
-          showToast(UI_TEXT[currentLang].toastPrioSaved);
+      if (chrome?.storage?.local) {
+        chrome.storage.local.get(['geTicketConfig'], (res) => {
+          const full = { ...(res.geTicketConfig || {}), priorities };
+          chrome.storage.local.set({ geTicketConfig: full }, () => {
+            showToast(UI_TEXT[currentLang].toastPrioSaved);
+          });
         });
-      });
-    } else {
-      showToast(UI_TEXT[currentLang].toastPrioSaved);
-    }
-  });
+      } else {
+        showToast(UI_TEXT[currentLang].toastPrioSaved);
+      }
+    });
+  }
 
   // Save Account Vault
   document.getElementById('btnSaveVault').addEventListener('click', () => {

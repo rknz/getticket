@@ -33,13 +33,12 @@
       </div>
     </header>
 
-    <!-- Navigation Bar (4 Compact Pages) -->
+    <!-- Navigation Bar (3 Clean Pages: Setup, Lists, Vault) -->
     <nav class="app-nav">
       <button class="nav-tab active" data-page="setup" id="tabSetup">🎯 Setup</button>
       <button class="nav-tab" data-page="schedules" id="tabSchedules">
         📅 Lists <span class="tab-mini-badge" id="miniBadgeCount">0</span>
       </button>
-      <button class="nav-tab" data-page="priority" id="tabPriority">⚡ Priority</button>
       <button class="nav-tab" data-page="vault" id="tabVault">🔐 Vault</button>
     </nav>
 
@@ -168,8 +167,49 @@
           </div>
         </div>
 
+        <!-- CASCADING PRIORITY RULES (Embedded in Setup) -->
+        <div class="priority-setup-section" id="prioritySetupSection" style="margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px;">
+          <div class="view-header" style="margin-bottom: 8px;">
+            <span class="view-title" id="lblPrioTitle" style="font-size: 12.5px;">🎯 Cascading Priority Rules</span>
+            <span class="badge-hint" id="lblPrioHint">Auto-Shift 1ms</span>
+          </div>
+
+          <div class="rule-card p1-card">
+            <div class="rule-top">
+              <span class="rule-tag tag-1" id="tagP1">Priority 1 (First Choice)</span>
+              <span class="rule-status" id="statP1">● Primary Target</span>
+            </div>
+            <div class="rule-row">
+              <select id="p1Class"></select>
+              <select id="p1Dir"></select>
+            </div>
+          </div>
+
+          <div class="rule-card p2-card">
+            <div class="rule-top">
+              <span class="rule-tag tag-2" id="tagP2">Priority 2 (Fallback)</span>
+              <span class="rule-status" id="statP2">● 1ms Failover</span>
+            </div>
+            <div class="rule-row">
+              <select id="p2Class"></select>
+              <select id="p2Dir"></select>
+            </div>
+          </div>
+
+          <div class="rule-card p3-card">
+            <div class="rule-top">
+              <span class="rule-tag tag-3" id="tagP3">Priority 3 (Backup)</span>
+              <span class="rule-status" id="statP3">● Last Resort</span>
+            </div>
+            <div class="rule-row">
+              <select id="p3Class"></select>
+              <select id="p3Dir"></select>
+            </div>
+          </div>
+        </div>
+
         <!-- Main Action Button -->
-        <button class="action-btn btn-primary" id="btnMainAction">
+        <button class="action-btn btn-primary" id="btnMainAction" style="margin-top: 14px;">
           ⚡ <span id="btnMainActionText">Instant Grab & Lock Seats</span>
         </button>
       </section>
@@ -190,51 +230,6 @@
           <b id="lblNoSched">No active schedules</b>
           <p id="lblNoSchedSub">Switch to Advance 8:00 AM mode on Setup tab to arm an automatic ticket alarm.</p>
         </div>
-      </section>
-
-      <!-- PAGE 3: PRIORITY RULES -->
-      <section class="page-view" id="page-priority">
-        <div class="view-header">
-          <span class="view-title" id="lblPrioTitle">Cascading Rules</span>
-          <span class="badge-hint" id="lblPrioHint">Auto-Shift</span>
-        </div>
-
-        <div class="rule-card p1-card">
-          <div class="rule-top">
-            <span class="rule-tag tag-1" id="tagP1">Priority 1 (First)</span>
-            <span class="rule-status" id="statP1">● Primary Target</span>
-          </div>
-          <div class="rule-row">
-            <select id="p1Class"></select>
-            <select id="p1Dir"></select>
-          </div>
-        </div>
-
-        <div class="rule-card p2-card">
-          <div class="rule-top">
-            <span class="rule-tag tag-2" id="tagP2">Priority 2 (Fallback)</span>
-            <span class="rule-status" id="statP2">● 1ms Failover</span>
-          </div>
-          <div class="rule-row">
-            <select id="p2Class"></select>
-            <select id="p2Dir"></select>
-          </div>
-        </div>
-
-        <div class="rule-card p3-card">
-          <div class="rule-top">
-            <span class="rule-tag tag-3" id="tagP3">Priority 3 (Backup)</span>
-            <span class="rule-status" id="statP3">● Last Resort</span>
-          </div>
-          <div class="rule-row">
-            <select id="p3Class"></select>
-            <select id="p3Dir"></select>
-          </div>
-        </div>
-
-        <button class="action-btn btn-primary" id="btnSavePriority">
-          💾 <span id="btnSavePrioText">Save Priority Rules</span>
-        </button>
       </section>
 
       <!-- PAGE 4: ACCOUNT VAULT -->
