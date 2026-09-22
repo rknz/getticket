@@ -145,9 +145,9 @@
     left: 6px !important;
     right: 6px !important;
     width: auto !important;
-    max-width: 380px !important;
-    margin: 0 auto !important;
-    max-height: 88vh !important;
+    max-width: calc(100vw - 12px) !important; /* was 380px: bleeds on 320px SE */
+    margin: 0 !important;
+    max-height: 86vh !important;
     border-radius: 16px !important;
   }
   .gt-body {
@@ -162,16 +162,17 @@
   }
   .gt-select, .gt-input {
     font-size: 11px !important;
-    height: 30px !important;
-    padding: 3px 5px !important;
+    height: 36px !important; /* was 30px — below iOS 44px tap target; 36px is a practical compromise */
+    padding: 4px 6px !important;
   }
   .gt-prio-row .gt-select {
     font-size: 10px !important;
-    height: 28px !important;
-    padding: 2px 4px !important;
+    height: 34px !important; /* was 28px */
+    padding: 3px 4px !important;
   }
   .gt-btn-primary {
-    padding: 8px 10px !important;
+    padding: 10px !important;
+    min-height: 42px !important; /* comfortable thumb tap */
     font-size: 11.5px !important;
   }
 }

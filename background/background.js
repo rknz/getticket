@@ -59,9 +59,14 @@ chrome.alarms.onAlarm.addListener((alarm) => {
       }
     });
   } else if (alarm.name === 'geticket_session_keepalive') {
-    // Ping to keep session warm
-    fetch(`${RAILWAY_URL}/api/v1/user/me`, { method: 'GET', credentials: 'include' })
-      .catch(() => {});
+    // MV3 service workers cannot use credentials:include across origins — CORS blocks it.
+    // Instead, message the content script on the live railway tab; it runs in the page
+    // context where cookies are already present, so its fetch carries the session.
+    chrome.tabs.query({ url: '*://eticket.railway.gov.bd/*' }, (tabs) => {
+      if (tabs && tabs.length > 0) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'SESSION_PING' }).catch(() => {});
+      }
+    });
   }
 });
 

@@ -47,17 +47,17 @@
 ## 🪟 ১. পিসি (Windows Chrome / Edge / Brave / Opera) গাইড
 
 ### ইনস্টলেশন পদ্ধতি:
-### 📥 সরাসরি ডাউনলোড (GitHub Releases v2.6):
-- 🪟 **পিসি ক্রোম:** [`geticket-chrome-windows-v2.6.zip`](https://github.com/rknz/getticket/releases/download/v2.6-chrome-pc/geticket-chrome-windows-v2.6.zip)
-- 🤖 **অ্যান্ড্রয়েড কিউই:** [`geticket-android-kiwi-v2.6.zip`](https://github.com/rknz/getticket/releases/download/v2.6-android-kiwi/geticket-android-kiwi-v2.6.zip)
-- 🍎 **আইফোন ওরিয়ন:** [`geticket-ios-apple-v2.6.zip`](https://github.com/rknz/getticket/releases/download/v2.6-ios-apple/geticket-ios-apple-v2.6.zip)
+### 📥 সরাসরি ডাউনলোড (GitHub Releases v2.7):
+- 🪟 **পিসি ক্রোম:** [`geticket-chrome-windows-v2.7.zip`](https://github.com/rknz/getticket/releases/download/v2.7-chrome-pc/geticket-chrome-windows-v2.7.zip)
+- 🤖 **অ্যান্ড্রয়েড কিউই:** [`geticket-android-kiwi-v2.7.zip`](https://github.com/rknz/getticket/releases/download/v2.7-android-kiwi/geticket-android-kiwi-v2.7.zip)
+- 🍎 **আইফোন ওরিয়ন:** [`geticket-ios-apple-v2.7.zip`](https://github.com/rknz/getticket/releases/download/v2.7-ios-apple/geticket-ios-apple-v2.7.zip)
 
 ---
 
 ## 🪟 ১. কম্পিউটার ও ল্যাপটপ (Google Chrome / Edge / Brave) গাইড
 
 ### ইনস্টলেশন পদ্ধতি:
-1. GitHub Releases থেকে **`geticket-chrome-windows-v2.6.zip`** ফাইলটি ডাউনলোড করে আপনার কম্পিউটারের যেকোনো ফোল্ডারে আনজিপ (Extract) করুন।
+1. GitHub Releases থেকে **`geticket-chrome-windows-v2.7.zip`** ফাইলটি ডাউনলোড করে আপনার কম্পিউটারের যেকোনো ফোল্ডারে আনজিপ (Extract) করুন।
 2. গুগল ক্রোম বা এজ ব্রাউজার ওপেন করে অ্যাড্রেস বারে লিখুন:
    ```text
    chrome://extensions/
@@ -88,10 +88,10 @@
 
 ### ইনস্টলেশন পদ্ধতি:
 1. গুগল প্লে স্টোর (Google Play Store) থেকে **Kiwi Browser** ইনস্টল করুন।
-2. আপনার ফোনে GitHub Releases থেকে **`geticket-android-kiwi-v2.6.zip`** ফাইলটি ডাউনলোড করুন।
+2. আপনার ফোনে GitHub Releases থেকে **`geticket-android-kiwi-v2.7.zip`** ফাইলটি ডাউনলোড করুন।
 3. কিউই ব্রাউজার ওপেন করে উপরে ডানদিকের **থ্রি-ডট (⋮) মেনু** ➔ **Extensions**-এ প্রবেশ করুন।
 4. উপরে ডানদিকের **Developer mode** চালু (Toggle ON) করুন।
-5. **+(from .zip / .crx / folder)** অপশনে চাপুন এবং ডাউনলোড করা `geticket-android-kiwi-v2.6.zip` ফাইলটি নির্বাচন করুন।
+5. **+(from .zip / .crx / folder)** অপশনে চাপুন এবং ডাউনলোড করা `geticket-android-kiwi-v2.7.zip` ফাইলটি নির্বাচন করুন।
 6. ইনস্টলেশন সাথে সাথে সম্পন্ন হবে এবং এক্সটেনশন তালিকায় চলে আসবে।
 
 ### মোবাইল থেকে টিকিট কাটার নিয়ম:
@@ -109,7 +109,7 @@
 ### মেথড ১: Orion Browser (আইফোনে নেটিভ ক্রোম এক্সটেনশন)
 1. অ্যাপল অ্যাপ স্টোর (Apple App Store) থেকে **Orion Browser by Kagi** ইনস্টল করুন। এটি একটি ফ্রি এবং অত্যন্ত দ্রুতগতির ওয়েবকিট ব্রাউজার যা আইফোনে ডেস্কটপ ক্রোম এক্সটেনশন সাপোর্ট করে।
 2. ওরিয়ন ওপেন করে **Settings ➔ Extensions ➔ Chrome Extensions Support** অন করুন।
-3. Add Extension ➔ **`geticket-ios-apple-v2.6.zip`** নির্বাচন করুন।
+3. Add Extension ➔ **`geticket-ios-apple-v2.7.zip`** নির্বাচন করুন।
 4. `eticket.railway.gov.bd` ওপেন করলে পিসির মতোই আইফোনেও অটোমেশন কাজ করবে।
 
 ### মেথড ২: সাফারি ওয়েব অ্যাপ (Standalone PWA)
@@ -181,7 +181,7 @@
 ## 📦 ৭. গিটহাব রিপোজিটরি ও জিপ ডাউনলোড নির্দেশিকা
 
 ### সরাসরি জিপ ডাউনলোড:
-আপনি এই রিপোজিটরির রুট ডিরেক্টরিতে থাকা **`Geticket-v2.6.zip`** ফাইলটি সরাসরি ডাউনলোড করে ব্যবহার করতে পারবেন।
+আপনি এই রিপোজিটরির রুট ডিরেক্টরিতে থাকা **`Geticket-v2.7.zip`** ফাইলটি সরাসরি ডাউনলোড করে ব্যবহার করতে পারবেন।
 
 ### গিট ক্লোন (Git Clone):
 ```bash
@@ -192,10 +192,10 @@ cd getticket
 ### প্রজেক্ট ফাইল স্ট্রাকচার:
 ```text
 Geticket/
-├── manifest.json              # Chrome Manifest V3 configuration (v2.6.0)
+├── manifest.json              # Chrome Manifest V3 configuration (v2.7.0)
 ├── README.md                  # Complete documentation & user guide
 ├── ui_preview.html            # Standalone interactive dashboard & simulator
-├── Geticket-v2.6.zip          # Production ready-to-install extension archive
+├── Geticket-v2.7.zip          # Production ready-to-install extension archive
 ├── background/
 │   └── background.js          # Service worker (alarms, live Shohoz API, notifications)
 ├── content/

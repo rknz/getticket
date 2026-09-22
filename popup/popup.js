@@ -486,6 +486,7 @@ let currentLang = 'en';
 let currentMode = 'instant'; // 'instant' | 'schedule'
 let liveServerData = null; // Caches real API response from railway server
 let isCurrentRouteValid = true;
+let isPopupEngineActive = true; // tracks popup power button state
 
 // Web Audio API Chime
 function playChime() {
@@ -752,12 +753,16 @@ async function fetchLiveTrainsFromServer(fromStation, toStation, journeyDate) {
         to: toStation,
         date: journeyDate
       }, (response) => {
-        if (response && response.success && response.data?.trains && response.data.trains.length > 0) {
-          liveServerData = response.data;
-          resolve(response.data.trains);
-        } else {
-          resolve(null);
+        if (response && response.success) {
+          // Normalise: API may return data.trains or data.trips depending on endpoint version
+          const trains = response.data?.trains || response.data?.trips || response.trains;
+          if (trains && trains.length > 0) {
+            liveServerData = { ...response.data, trains }; // always expose as .trains
+            resolve(trains);
+            return;
+          }
         }
+        resolve(null);
       });
     } else {
       resolve(null);
@@ -852,8 +857,22 @@ document.addEventListener('DOMContentLoaded', () => {
         seatTypes: lt.seat_types || []
       }));
     } else {
-      // 2. Fallback to our master database
-      trains = ROUTE_TRAIN_MAP[routeKey] || ROUTE_TRAIN_MAP[`${to}-${from}`] || [];
+      // 2. Fallback to DOM-scraped trains from the active railway tab (recent only)
+      const scrapedTrains = await new Promise(resolve => {
+        if (!chrome?.storage?.local) { resolve(null); return; }
+        chrome.storage.local.get(['liveScrapedTrains', 'liveScrapedMeta'], r => {
+          const meta = r.liveScrapedMeta;
+          const isRecent = meta && (Date.now() - meta.scrapedAt) < 4 * 60 * 1000; // 4-min max age
+          resolve(isRecent && r.liveScrapedTrains?.length > 0 ? r.liveScrapedTrains : null);
+        });
+      });
+
+      if (scrapedTrains) {
+        trains = scrapedTrains; // already in { nameEn, nameBn, code, dep, arr } format
+      } else {
+        // 3. Final fallback to our master database
+        trains = ROUTE_TRAIN_MAP[routeKey] || ROUTE_TRAIN_MAP[`${to}-${from}`] || [];
+      }
     }
 
     // Ensure trains are strictly sorted by departure time (AM to PM)
@@ -1249,6 +1268,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ARM ADVANCE SCHEDULE & WATCHDOG
   function handleArmSchedule() {
+    if (!isPopupEngineActive) {
+      showToast(currentLang === 'bn' ? '⏸️ ইঞ্জিন বন্ধ আছে। সক্রিয় করুন।' : '⏸️ Engine is paused. Activate first.');
+      return;
+    }
     if (!isCurrentRouteValid) {
       showToast(currentLang === 'bn' ? '⚠️ এই রুটে সরাসরি ট্রেন নেই!' : '⚠️ Route unavailable!');
       return;
@@ -1263,6 +1286,18 @@ document.addEventListener('DOMContentLoaded', () => {
     todayDate.setHours(0, 0, 0, 0);
     const diffDays = Math.round((selectedDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
     const isWithin10Days = diffDays <= 10;
+
+    // Compute the exact alarm timestamp for advance bookings (>10 days ahead).
+    // Tickets release 10 days before the journey at 08:00 AM (West) or 02:00 PM (East).
+    // Fire the alarm 10 minutes early so we can open the tab and be ready.
+    let targetTimestamp = null;
+    if (!isWithin10Days) {
+      const releaseDay = new Date(selectedDate);
+      releaseDay.setDate(releaseDay.getDate() - 10);
+      releaseDay.setHours(isWest ? 7 : 13, 50, 0, 0); // 07:50 AM West / 01:50 PM East
+      targetTimestamp = releaseDay.getTime();
+      if (targetTimestamp <= Date.now()) targetTimestamp = null; // already passed
+    }
 
     const scheduleId = `geticket_sched_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
     const alarmTime = isWithin10Days 
@@ -1294,6 +1329,7 @@ document.addEventListener('DOMContentLoaded', () => {
           chrome.runtime.sendMessage({
             action: isWithin10Days ? 'TRIGGER_INSTANT_GRAB' : 'SCHEDULE_BOOKING',
             id: scheduleId,
+            targetTimestamp,   // computed above; null for instant bookings
             bookingInfo: newBooking,
             from: cfg.from,
             to: cfg.to,
@@ -1317,6 +1353,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // INSTANT FAST-GRAB (LOCK) - Adds to Lists & executes grab
   function handleInstantGrab() {
+    if (!isPopupEngineActive) {
+      showToast(currentLang === 'bn' ? '⏸️ ইঞ্জিন বন্ধ আছে। সক্রিয় করুন।' : '⏸️ Engine is paused. Activate first.');
+      return;
+    }
     if (!isCurrentRouteValid) {
       showToast(currentLang === 'bn' ? '⚠️ এই রুটে সরাসরি ট্রেন নেই!' : '⚠️ Route unavailable!');
       return;
@@ -1387,6 +1427,10 @@ const trainDisp = getTrainDisplayName(cfg.trainName, currentLang);
   // LIVE AVAILABILITY SCANNER: Fetches live API trains and renders per-class
   // seat availability with a Book Now action that reuses the Instant Grab flow.
   async function handleScanLive() {
+    if (!isPopupEngineActive) {
+      showToast(currentLang === 'bn' ? '⏸️ ইঞ্জিন বন্ধ আছে। সক্রিয় করুন।' : '⏸️ Engine is paused. Activate first.');
+      return;
+    }
     const btnScan = document.getElementById('btnScanLive');
     const panel = document.getElementById('liveResultsPanel');
     const listEl = document.getElementById('liveResultsList');
@@ -1404,6 +1448,30 @@ const trainDisp = getTrainDisplayName(cfg.trainName, currentLang);
     // Force a fresh server fetch for the current route/date, then render.
     liveServerData = null;
     await onRouteChanged(true);
+
+    // If API returned nothing, try DOM-scraped trains from the active railway tab
+    if (!liveServerData?.trains?.length && chrome?.storage?.local) {
+      await new Promise(resolve => {
+        chrome.storage.local.get(['liveScrapedTrains', 'liveScrapedMeta'], (res) => {
+          const meta = res.liveScrapedMeta;
+          const isRecent = meta && (Date.now() - meta.scrapedAt) < 4 * 60 * 1000;
+          if (isRecent && res.liveScrapedTrains?.length > 0) {
+            // Convert scraped format to the API shape the renderer already expects
+            liveServerData = {
+              trains: res.liveScrapedTrains.map(t => ({
+                train_name:    t.nameEn,
+                train_name_bn: t.nameBn,
+                train_model:   t.code,
+                departure_time: t.dep,
+                arrival_time:   t.arr,
+                seat_types: [] // no per-class count from DOM scrape; fare DB used instead
+              }))
+            };
+          }
+          resolve();
+        });
+      });
+    }
 
     btnScan.disabled = false;
     const btnScanText = document.getElementById('btnScanText');
@@ -1554,6 +1622,45 @@ const trainDisp = getTrainDisplayName(cfg.trainName, currentLang);
 
   const btnScan = document.getElementById('btnScanLive');
   if (btnScan) btnScan.addEventListener('click', handleScanLive);
+
+  // Popup Power Button — gates automation & mirrors state to the railway tab content script
+  const btnPopPower = document.getElementById('btnPopPower');
+  if (btnPopPower) {
+    btnPopPower.addEventListener('click', () => {
+      isPopupEngineActive = !isPopupEngineActive;
+      if (isPopupEngineActive) {
+        btnPopPower.classList.remove('paused');
+        btnPopPower.classList.add('active');
+        btnPopPower.textContent = '🟢 Active';
+        // Restore visual state on action buttons
+        [document.getElementById('btnArmSchedule'),
+         document.getElementById('btnGrabNow'),
+         document.getElementById('btnScanLive')].forEach(btn => {
+          if (btn) btn.style.opacity = '';
+        });
+        showToast(currentLang === 'bn' ? '⚡ অটোমেশন ইঞ্জিন সক্রিয়' : '⚡ Automation Engine Active');
+      } else {
+        btnPopPower.classList.remove('active');
+        btnPopPower.classList.add('paused');
+        btnPopPower.textContent = '🔴 Paused';
+        // Dim buttons as a visual indicator (guards inside functions block execution)
+        [document.getElementById('btnArmSchedule'),
+         document.getElementById('btnGrabNow'),
+         document.getElementById('btnScanLive')].forEach(btn => {
+          if (btn) btn.style.opacity = '0.45';
+        });
+        showToast(currentLang === 'bn' ? '⏸️ অটোমেশন ইঞ্জিন বন্ধ' : '⏸️ Automation Engine Paused');
+        // Also pause the content script running on the railway tab
+        if (chrome?.tabs?.query) {
+          chrome.tabs.query({ url: '*://eticket.railway.gov.bd/*' }, (tabs) => {
+            if (tabs) tabs.forEach(tab => {
+              chrome.tabs.sendMessage(tab.id, { action: 'PAUSE_ENGINE' }).catch(() => {});
+            });
+          });
+        }
+      }
+    });
+  }
 
   // Form Inputs Listeners
   document.getElementById('routeFrom')?.addEventListener('change', () => onRouteChanged());

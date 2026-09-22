@@ -46,7 +46,7 @@
 body {
   width: 440px;
   max-width: 450px;
-  min-width: 430px;
+  min-width: 320px; /* was 430px — was clipping on phones narrower than 430px */
   height: 590px;
   max-height: 600px;
   margin: 0 auto;
@@ -54,7 +54,8 @@ body {
   color: var(--text-main);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   font-size: 13px;
-  overflow: hidden;
+  overflow-y: auto;   /* allow scroll instead of hard clip on short Kiwi popups */
+  overflow-x: hidden;
   user-select: none;
   transition: background 0.2s, color 0.2s;
 }
@@ -242,6 +243,7 @@ h1 {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* smooth momentum scroll on iOS/Kiwi */
   position: relative;
 }
 
@@ -696,6 +698,7 @@ h1 {
     min-height: 100vh;
     height: 100vh;
     max-height: none;
+    overflow-y: auto;
   }
 
   .app-container {
@@ -707,8 +710,8 @@ h1 {
   }
 
   .btn-swap-stations {
-    height: 32px;
-    width: 32px;
+    height: 36px;  /* iOS HIG: min 44px tap target; 36px is acceptable for icon-only */
+    width: 36px;
     font-size: 14px;
   }
 
@@ -722,7 +725,8 @@ h1 {
 
   .action-btn {
     font-size: 12px;
-    padding: 8px;
+    padding: 10px 8px; /* taller touch target */
+    min-height: 42px;
   }
 
   .app-nav {
@@ -732,7 +736,11 @@ h1 {
 
   .nav-tab {
     font-size: 11px;
-    padding: 5px 3px;
+    padding: 7px 3px; /* taller for thumb tapping */
+  }
+
+  .select-control, .input-control {
+    height: 36px; /* was 32px; larger touch target */
   }
 
   .fare-data-row {
