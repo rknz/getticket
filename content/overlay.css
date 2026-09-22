@@ -1,24 +1,34 @@
-/* GeTicket Pro Floating HUD - Light Mode Default with Dark Theme Support */
+/* GeTicket Pro Floating Mobile & Desktop HUD - Production Grade */
 :root {
-  --gt-hud-bg: rgba(255, 255, 255, 0.96);
+  --gt-hud-bg: rgba(255, 255, 255, 0.98);
   --gt-hud-border: #0284c7;
   --gt-hud-text: #0f172a;
   --gt-hud-muted: #64748b;
-  --gt-hud-card-bg: rgba(2, 132, 199, 0.08);
+  --gt-hud-card-bg: #f8fafc;
   --gt-hud-card-border: #e2e8f0;
-  --gt-hud-shadow: 0 16px 40px rgba(0, 0, 0, 0.15), 0 0 16px rgba(2, 132, 199, 0.15);
-  --gt-bubble-bg: linear-gradient(135deg, #0284c7, #2563eb);
+  --gt-hud-shadow: 0 20px 50px rgba(0, 0, 0, 0.22), 0 0 20px rgba(2, 132, 199, 0.2);
+  --gt-bubble-bg: #ffffff;
+  --gt-bubble-border: #0284c7;
+  --gt-bubble-shadow: 0 10px 30px rgba(2, 132, 199, 0.4), 0 3px 10px rgba(0, 0, 0, 0.15);
+  --gt-accent: #0284c7;
+  --gt-success: #10b981;
+  --gt-warning: #f59e0b;
 }
 
 [data-theme="dark"] {
-  --gt-hud-bg: rgba(15, 23, 42, 0.95);
+  --gt-hud-bg: rgba(15, 23, 42, 0.97);
   --gt-hud-border: #00d2ff;
   --gt-hud-text: #f8fafc;
   --gt-hud-muted: #94a3b8;
-  --gt-hud-card-bg: rgba(37, 99, 235, 0.18);
+  --gt-hud-card-bg: rgba(30, 41, 59, 0.85);
   --gt-hud-card-border: rgba(45, 130, 255, 0.25);
-  --gt-hud-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 210, 255, 0.2);
-  --gt-bubble-bg: linear-gradient(135deg, #00d2ff, #2563eb);
+  --gt-hud-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 25px rgba(0, 210, 255, 0.25);
+  --gt-bubble-bg: #ffffff;
+  --gt-bubble-border: #00d2ff;
+  --gt-bubble-shadow: 0 10px 30px rgba(0, 210, 255, 0.45), 0 3px 10px rgba(0, 0, 0, 0.25);
+  --gt-accent: #00d2ff;
+  --gt-success: #10b981;
+  --gt-warning: #f59e0b;
 }
 
 #geticket-hud-root {
@@ -26,164 +36,404 @@
   bottom: 24px !important;
   right: 24px !important;
   z-index: 2147483647 !important;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
-  font-size: 12.5px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+  font-size: 13px !important;
   line-height: 1.4 !important;
   color: var(--gt-hud-text) !important;
   user-select: none !important;
 }
 
+/* Floating Action Button (Clean, Bright, Professional Light Background) */
 .gt-bubble {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: var(--gt-bubble-bg);
-  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.45);
+  background: var(--gt-bubble-bg) !important;
+  border: 2.5px solid var(--gt-bubble-border) !important;
+  box-shadow: var(--gt-bubble-shadow) !important;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 22px;
-  color: #fff;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
 }
 
 .gt-bubble:hover {
-  transform: scale(1.08);
+  transform: scale(1.1);
+}
+
+.gt-bubble:active {
+  transform: scale(0.95);
 }
 
 .gt-bubble img {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   pointer-events: none;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.18));
 }
 
-.gt-panel {
+.gt-bubble-pulse {
   position: absolute;
-  bottom: 64px;
-  right: 0;
-  width: 325px;
-  background: var(--gt-hud-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--gt-hud-border);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: var(--gt-hud-shadow);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--gt-bubble-border);
+  animation: gtPulseRing 2.2s infinite ease-out;
+  pointer-events: none;
+}
+
+@keyframes gtPulseRing {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* Floating Modal Panel (Desktop & Mobile Responsive) */
+.gt-panel {
+  position: fixed !important;
+  bottom: 90px !important;
+  right: 24px !important;
+  width: 420px !important;
+  max-width: 95vw !important;
+  max-height: 85vh !important;
+  background: var(--gt-hud-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1.5px solid var(--gt-hud-border) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--gt-hud-shadow) !important;
   display: none;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: column !important;
+  overflow: hidden !important;
   transform-origin: bottom right;
-  animation: gtFadeIn 0.2s ease-out;
-  color: var(--gt-hud-text);
+  color: var(--gt-hud-text) !important;
+  box-sizing: border-box !important;
+}
+
+.gt-panel * {
+  box-sizing: border-box !important;
 }
 
 .gt-panel.open {
-  display: flex;
+  display: flex !important;
+  animation: gtSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-@keyframes gtFadeIn {
-  from { opacity: 0; transform: scale(0.92); }
-  to { opacity: 1; transform: scale(1); }
+@keyframes gtSlideIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* Mobile Screen Adaptation (100% fits within phone viewports) */
+@media (max-width: 640px) {
+  #geticket-hud-root {
+    bottom: 16px !important;
+    right: 16px !important;
+  }
+  .gt-bubble {
+    width: 52px;
+    height: 52px;
+  }
+  .gt-bubble img {
+    width: 32px;
+    height: 32px;
+  }
+  .gt-panel {
+    bottom: 78px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-width: 440px !important;
+    margin: 0 auto !important;
+    max-height: 84vh !important;
+    border-radius: 18px !important;
+  }
+}
+
+/* Header Section */
 .gt-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 12px 14px 8px 14px;
   border-bottom: 1px solid var(--gt-hud-card-border);
-  padding-bottom: 8px;
+  background: var(--gt-hud-card-bg);
 }
 
-.gt-title {
+.gt-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gt-title-box img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.gt-title-text {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--gt-accent);
+}
+
+.gt-version-pill {
+  background: #10b981;
+  color: #ffffff;
+  font-size: 9.5px;
   font-weight: 700;
-  color: #0284c7;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
 }
 
-[data-theme="dark"] .gt-title {
-  color: #00d2ff;
-}
-
-.gt-ctrl-btns {
+.gt-header-tools {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.gt-icon-btn {
+.gt-ctrl-btn {
   background: transparent;
   border: 1px solid var(--gt-hud-card-border);
   border-radius: 6px;
   color: var(--gt-hud-muted);
   cursor: pointer;
   font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  transition: all 0.15s;
+}
+
+.gt-ctrl-btn:hover {
+  background: var(--gt-hud-card-border);
+  color: var(--gt-hud-text);
+}
+
+.gt-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: var(--gt-hud-muted);
+  cursor: pointer;
   padding: 2px 6px;
+  border-radius: 6px;
 }
 
-.gt-clock {
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--gt-hud-card-border);
-  border-radius: 10px;
-  padding: 8px;
-  text-align: center;
+.gt-close-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
 }
 
-[data-theme="dark"] .gt-clock {
-  background: rgba(0, 0, 0, 0.4);
+/* Server Clock Bar */
+.gt-clock-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 14px;
+  background: rgba(2, 132, 199, 0.06);
+  border-bottom: 1px solid var(--gt-hud-card-border);
+  font-size: 11px;
 }
 
 .gt-clock-label {
-  font-size: 9.5px;
+  color: var(--gt-hud-muted);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gt-clock-val {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--gt-success);
+}
+
+/* 3 Clean Navigation Tabs (Setup, Lists, Vault) */
+.gt-tabs-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--gt-hud-card-bg);
+  border-bottom: 1px solid var(--gt-hud-card-border);
+}
+
+.gt-tab-nav {
+  padding: 7px 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--gt-hud-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+
+.gt-tab-nav:hover {
+  background: rgba(2, 132, 199, 0.08);
+  color: var(--gt-hud-text);
+}
+
+.gt-tab-nav.active {
+  background: var(--gt-accent);
+  color: #ffffff;
+  border-color: var(--gt-accent);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+}
+
+.gt-nav-badge {
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+/* Tab Scrollable Body */
+.gt-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gt-pane {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gt-pane.active {
+  display: flex;
+}
+
+/* Form Controls */
+.gt-field-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.gt-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gt-label {
+  font-size: 10.5px;
+  font-weight: 700;
   color: var(--gt-hud-muted);
   text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.gt-clock-time {
-  font-family: monospace;
-  font-size: 22px;
-  font-weight: 700;
-  color: #10b981;
+.gt-select, .gt-input {
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--gt-hud-card-border);
+  background: var(--gt-hud-bg);
+  color: var(--gt-hud-text);
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.15s;
 }
 
-.gt-target {
+.gt-select:focus, .gt-input:focus {
+  border-color: var(--gt-accent);
+}
+
+.gt-btn-swap {
+  align-self: flex-end;
+  background: var(--gt-hud-card-bg);
+  border: 1px solid var(--gt-hud-card-border);
+  border-radius: 8px;
+  padding: 7px 9px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--gt-accent);
+  font-weight: 800;
+  transition: all 0.15s;
+  height: 33px;
+}
+
+.gt-btn-swap:hover {
+  background: var(--gt-accent);
+  color: #fff;
+}
+
+/* Priority Section */
+.gt-priority-box {
   background: var(--gt-hud-card-bg);
   border: 1px solid var(--gt-hud-card-border);
   border-radius: 10px;
-  padding: 10px;
-  font-size: 11.5px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.gt-target-title {
-  font-weight: 700;
+.gt-priority-head {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 3px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--gt-accent);
 }
 
-.gt-watchdog {
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid #f59e0b;
-  border-radius: 10px;
-  padding: 8px 10px;
-  font-size: 11px;
+.gt-prio-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  font-size: 11px;
 }
 
-.gt-btn {
+.gt-prio-tag {
+  width: 24px;
+  height: 20px;
+  background: var(--gt-accent);
+  color: #fff;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+/* Primary Action Buttons */
+.gt-action-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.gt-btn-primary {
   width: 100%;
   padding: 10px;
   border-radius: 10px;
   border: none;
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: 800;
+  font-size: 12.5px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -192,22 +442,198 @@
   transition: all 0.2s;
 }
 
-.gt-btn-grab {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+.gt-btn-arm {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
 }
 
-.gt-btn-grab:hover {
-  opacity: 0.92;
+.gt-btn-arm:hover {
+  opacity: 0.95;
   transform: translateY(-1px);
 }
 
-.gt-badge-stealth {
-  font-size: 10px;
-  color: #10b981;
+.gt-btn-grab {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.gt-btn-grab:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.gt-stealth-note {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
+  font-size: 10px;
+  color: var(--gt-success);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Schedules Tab Cards */
+.gt-sched-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gt-sched-card {
+  background: var(--gt-hud-card-bg);
+  border: 1px solid var(--gt-hud-card-border);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.15s;
+}
+
+.gt-sched-card:hover {
+  border-color: var(--gt-accent);
+}
+
+.gt-sched-info-title {
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--gt-accent);
+}
+
+.gt-sched-info-meta {
+  font-size: 10.5px;
+  color: var(--gt-hud-muted);
+  margin-top: 2px;
+}
+
+.gt-sched-alarm {
+  font-size: 10.5px;
+  color: var(--gt-success);
+  font-weight: 700;
+  margin-top: 3px;
+}
+
+.gt-btn-del {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  border-radius: 6px;
+  padding: 4px 7px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.gt-btn-del:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.gt-empty-state {
+  text-align: center;
+  padding: 24px 12px;
+  color: var(--gt-hud-muted);
+  font-size: 11.5px;
+}
+
+/* Vault (Fare & bKash) */
+.gt-fare-card {
+  background: var(--gt-hud-card-bg);
+  border: 1px solid var(--gt-hud-card-border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gt-fare-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+}
+
+.gt-total-box {
+  background: rgba(2, 132, 199, 0.1);
+  border: 1px solid var(--gt-accent);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.gt-total-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--gt-accent);
+}
+
+.gt-advice-note {
+  background: rgba(245, 158, 11, 0.1);
+  border-left: 3px solid #f59e0b;
+  padding: 6px 8px;
+  font-size: 10.5px;
+  color: #b45309;
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .gt-advice-note {
+  color: #fcd34d;
+}
+
+/* Universal Developer Credit Footer */
+.gt-dev-footer {
+  text-align: center;
+  padding: 8px 10px;
+  border-top: 1px solid var(--gt-hud-card-border);
+  background: var(--gt-hud-card-bg);
+  font-size: 10.5px;
+  color: var(--gt-hud-muted);
+}
+
+.gt-dev-footer strong {
+  color: var(--gt-accent);
+}
+
+.gt-dev-footer a {
+  color: var(--gt-hud-muted);
+  text-decoration: none;
+  display: block;
+  margin-top: 2px;
+  font-size: 9.5px;
+}
+
+.gt-dev-footer a:hover {
+  color: var(--gt-accent);
+}
+
+/* Floating Confirmation Toast Banner */
+#gtToastBanner {
+  position: fixed !important;
+  top: 16px !important;
+  left: 50% !important;
+  transform: translateX(-50%) translateY(-90px) !important;
+  z-index: 2147483647 !important;
+  background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+  color: #ffffff !important;
+  padding: 10px 18px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(2, 132, 199, 0.45) !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  pointer-events: none !important;
+  max-width: 90vw !important;
+  text-align: center !important;
+}
+
+#gtToastBanner.show {
+  transform: translateX(-50%) translateY(0) !important;
 }

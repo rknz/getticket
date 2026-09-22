@@ -50,15 +50,16 @@
 }
 
 body {
-  width: 520px;
-  max-width: 560px;
-  min-width: 480px;
-  height: 600px;
+  width: 440px;
+  max-width: 450px;
+  min-width: 430px;
+  height: 590px;
   max-height: 600px;
   margin: 0 auto;
   background: var(--bg-app);
   color: var(--text-main);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
   overflow: hidden;
   user-select: none;
   transition: background 0.2s, color 0.2s;
@@ -371,20 +372,23 @@ h1 {
 }
 
 .field-item label {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--text-muted);
-  letter-spacing: 0.1px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
 .field-item select, .field-item input {
   width: 100%;
+  height: 35px;
   background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: 7px;
-  padding: 6px 8px;
+  border: 1.5px solid var(--input-border);
+  border-radius: 8px;
+  padding: 6px 10px;
   color: var(--text-main);
-  font-size: 11px;
+  font-size: 12.5px;
+  font-weight: 600;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -771,12 +775,13 @@ h1 {
 
 .rule-row select {
   width: 100%;
+  height: 34px;
   background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: 6px;
-  padding: 6px 8px;
-  font-size: 11px;
-  font-weight: 500;
+  border: 1.5px solid var(--input-border);
+  border-radius: 7px;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text-main);
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;

@@ -1276,24 +1276,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('lblNoSchedSub').innerText = t.lblNoSchedSub;
 
     // Page 3: Priority Rules
-    document.getElementById('lblPrioTitle').innerText = t.lblPrioTitle;
-    document.getElementById('lblPrioHint').innerText = t.lblPrioHint;
-    document.getElementById('tagP1').innerText = t.tagP1;
-    document.getElementById('statP1').innerText = t.statP1;
-    document.getElementById('tagP2').innerText = t.tagP2;
-    document.getElementById('statP2').innerText = t.statP2;
-    document.getElementById('tagP3').innerText = t.tagP3;
-    document.getElementById('statP3').innerText = t.statP3;
-    document.getElementById('btnSavePrioText').innerText = t.btnSavePrioText;
+    if (document.getElementById('lblPrioTitle')) document.getElementById('lblPrioTitle').innerText = t.lblPrioTitle;
+    if (document.getElementById('lblPrioHint')) document.getElementById('lblPrioHint').innerText = t.lblPrioHint;
+    if (document.getElementById('tagP1')) document.getElementById('tagP1').innerText = t.tagP1;
+    if (document.getElementById('statP1')) document.getElementById('statP1').innerText = t.statP1;
+    if (document.getElementById('tagP2')) document.getElementById('tagP2').innerText = t.tagP2;
+    if (document.getElementById('statP2')) document.getElementById('statP2').innerText = t.statP2;
+    if (document.getElementById('tagP3')) document.getElementById('tagP3').innerText = t.tagP3;
+    if (document.getElementById('statP3')) document.getElementById('statP3').innerText = t.statP3;
+    const btnSavePrioTextEl = document.getElementById('btnSavePrioText');
+    if (btnSavePrioTextEl) btnSavePrioTextEl.innerText = t.btnSavePrioText;
 
     // Page 4: Vault
-    document.getElementById('lblVaultTitle').innerText = t.lblVaultTitle;
-    document.getElementById('lblVaultHint').innerText = t.lblVaultHint;
-    document.getElementById('lblVaultPhone').innerText = t.lblVaultPhone;
-    document.getElementById('lblVaultPass').innerText = t.lblVaultPass;
-    document.getElementById('lblVaultGuardHead').innerText = t.lblVaultGuardHead;
-    document.getElementById('lblVaultGuardDesc').innerText = t.lblVaultGuardDesc;
-    document.getElementById('btnSaveVaultText').innerText = t.btnSaveVaultText;
+    if (document.getElementById('lblVaultTitle')) document.getElementById('lblVaultTitle').innerText = t.lblVaultTitle;
+    if (document.getElementById('lblVaultHint')) document.getElementById('lblVaultHint').innerText = t.lblVaultHint;
+    if (document.getElementById('lblVaultPhone')) document.getElementById('lblVaultPhone').innerText = t.lblVaultPhone;
+    if (document.getElementById('lblVaultPass')) document.getElementById('lblVaultPass').innerText = t.lblVaultPass;
+    if (document.getElementById('lblVaultGuardHead')) document.getElementById('lblVaultGuardHead').innerText = t.lblVaultGuardHead;
+    if (document.getElementById('lblVaultGuardDesc')) document.getElementById('lblVaultGuardDesc').innerText = t.lblVaultGuardDesc;
+    const btnSaveVaultTextEl = document.getElementById('btnSaveVaultText');
+    if (btnSaveVaultTextEl) btnSaveVaultTextEl.innerText = t.btnSaveVaultText;
 
     populateDropdowns();
     onRouteChanged();
@@ -1410,6 +1412,40 @@ document.addEventListener('DOMContentLoaded', () => {
     onRouteChanged();
   });
   document.getElementById('passengerCount').addEventListener('change', updateCalculations);
+
+  // Cascading Priority Interactivity & Auto-Sync
+  ['p1Class', 'p1Dir', 'p2Class', 'p2Dir', 'p3Class', 'p3Dir'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', () => {
+        if (id === 'p1Class') {
+          const prefEl = document.getElementById('prefClass');
+          if (prefEl && prefEl.value !== el.value) {
+            prefEl.value = el.value;
+          }
+          updateCalculations();
+        }
+        // Auto-save priority configuration
+        const p1C = document.getElementById('p1Class')?.value || 'S_CHAIR';
+        const p1D = document.getElementById('p1Dir')?.value || 'straight';
+        const p2C = document.getElementById('p2Class')?.value || 'SNIGDHA';
+        const p2D = document.getElementById('p2Dir')?.value || 'middle';
+        const p3C = document.getElementById('p3Class')?.value || 'F_CHAIR';
+        const p3D = document.getElementById('p3Dir')?.value || 'any';
+        const priorities = [
+          { level: 1, classCode: p1C, dir: p1D, coach: 'ANY' },
+          { level: 2, classCode: p2C, dir: p2D, coach: 'ANY' },
+          { level: 3, classCode: p3C, dir: p3D, coach: 'ANY' }
+        ];
+        if (chrome?.storage?.local) {
+          chrome.storage.local.get(['geTicketConfig'], (res) => {
+            const full = { ...(res.geTicketConfig || {}), priorities };
+            chrome.storage.local.set({ geTicketConfig: full });
+          });
+        }
+      });
+    }
+  });
 
   // Theme & Language Buttons
   document.getElementById('btnPopTheme').addEventListener('click', () => {

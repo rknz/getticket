@@ -329,89 +329,545 @@
     setInterval(initPaymentAutoAssister, 800);
   }
 
+  const STATIONS_MAP = [
+    { en: "Dhaka", bn: "ঢাকা" },
+    { en: "Chattogram", bn: "চট্টগ্রাম" },
+    { en: "Jamalpur", bn: "জামালপুর" },
+    { en: "Mymensingh", bn: "ময়মনসিংহ" },
+    { en: "Cox's Bazar", bn: "কক্সবাজার" },
+    { en: "Sylhet", bn: "সিলেট" },
+    { en: "Sreemangal", bn: "শ্রীমঙ্গল" },
+    { en: "Rajshahi", bn: "রাজশাহী" },
+    { en: "Khulna", bn: "খুলনা" },
+    { en: "Rangpur", bn: "রংপুর" },
+    { en: "Dinajpur", bn: "দিনাজপুর" },
+    { en: "Panchagarh", bn: "পঞ্চগড়" },
+    { en: "Benapole", bn: "বেনাপোল" },
+    { en: "Ishwardi", bn: "ঈশ্বরদী" },
+    { en: "Bogra", bn: "বগুড়া" },
+    { en: "Cumilla", bn: "কুমিল্লা" },
+    { en: "Feni", bn: "ফেনী" }
+  ];
+
+  const TRAINS_MAP = {
+    "Dhaka-Jamalpur": ["Teesta Express", "Brahmaputra Express", "Jamuna Express", "Agnibina Express"],
+    "Jamalpur-Dhaka": ["Teesta Express", "Brahmaputra Express", "Jamuna Express", "Agnibina Express"],
+    "Dhaka-Chattogram": ["Suborno Express", "Sonar Bangla Express", "Mahanagar Provati", "Mahanagar Godhuli", "Turna Express", "Chattala Express"],
+    "Chattogram-Dhaka": ["Suborno Express", "Sonar Bangla Express", "Mahanagar Provati", "Mahanagar Godhuli", "Turna Express", "Chattala Express"],
+    "Dhaka-Sylhet": ["Parabat Express", "Jayantika Express", "Upaban Express", "Kalani Express"],
+    "Sylhet-Dhaka": ["Parabat Express", "Jayantika Express", "Upaban Express", "Kalani Express"],
+    "Dhaka-Rajshahi": ["Silkcity Express", "Padma Express", "Dhumketu Express", "Banalata Express"],
+    "Rajshahi-Dhaka": ["Silkcity Express", "Padma Express", "Dhumketu Express", "Banalata Express"],
+    "Dhaka-Cox's Bazar": ["Cox's Bazar Express", "Parjatak Express"],
+    "Cox's Bazar-Dhaka": ["Cox's Bazar Express", "Parjatak Express"]
+  };
+
+  const FARES = {
+    "S_CHAIR": 205,
+    "SHOVON": 170,
+    "SNIGDHA": 395,
+    "F_CHAIR": 275,
+    "AC_S": 475,
+    "AC_B": 710
+  };
+
+  function showHudToast(message) {
+    let toast = document.getElementById('gtToastBanner');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'gtToastBanner';
+      document.body.appendChild(toast);
+    }
+    toast.innerText = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3800);
+  }
+
   function injectHud() {
     if (document.getElementById('geticket-hud-root')) return;
 
-    const logoUrl = chrome?.runtime?.getURL ? chrome.runtime.getURL('icons/icon48.png') : '';
+    const logoUrl = chrome?.runtime?.getURL ? chrome.runtime.getURL('icons/logo_mark_transparent.png') : '';
     const root = document.createElement('div');
     root.id = 'geticket-hud-root';
     document.documentElement.setAttribute('data-theme', currentTheme);
 
+    const todayStr = new Date().toISOString().split('T')[0];
+
     root.innerHTML = `
-      <div class="gt-bubble" id="gtBubble" title="GeTicket Pro">
-        <img src="${logoUrl}" alt="GeTicket Pro" style="width: 32px; height: 32px; object-fit: contain; pointer-events: none; display: block;">
+      <div class="gt-bubble" id="gtBubble" title="GeTicket Pro Control">
+        <div class="gt-bubble-pulse"></div>
+        <img src="${logoUrl}" alt="GeTicket Pro">
       </div>
+
       <div class="gt-panel" id="gtPanel">
+        <!-- Header -->
         <div class="gt-header">
-          <div class="gt-title" style="display: flex; align-items: center; gap: 7px;">
-            <img src="${logoUrl}" alt="GeTicket Pro" style="width: 20px; height: 20px; object-fit: contain; display: block;">
-            <span id="gtMainTitle">GeTicket Pro</span>
+          <div class="gt-title-box">
+            <img src="${logoUrl}" alt="Logo">
+            <span class="gt-title-text" id="gtTitleText">GeTicket Pro</span>
+            <span class="gt-version-pill">v2.6</span>
           </div>
-          <div class="gt-ctrl-btns">
-            <button class="gt-icon-btn" id="gtLangToggle">EN</button>
-            <button class="gt-icon-btn" id="gtThemeToggle">☀️</button>
-            <button class="gt-icon-btn" id="gtCloseBtn">&times;</button>
-          </div>
-        </div>
-
-        <div class="gt-clock">
-          <div class="gt-clock-label" id="gtClockLabel">RAILWAY SERVER TIME (COUNTDOWN)</div>
-          <div class="gt-clock-time" id="gtCountdown">07:59:58.750</div>
-        </div>
-
-        <div class="gt-target">
-          <div class="gt-target-title">
-            <span id="gtTargetTitle">🎯 Target Armed</span>
-            <span style="color: #10b981;" id="gtPax">${config.passengers} Seats</span>
-          </div>
-          <div style="color: var(--gt-hud-muted); font-size: 11px;" id="gtTargetDesc">
-            ${config.routeFrom} ➔ ${config.routeTo} | ${config.trainName || 'Teesta'}
+          <div class="gt-header-tools">
+            <button class="gt-ctrl-btn" id="gtLangToggle">EN</button>
+            <button class="gt-ctrl-btn" id="gtThemeToggle">☀️</button>
+            <button class="gt-close-btn" id="gtCloseBtn">&times;</button>
           </div>
         </div>
 
-        <div class="gt-watchdog">
-          <span style="font-size: 16px;">📡</span>
-          <div>
-            <div style="color: #f59e0b; font-weight: 600;" id="gtWatchdogTitle">Continuous Seat Watchdog</div>
-            <div style="color: var(--gt-hud-muted); font-size: 10px;" id="gtWatchdogDesc">Monitoring 1-5m & 15m released seats...</div>
-          </div>
+        <!-- Clock Countdown Strip -->
+        <div class="gt-clock-strip">
+          <span class="gt-clock-label" id="gtClockLabel">RAILWAY SERVER TIME</span>
+          <span class="gt-clock-val" id="gtCountdown">07:59:58.750</span>
         </div>
 
-        <button class="gt-btn gt-btn-grab" id="gtGrabBtn">
-          ⚡ <span id="gtGrabText">Instant Fast-Grab (Lock)</span>
-        </button>
+        <!-- 3 Clean Navigation Tabs -->
+        <div class="gt-tabs-bar">
+          <button class="gt-tab-nav active" data-tab="setup" id="gtTabNavSetup">
+            🎯 <span id="gtTabTitleSetup">Setup</span>
+          </button>
+          <button class="gt-tab-nav" data-tab="schedules" id="gtTabNavSchedules">
+            📅 <span id="gtTabTitleSchedules">Lists</span>
+            <span class="gt-nav-badge" id="gtNavBadge">0</span>
+          </button>
+          <button class="gt-tab-nav" data-tab="vault" id="gtTabNavVault">
+            💳 <span id="gtTabTitleVault">Vault</span>
+          </button>
+        </div>
 
-        <div class="gt-badge-stealth" id="gtStealthBadge">
-          <span>🛡️ 100% Humanized Stealth Active</span>
+        <!-- Scrollable Content Body -->
+        <div class="gt-body">
+          
+          <!-- TAB 1: SETUP -->
+          <div class="gt-pane active" id="gtPaneSetup">
+            <!-- Route -->
+            <div class="gt-field-row">
+              <div class="gt-col">
+                <label class="gt-label" id="gtLblFrom">From Station</label>
+                <select class="gt-select" id="gtSelectFrom"></select>
+              </div>
+              <button class="gt-btn-swap" id="gtBtnSwap" title="Swap Stations">⇄</button>
+              <div class="gt-col">
+                <label class="gt-label" id="gtLblTo">To Station</label>
+                <select class="gt-select" id="gtSelectTo"></select>
+              </div>
+            </div>
+
+            <!-- Date & Passengers -->
+            <div class="gt-field-row">
+              <div class="gt-col">
+                <label class="gt-label" id="gtLblDate">Journey Date</label>
+                <input type="date" class="gt-input" id="gtInputDate" value="${todayStr}" min="${todayStr}">
+              </div>
+              <div class="gt-col">
+                <label class="gt-label" id="gtLblPax">Passengers</label>
+                <select class="gt-select" id="gtSelectPax">
+                  <option value="1">1 Person</option>
+                  <option value="2" selected>2 Persons</option>
+                  <option value="3">3 Persons</option>
+                  <option value="4">4 Persons</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Train & Class -->
+            <div class="gt-field-row">
+              <div class="gt-col">
+                <label class="gt-label" id="gtLblTrain">Train Name</label>
+                <select class="gt-select" id="gtSelectTrain"></select>
+              </div>
+              <div class="gt-col">
+                <label class="gt-label" id="gtLblClass">Coach Class</label>
+                <select class="gt-select" id="gtSelectClass">
+                  <option value="S_CHAIR">Shovon Chair</option>
+                  <option value="SNIGDHA">Snigdha AC</option>
+                  <option value="F_CHAIR">1st Class Chair</option>
+                  <option value="AC_S">AC Seat</option>
+                  <option value="AC_B">AC Berth</option>
+                  <option value="SHOVON">Shovon</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Cascading Priority Rules -->
+            <div class="gt-priority-box">
+              <div class="gt-priority-head">
+                <span id="gtPrioTitle">🎯 Cascading Priority Chain</span>
+                <span style="font-size: 9.5px; color: var(--gt-hud-muted);" id="gtPrioHint">Auto-Shift 1ms</span>
+              </div>
+              <div class="gt-prio-row">
+                <div class="gt-prio-tag">P1</div>
+                <select class="gt-select" id="gtP1Class" style="flex: 1.2;"></select>
+                <select class="gt-select" id="gtP1Dir" style="flex: 1;">
+                  <option value="straight">Straight Facing</option>
+                  <option value="middle">Middle Seats</option>
+                  <option value="any">Any Available</option>
+                </select>
+              </div>
+              <div class="gt-prio-row">
+                <div class="gt-prio-tag" style="background: #f59e0b;">P2</div>
+                <select class="gt-select" id="gtP2Class" style="flex: 1.2;"></select>
+                <select class="gt-select" id="gtP2Dir" style="flex: 1;">
+                  <option value="middle">Middle Seats</option>
+                  <option value="straight">Straight Facing</option>
+                  <option value="any">Any Available</option>
+                </select>
+              </div>
+              <div class="gt-prio-row">
+                <div class="gt-prio-tag" style="background: #64748b;">P3</div>
+                <select class="gt-select" id="gtP3Class" style="flex: 1.2;"></select>
+                <select class="gt-select" id="gtP3Dir" style="flex: 1;">
+                  <option value="any" selected>Any Available</option>
+                  <option value="straight">Straight Facing</option>
+                  <option value="middle">Middle Seats</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="gt-action-btns">
+              <button class="gt-btn-primary gt-btn-arm" id="gtBtnArmSchedule">
+                ⏰ <span id="gtArmText">Arm Advance Schedule & Watchdog</span>
+              </button>
+              <button class="gt-btn-primary gt-btn-grab" id="gtBtnGrabNow">
+                ⚡ <span id="gtGrabText">Instant Fast-Grab (Lock)</span>
+              </button>
+            </div>
+
+            <div class="gt-stealth-note" id="gtStealthNote">
+              <span>🛡️ 100% Humanized Stealth Active • Zero Account Ban</span>
+            </div>
+          </div>
+
+          <!-- TAB 2: LISTS (SCHEDULES) -->
+          <div class="gt-pane" id="gtPaneSchedules">
+            <div class="gt-sched-list" id="gtSchedList"></div>
+            <div class="gt-empty-state" id="gtEmptySched">
+              <div style="font-size: 26px; margin-bottom: 6px;">📅</div>
+              <b id="gtEmptyHead">No active schedules</b>
+              <p style="margin-top: 4px;" id="gtEmptyDesc">Set your route and click 'Arm Advance Schedule' on the Setup tab to activate automated booking.</p>
+            </div>
+          </div>
+
+          <!-- TAB 3: VAULT (FARE & BKASH) -->
+          <div class="gt-pane" id="gtPaneVault">
+            <div class="gt-fare-card">
+              <div style="font-weight: 800; color: var(--gt-accent);" id="gtVaultHead">💳 Fare & bKash Summary</div>
+              <div class="gt-fare-row">
+                <span id="gtLblBaseFare">Base Ticket Fare:</span>
+                <span id="gtValBaseFare">৳205 × 2 = ৳410</span>
+              </div>
+              <div class="gt-fare-row">
+                <span id="gtLblStationFee">Railway Charge (৳20):</span>
+                <span id="gtValStationFee">৳40</span>
+              </div>
+              <div class="gt-fare-row">
+                <span id="gtLblBkashFee">bKash Charge (1.5%):</span>
+                <span id="gtValBkashFee">৳7</span>
+              </div>
+              <div class="gt-total-box">
+                <div>
+                  <div style="font-size: 10px; color: var(--gt-hud-muted);" id="gtLblTotalKeep">TOTAL TO KEEP IN BKASH</div>
+                  <div class="gt-total-val" id="gtValTotalFare">৳457</div>
+                </div>
+                <span style="background: #10b981; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px;">READY</span>
+              </div>
+              <div class="gt-advice-note" id="gtAdviceNote">
+                💡 Keep at least ৳460 in bKash before 8:00 AM!
+              </div>
+            </div>
+
+            <div style="background: var(--gt-hud-card-bg); border: 1px solid var(--gt-hud-card-border); border-radius: 10px; padding: 10px; font-size: 11px;">
+              <div style="color: #10b981; font-weight: 700; margin-bottom: 4px;">✓ Anti-Logout Guard Active</div>
+              <div style="color: var(--gt-hud-muted); font-size: 10px;">Automated 5-minute seat hold detection, bKash auto-selector, and OTP auto-focus active on railway checkout.</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Universal Developer Credit Footer -->
+        <div class="gt-dev-footer">
+          <div>Designed &amp; Developed by <strong>Rukonuzzaman</strong></div>
+          <a href="mailto:rukonuzzaman.dev@gmail.com">✉ rukonuzzaman.dev@gmail.com</a>
         </div>
       </div>
     `;
 
     document.body.appendChild(root);
 
+    // Wire Up Elements
     const bubble = root.querySelector('#gtBubble');
     const panel = root.querySelector('#gtPanel');
     const closeBtn = root.querySelector('#gtCloseBtn');
-    const grabBtn = root.querySelector('#gtGrabBtn');
     const langBtn = root.querySelector('#gtLangToggle');
     const themeBtn = root.querySelector('#gtThemeToggle');
+    const selFrom = root.querySelector('#gtSelectFrom');
+    const selTo = root.querySelector('#gtSelectTo');
+    const btnSwap = root.querySelector('#gtBtnSwap');
+    const inputDate = root.querySelector('#gtInputDate');
+    const selPax = root.querySelector('#gtSelectPax');
+    const selTrain = root.querySelector('#gtSelectTrain');
+    const selClass = root.querySelector('#gtSelectClass');
+    const btnArm = root.querySelector('#gtBtnArmSchedule');
+    const btnGrab = root.querySelector('#gtBtnGrabNow');
 
-    bubble.addEventListener('click', () => panel.classList.toggle('open'));
+    // Populate Stations
+    function populateStations() {
+      selFrom.innerHTML = '';
+      selTo.innerHTML = '';
+      STATIONS_MAP.forEach(s => {
+        const text = currentLang === 'bn' ? s.bn : s.en;
+        selFrom.appendChild(new Option(text, s.en));
+        selTo.appendChild(new Option(text, s.en));
+      });
+      selFrom.value = config.routeFrom || "Dhaka";
+      selTo.value = config.routeTo || "Jamalpur";
+
+      // Classes
+      const classOpts = [
+        { val: "S_CHAIR", en: "Shovon Chair", bn: "শোভন চেয়ার" },
+        { val: "SNIGDHA", en: "Snigdha AC", bn: "স্নিগ্ধা এসি" },
+        { val: "F_CHAIR", en: "1st Class Chair", bn: "১ম শ্রেণি চেয়ার" },
+        { val: "AC_S", en: "AC Seat", bn: "এসি সিট" },
+        { val: "AC_B", en: "AC Berth", bn: "এসি বার্থ" },
+        { val: "SHOVON", en: "Shovon", bn: "সাধারণ শোভন" }
+      ];
+
+      [selClass, root.querySelector('#gtP1Class'), root.querySelector('#gtP2Class'), root.querySelector('#gtP3Class')].forEach(sel => {
+        if (!sel) return;
+        const cur = sel.value;
+        sel.innerHTML = '';
+        classOpts.forEach(c => {
+          sel.appendChild(new Option(currentLang === 'bn' ? c.bn : c.en, c.val));
+        });
+        if (cur) sel.value = cur;
+      });
+
+      if (!root.querySelector('#gtP1Class').value) root.querySelector('#gtP1Class').value = 'S_CHAIR';
+      if (!root.querySelector('#gtP2Class').value) root.querySelector('#gtP2Class').value = 'SNIGDHA';
+      if (!root.querySelector('#gtP3Class').value) root.querySelector('#gtP3Class').value = 'F_CHAIR';
+
+      updateTrains();
+    }
+
+    function updateTrains() {
+      const routeKey = `${selFrom.value}-${selTo.value}`;
+      const revRouteKey = `${selTo.value}-${selFrom.value}`;
+      const list = TRAINS_MAP[routeKey] || TRAINS_MAP[revRouteKey] || ["Teesta Express", "Brahmaputra Express", "Jamuna Express"];
+      selTrain.innerHTML = '';
+      list.forEach(tr => {
+        selTrain.appendChild(new Option(tr, tr));
+      });
+      if (config.trainName && list.includes(config.trainName)) {
+        selTrain.value = config.trainName;
+      }
+      updateFareAndConfig();
+    }
+
+    function updateFareAndConfig() {
+      config.routeFrom = selFrom.value;
+      config.routeTo = selTo.value;
+      config.targetDate = inputDate.value;
+      config.passengers = parseInt(selPax.value, 10) || 2;
+      config.trainName = selTrain.value;
+      const chosenClass = selClass.value || "S_CHAIR";
+
+      const unit = FARES[chosenClass] || 205;
+      const base = unit * config.passengers;
+      const serv = 20 * config.passengers;
+      const sub = base + serv;
+      const fee = Math.round(sub * 0.015);
+      const total = sub + fee;
+      const rec = Math.ceil((total + 5) / 10) * 10;
+
+      const valBase = root.querySelector('#gtValBaseFare');
+      const valServ = root.querySelector('#gtValStationFee');
+      const valFee = root.querySelector('#gtValBkashFee');
+      const valTotal = root.querySelector('#gtValTotalFare');
+      const advice = root.querySelector('#gtAdviceNote');
+
+      if (valBase) valBase.innerText = `৳${unit} × ${config.passengers} = ৳${base}`;
+      if (valServ) valServ.innerText = `৳${serv}`;
+      if (valFee) valFee.innerText = `৳${fee}`;
+      if (valTotal) valTotal.innerText = `৳${total}`;
+      if (advice) {
+        advice.innerText = currentLang === 'bn' 
+          ? `💡 সকাল ৮:০০ টার আগে বিকাশে অন্তত ৳${rec} ব্যালেন্স রাখুন!` 
+          : `💡 Keep at least ৳${rec} in bKash before 8:00 AM!`;
+      }
+    }
+
+    function renderActiveSchedules() {
+      if (!chrome?.storage?.local) return;
+      chrome.storage.local.get(['scheduledBookings'], (res) => {
+        const bookings = Array.isArray(res.scheduledBookings) ? res.scheduledBookings : [];
+        const container = root.querySelector('#gtSchedList');
+        const empty = root.querySelector('#gtEmptySched');
+        const badge = root.querySelector('#gtNavBadge');
+
+        if (badge) badge.innerText = bookings.length;
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (bookings.length === 0) {
+          if (empty) empty.style.display = 'block';
+          return;
+        }
+
+        if (empty) empty.style.display = 'none';
+
+        bookings.forEach(b => {
+          const card = document.createElement('div');
+          card.className = 'gt-sched-card';
+          card.innerHTML = `
+            <div>
+              <div class="gt-sched-info-title">🚄 ${b.trainName}</div>
+              <div class="gt-sched-info-meta">📍 ${b.from} ➔ ${b.to}</div>
+              <div class="gt-sched-info-meta">📅 ${b.date} • 👥 ${b.passengers || 2} Pax • 💺 ${b.classCode || 'S_CHAIR'}</div>
+              <div class="gt-sched-alarm">⏰ Alarm: ${b.alarmTime || '07:50 AM'} (Armed)</div>
+            </div>
+            <button class="gt-btn-del" data-id="${b.id}" title="Delete">🗑️</button>
+          `;
+
+          card.querySelector('.gt-btn-del').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const updated = bookings.filter(item => item.id !== b.id);
+            chrome.storage.local.set({ scheduledBookings: updated }, () => {
+              renderActiveSchedules();
+              showHudToast(currentLang === 'bn' ? '✓ শিডিউল মুছে ফেলা হয়েছে' : '✓ Schedule deleted');
+            });
+          });
+
+          container.appendChild(card);
+        });
+      });
+    }
+
+    // Toggle Open/Close
+    bubble.addEventListener('click', () => {
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) renderActiveSchedules();
+    });
     closeBtn.addEventListener('click', () => panel.classList.remove('open'));
-    grabBtn.addEventListener('click', () => executeCascadingGrab());
 
+    // Tabs Switcher
+    root.querySelectorAll('.gt-tab-nav').forEach(btn => {
+      btn.addEventListener('click', () => {
+        root.querySelectorAll('.gt-tab-nav').forEach(b => b.classList.remove('active'));
+        root.querySelectorAll('.gt-pane').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        if (tab === 'setup') root.querySelector('#gtPaneSetup').classList.add('active');
+        if (tab === 'schedules') {
+          root.querySelector('#gtPaneSchedules').classList.add('active');
+          renderActiveSchedules();
+        }
+        if (tab === 'vault') root.querySelector('#gtPaneVault').classList.add('active');
+      });
+    });
+
+    // Station Changes & Swap
+    selFrom.addEventListener('change', updateTrains);
+    selTo.addEventListener('change', updateTrains);
+    btnSwap.addEventListener('click', () => {
+      const temp = selFrom.value;
+      selFrom.value = selTo.value;
+      selTo.value = temp;
+      updateTrains();
+    });
+
+    inputDate.addEventListener('change', updateFareAndConfig);
+    selPax.addEventListener('change', updateFareAndConfig);
+    selTrain.addEventListener('change', updateFareAndConfig);
+    selClass.addEventListener('change', () => {
+      const p1 = root.querySelector('#gtP1Class');
+      if (p1) p1.value = selClass.value;
+      updateFareAndConfig();
+    });
+
+    // Priority Sync
+    root.querySelector('#gtP1Class')?.addEventListener('change', (e) => {
+      if (selClass) selClass.value = e.target.value;
+      updateFareAndConfig();
+    });
+
+    // Language Toggle
     langBtn.addEventListener('click', () => {
       currentLang = currentLang === 'en' ? 'bn' : 'en';
       if (chrome?.storage?.local) chrome.storage.local.set({ gt_lang: currentLang });
       applyThemeAndLang();
+      populateStations();
     });
 
+    // Theme Toggle
     themeBtn.addEventListener('click', () => {
       currentTheme = currentTheme === 'light' ? 'dark' : 'light';
       if (chrome?.storage?.local) chrome.storage.local.set({ gt_theme: currentTheme });
       applyThemeAndLang();
     });
 
+    // Arm Schedule Button
+    btnArm.addEventListener('click', () => {
+      playAlertSound();
+      const p1C = root.querySelector('#gtP1Class')?.value || selClass.value || 'S_CHAIR';
+      const p1D = root.querySelector('#gtP1Dir')?.value || 'straight';
+      const p2C = root.querySelector('#gtP2Class')?.value || 'SNIGDHA';
+      const p2D = root.querySelector('#gtP2Dir')?.value || 'middle';
+      const p3C = root.querySelector('#gtP3Class')?.value || 'F_CHAIR';
+      const p3D = root.querySelector('#gtP3Dir')?.value || 'any';
+
+      const isWest = ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'].includes(selTo.value);
+      const alarmTime = isWest ? '07:50 AM' : '01:50 PM';
+
+      const newBooking = {
+        id: 'geticket_schedule_' + Date.now(),
+        from: selFrom.value,
+        to: selTo.value,
+        date: inputDate.value,
+        passengers: parseInt(selPax.value, 10) || 2,
+        trainName: selTrain.value,
+        classCode: selClass.value,
+        alarmTime,
+        zone: isWest ? 'west' : 'east',
+        priorities: [
+          { level: 1, classCode: p1C, dir: p1D, coach: 'ANY' },
+          { level: 2, classCode: p2C, dir: p2D, coach: 'ANY' },
+          { level: 3, classCode: p3C, dir: p3D, coach: 'ANY' }
+        ],
+        createdAt: Date.now()
+      };
+
+      if (chrome?.storage?.local) {
+        chrome.storage.local.get(['scheduledBookings'], (res) => {
+          const list = Array.isArray(res.scheduledBookings) ? res.scheduledBookings : [];
+          list.unshift(newBooking);
+          chrome.storage.local.set({ scheduledBookings: list }, () => {
+            renderActiveSchedules();
+            const msg = currentLang === 'bn' 
+              ? `🎉 সফল! (${newBooking.trainName}) ট্রেনের অগ্রিম শিডিউল সক্রিয় করা হয়েছে!` 
+              : `🎉 Success! (${newBooking.trainName}) Schedule Armed!`;
+            showHudToast(msg);
+            // Switch to Lists tab
+            root.querySelector('#gtTabNavSchedules')?.click();
+          });
+        });
+      }
+    });
+
+    // Instant Grab Button
+    btnGrab.addEventListener('click', () => {
+      playAlertSound();
+      config.trainName = selTrain.value;
+      config.passengers = parseInt(selPax.value, 10) || 2;
+      config.priorities = [
+        { level: 1, classCode: root.querySelector('#gtP1Class')?.value || selClass.value, dir: root.querySelector('#gtP1Dir')?.value || 'straight', coach: 'ANY' },
+        { level: 2, classCode: root.querySelector('#gtP2Class')?.value || 'SNIGDHA', dir: root.querySelector('#gtP2Dir')?.value || 'middle', coach: 'ANY' },
+        { level: 3, classCode: root.querySelector('#gtP3Class')?.value || 'F_CHAIR', dir: root.querySelector('#gtP3Dir')?.value || 'any', coach: 'ANY' }
+      ];
+      showHudToast(currentLang === 'bn' ? '⚡ ইন্সট্যান্ট সিট খোঁজা ও লক শুরু হয়েছে...' : '⚡ Instant Seat Grab in progress...');
+      executeCascadingGrab();
+    });
+
+    populateStations();
     setInterval(updateClock, 50);
     startWatchdog();
     applyThemeAndLang();
@@ -424,41 +880,44 @@
 
     const themeBtn = root.querySelector('#gtThemeToggle');
     const langBtn = root.querySelector('#gtLangToggle');
-    const mainTitle = root.querySelector('#gtMainTitle');
+    const titleText = root.querySelector('#gtTitleText');
     const clockLabel = root.querySelector('#gtClockLabel');
-    const targetTitle = root.querySelector('#gtTargetTitle');
-    const grabText = root.querySelector('#gtGrabText');
-    const watchdogTitle = root.querySelector('#gtWatchdogTitle');
-    const watchdogDesc = root.querySelector('#gtWatchdogDesc');
-    const stealthBadge = root.querySelector('#gtStealthBadge');
 
     if (themeBtn) themeBtn.innerText = currentTheme === 'light' ? '☀️' : '🌙';
     if (langBtn) langBtn.innerText = currentLang === 'en' ? 'EN' : 'বাং';
 
     if (currentLang === 'bn') {
-      if (mainTitle) mainTitle.innerText = 'জি-টিকিট প্রো';
+      if (titleText) titleText.innerText = 'জি-টিকিট প্রো';
       if (clockLabel) clockLabel.innerText = 'সার্ভার টাইম (০৮:০০:০০ কাউন্টডাউন)';
-      if (targetTitle) targetTitle.innerText = '🎯 টার্গেট প্রস্তুত';
-      if (grabText) grabText.innerText = 'তাত্ক্ষণিক ফাস্ট-গ্র্যাব (লক)';
-      if (watchdogTitle) watchdogTitle.innerText = 'কন্টিনিউয়াস সিট ওয়াচডগ';
-      if (watchdogDesc) watchdogDesc.innerText = '১-৫ মিনিট ও ১৫ মিনিটের রিলিজ সিটের অপেক্ষায়...';
-      if (stealthBadge) stealthBadge.innerHTML = '<span>🛡️ ১০০% হিউম্যানাইজড শিল্ড সক্রিয়</span>';
+      if (root.querySelector('#gtTabTitleSetup')) root.querySelector('#gtTabTitleSetup').innerText = 'সেটআপ';
+      if (root.querySelector('#gtTabTitleSchedules')) root.querySelector('#gtTabTitleSchedules').innerText = 'শিডিউল';
+      if (root.querySelector('#gtTabTitleVault')) root.querySelector('#gtTabTitleVault').innerText = 'ভল্ট';
+      if (root.querySelector('#gtLblFrom')) root.querySelector('#gtLblFrom').innerText = 'যাত্রার স্টেশন';
+      if (root.querySelector('#gtLblTo')) root.querySelector('#gtLblTo').innerText = 'গন্তব্য স্টেশন';
+      if (root.querySelector('#gtLblDate')) root.querySelector('#gtLblDate').innerText = 'যাত্রার তারিখ';
+      if (root.querySelector('#gtLblPax')) root.querySelector('#gtLblPax').innerText = 'যাত্রী সংখ্যা';
+      if (root.querySelector('#gtLblTrain')) root.querySelector('#gtLblTrain').innerText = 'ট্রেনের নাম';
+      if (root.querySelector('#gtLblClass')) root.querySelector('#gtLblClass').innerText = 'বসার শ্রেণি';
+      if (root.querySelector('#gtArmText')) root.querySelector('#gtArmText').innerText = 'অগ্রিম শিডিউল ও অ্যালার্ম সক্রিয় করুন';
+      if (root.querySelector('#gtGrabText')) root.querySelector('#gtGrabText').innerText = 'তাত্ক্ষণিক ফাস্ট-গ্র্যাব (লক)';
+      if (root.querySelector('#gtEmptyHead')) root.querySelector('#gtEmptyHead').innerText = 'কোনো সক্রিয় শিডিউল নেই';
+      if (root.querySelector('#gtEmptyDesc')) root.querySelector('#gtEmptyDesc').innerText = 'সেটআপ ট্যাব থেকে অগ্রিম টিকিট শিডিউল যুক্ত করলে অ্যালার্ম বাজবে।';
     } else {
-      if (mainTitle) mainTitle.innerText = 'GeTicket Pro';
-      if (clockLabel) clockLabel.innerText = 'RAILWAY SERVER TIME (COUNTDOWN)';
-      if (targetTitle) targetTitle.innerText = '🎯 Target Armed';
-      if (grabText) grabText.innerText = 'Instant Fast-Grab (Lock)';
-      if (watchdogTitle) watchdogTitle.innerText = 'Continuous Seat Watchdog';
-      if (watchdogDesc) watchdogDesc.innerText = 'Monitoring 1-5m & 15m released seats...';
-      if (stealthBadge) stealthBadge.innerHTML = '<span>🛡️ 100% Humanized Stealth Active</span>';
-    }
-  }
-
-  function setHudStatus(msg, color) {
-    const el = document.getElementById('gtWatchdogTitle');
-    if (el) {
-      el.innerText = msg;
-      if (color) el.style.color = color;
+      if (titleText) titleText.innerText = 'GeTicket Pro';
+      if (clockLabel) clockLabel.innerText = 'RAILWAY SERVER TIME';
+      if (root.querySelector('#gtTabTitleSetup')) root.querySelector('#gtTabTitleSetup').innerText = 'Setup';
+      if (root.querySelector('#gtTabTitleSchedules')) root.querySelector('#gtTabTitleSchedules').innerText = 'Lists';
+      if (root.querySelector('#gtTabTitleVault')) root.querySelector('#gtTabTitleVault').innerText = 'Vault';
+      if (root.querySelector('#gtLblFrom')) root.querySelector('#gtLblFrom').innerText = 'From Station';
+      if (root.querySelector('#gtLblTo')) root.querySelector('#gtLblTo').innerText = 'To Station';
+      if (root.querySelector('#gtLblDate')) root.querySelector('#gtLblDate').innerText = 'Journey Date';
+      if (root.querySelector('#gtLblPax')) root.querySelector('#gtLblPax').innerText = 'Passengers';
+      if (root.querySelector('#gtLblTrain')) root.querySelector('#gtLblTrain').innerText = 'Train Name';
+      if (root.querySelector('#gtLblClass')) root.querySelector('#gtLblClass').innerText = 'Coach Class';
+      if (root.querySelector('#gtArmText')) root.querySelector('#gtArmText').innerText = 'Arm Advance Schedule & Watchdog';
+      if (root.querySelector('#gtGrabText')) root.querySelector('#gtGrabText').innerText = 'Instant Fast-Grab (Lock)';
+      if (root.querySelector('#gtEmptyHead')) root.querySelector('#gtEmptyHead').innerText = 'No active schedules';
+      if (root.querySelector('#gtEmptyDesc')) root.querySelector('#gtEmptyDesc').innerText = 'Set your route and click Arm Advance Schedule on Setup tab.';
     }
   }
 
@@ -480,8 +939,8 @@
       if (req.classCode && config.priorities?.[0]) config.priorities[0].classCode = req.classCode;
       
       playAlertSound();
-      setHudStatus(currentLang === 'bn' ? '⚡ ইন্সট্যান্ট সিট খোঁজা হচ্ছে...' : '⚡ Instant Seat Grab in progress...', '#0284c7');
-      attemptCascadingGrab();
+      showHudToast(currentLang === 'bn' ? '⚡ ইন্সট্যান্ট সিট খোঁজা হচ্ছে...' : '⚡ Instant Seat Grab in progress...');
+      executeCascadingGrab();
       sendResponse({ success: true, message: 'Instant Grab Started' });
     }
   });
@@ -493,3 +952,4 @@
   }
 
 })();
+
