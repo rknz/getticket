@@ -178,17 +178,48 @@
     const priorities = config.priorities || [];
     let currentRuleIdx = 0;
 
+    // Check if on search form page without results yet
+    const fromInput = document.querySelector('input[name="from_station"], #from_station, input[placeholder*="From" i]');
+    const toInput = document.querySelector('input[name="to_station"], #to_station, input[placeholder*="To" i]');
+    const searchBtn = document.querySelector('button[type="submit"], button.search-btn, button.btn-search, [class*="search-btn"]');
+    const hasSearchResults = document.querySelectorAll('.single-trip, .trip-item, .train-item, [class*="trip-wrapper"], [class*="train-card"]').length > 0;
+    
+    if (!hasSearchResults && fromInput && toInput && searchBtn) {
+      setHudStatus(currentLang === 'bn' ? '🔍 রেলওয়ে পোর্টালে সার্চ শুরু করা হচ্ছে...' : '🔍 Initiating train search on Railway Portal...', '#0284c7');
+      fromInput.value = config.routeFrom;
+      fromInput.dispatchEvent(new Event('input', { bubbles: true }));
+      toInput.value = config.routeTo;
+      toInput.dispatchEvent(new Event('input', { bubbles: true }));
+      
+      const dateEl = document.querySelector('input[name="journey_date"], #journey_date, input[type="date"]');
+      if (dateEl && config.targetDate) {
+        dateEl.value = config.targetDate;
+        dateEl.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      
+      safeHumanClick(searchBtn, () => {
+        isExecutingGrab = false;
+        setTimeout(executeCascadingGrab, 1500);
+      });
+      return;
+    }
+
     function tryNextRule() {
       if (currentRuleIdx >= priorities.length) {
         isExecutingGrab = false;
-        setHudStatus(currentLang === 'bn' ? 'সব প্রায়োরিটিতে সিট শেষ! ওয়াচডগ সক্রিয়...' : 'All priorities exhausted! Watchdog active...', '#f59e0b');
+        const noSeatMsg = currentLang === 'bn' 
+          ? `⚠️ (${config.trainName || 'ট্রেনে'}) এই মুহূর্তে কোনো সিট খালি নেই। লাইভ ওয়াচডগ সক্রিয় (প্রতি ২ মিনিট পর পর অটো-চেক হবে)!` 
+          : `⚠️ (${config.trainName || 'Train'}) No seats available right now. Live Watchdog Active (Auto-checking every 2 mins)!`;
+        
+        setHudStatus(noSeatMsg, '#f59e0b');
+        start2MinWatchdog(config.trainName, config.routeFrom, config.routeTo, config.targetDate, config.passengers, config.priorities[0]?.classCode);
         return;
       }
 
       const rule = priorities[currentRuleIdx];
-      setHudStatus(currentLang === 'bn' ? `প্রায়োরিটি ${rule.level} চেক করা হচ্ছে...` : `Checking Priority ${rule.level}...`, '#0284c7');
+      setHudStatus(currentLang === 'bn' ? `প্রায়োরিটি ${rule.level} (${rule.classCode}) চেক করা হচ্ছে...` : `Checking Priority ${rule.level} (${rule.classCode})...`, '#0284c7');
 
-      const classButtons = document.querySelectorAll('.class-btn, .trip-btn, [class*="trip-seat"], [class*="class-name"]');
+      const classButtons = document.querySelectorAll('.class-btn, .trip-btn, [class*="trip-seat"], [class*="class-name"], button');
       let targetClassEl = null;
 
       classButtons.forEach(btn => {
@@ -197,7 +228,9 @@
            (rule.classCode === 'S_CHAIR' && (txt.includes('SHOVON') || txt.includes('শোভন'))) ||
            (rule.classCode === 'SNIGDHA' && (txt.includes('SNIGDHA') || txt.includes('স্নিগ্ধা'))) ||
            (rule.classCode === 'F_CHAIR' && (txt.includes('FIRST') || txt.includes('১ম')))) {
-          targetClassEl = btn;
+          if (!txt.includes('0 SEAT') && !txt.includes('০ টি') && !txt.includes('BOOKED') && !txt.includes('বুকড')) {
+            targetClassEl = btn;
+          }
         }
       });
 
@@ -211,13 +244,13 @@
               lockTargetSeats(targetSeats, rule);
             } else {
               currentRuleIdx++;
-              setTimeout(tryNextRule, 60);
+              setTimeout(tryNextRule, 80);
             }
-          }, 120);
+          }, 150);
         });
       } else {
         currentRuleIdx++;
-        setTimeout(tryNextRule, 40);
+        setTimeout(tryNextRule, 60);
       }
     }
 
@@ -611,7 +644,7 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
 // 4. Strict Single-Language UI Dictionary
 
 
-  function showHudToast(message) {
+  function showHudToast(message, duration = 4500) {
     let toast = document.getElementById('gtToastBanner');
     if (!toast) {
       toast = document.createElement('div');
@@ -620,7 +653,50 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
     }
     toast.innerText = message;
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3800);
+    if (toast.__timeout) clearTimeout(toast.__timeout);
+    toast.__timeout = setTimeout(() => toast.classList.remove('show'), duration);
+  }
+
+  function setHudStatus(message, color = '#0284c7') {
+    showHudToast(message);
+    const clockLabel = document.getElementById('gtClockLabel');
+    if (clockLabel) {
+      clockLabel.innerText = message;
+      if (color) clockLabel.style.color = color;
+    }
+    const stealthNote = document.getElementById('gtStealthNote');
+    if (stealthNote) {
+      stealthNote.innerHTML = `<span style="color: ${color || 'var(--gt-success)'}; font-weight: 700;">${message}</span>`;
+    }
+  }
+
+  let watchdogIntervalTimer = null;
+  function start2MinWatchdog(trainName, routeFrom, routeTo, date, passengers, chosenClass) {
+    if (watchdogIntervalTimer) clearInterval(watchdogIntervalTimer);
+    
+    watchdogIntervalTimer = setInterval(() => {
+      console.log('[GeTicket Pro Watchdog] Checking live seats for:', trainName);
+      
+      const classButtons = document.querySelectorAll('.class-btn, .trip-btn, [class*="trip-seat"], [class*="class-name"], button');
+      let foundAvailable = false;
+
+      classButtons.forEach(btn => {
+        const txt = btn.innerText.toUpperCase();
+        const hasSeatCount = /\b[1-9]\d*\b/.test(txt) || txt.includes('AVAILABLE') || txt.includes('খালি');
+        if (hasSeatCount && !txt.includes('0 SEAT') && !txt.includes('০ টি') && !txt.includes('BOOKED')) {
+          foundAvailable = true;
+        }
+      });
+
+      if (foundAvailable) {
+        setHudStatus(currentLang === 'bn' ? `⚡ সিট পাওয়া গেছে! (${trainName}) সিট লক করা হচ্ছে...` : `⚡ Released seats detected! (${trainName}) Locking now...`, '#10b981');
+        playAlertSound();
+        executeCascadingGrab();
+      } else {
+        const timeNow = new Date().toLocaleTimeString();
+        console.log(`[GeTicket Pro Watchdog] Checked at ${timeNow}: Still sold out. Re-checking in 2 mins.`);
+      }
+    }, 120000); // 2 minutes auto-recheck
   }
 
   function injectHud() {
@@ -1091,24 +1167,39 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
       const p3C = root.querySelector('#gtP3Class')?.value || 'F_CHAIR';
       const p3D = root.querySelector('#gtP3Dir')?.value || 'any';
 
+      config.trainName = selTrain.value;
+      config.passengers = parseInt(selPax.value, 10) || 2;
+      config.priorities = [
+        { level: 1, classCode: p1C, dir: p1D, coach: 'ANY' },
+        { level: 2, classCode: p2C, dir: p2D, coach: 'ANY' },
+        { level: 3, classCode: p3C, dir: p3D, coach: 'ANY' }
+      ];
+
+      const selectedDate = new Date((inputDate.value || todayStr) + 'T00:00:00');
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      const diffDays = Math.round((selectedDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+
       const isWest = ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'].includes(selTo.value);
-      const alarmTime = isWest ? '07:50 AM' : '01:50 PM';
+      const isWithin10Days = diffDays <= 10;
+
+      const scheduleId = 'geticket_schedule_' + Date.now();
+      const alarmLabel = isWithin10Days 
+        ? (currentLang === 'bn' ? '⚡ লাইভ ওয়াচডগ সক্রিয় (প্রতি ২ মিনিট)' : '⚡ Live Watchdog Active (Every 2m)')
+        : (currentLang === 'bn' ? `⏰ অগ্রিম অ্যালার্ম: ${isWest ? '০৭:৫০ AM' : '০১:৫০ PM'}` : `⏰ Alarm: ${isWest ? '07:50 AM' : '01:50 PM'} (Armed)`);
 
       const newBooking = {
-        id: 'geticket_schedule_' + Date.now(),
+        id: scheduleId,
+        type: isWithin10Days ? 'instant' : 'schedule',
         from: selFrom.value,
         to: selTo.value,
         date: inputDate.value,
-        passengers: parseInt(selPax.value, 10) || 2,
+        passengers: config.passengers,
         trainName: selTrain.value,
         classCode: selClass.value,
-        alarmTime,
+        alarmTime: alarmLabel,
         zone: isWest ? 'west' : 'east',
-        priorities: [
-          { level: 1, classCode: p1C, dir: p1D, coach: 'ANY' },
-          { level: 2, classCode: p2C, dir: p2D, coach: 'ANY' },
-          { level: 3, classCode: p3C, dir: p3D, coach: 'ANY' }
-        ],
+        priorities: config.priorities,
         createdAt: Date.now()
       };
 
@@ -1119,17 +1210,20 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
           chrome.storage.local.set({ scheduledBookings: list }, () => {
             renderActiveSchedules();
             const msg = currentLang === 'bn' 
-              ? `🎉 সফল! (${newBooking.trainName}) ট্রেনের অগ্রিম শিডিউল সক্রিয় করা হয়েছে!` 
+              ? `🎉 সফল! (${newBooking.trainName}) শিডিউল সক্রিয় করা হয়েছে!` 
               : `🎉 Success! (${newBooking.trainName}) Schedule Armed!`;
             showHudToast(msg);
-            // Switch to Lists tab
             root.querySelector('#gtTabNavSchedules')?.click();
           });
         });
       }
+
+      if (isWithin10Days) {
+        executeCascadingGrab();
+      }
     });
 
-    // Instant Grab Button (Locks seats & adds to Lists)
+    // Instant Grab Button (Locks seats & starts live continuous watchdog)
     btnGrab.addEventListener('click', () => {
       playAlertSound();
       config.trainName = selTrain.value;
@@ -1156,7 +1250,7 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
         passengers: config.passengers,
         trainName: config.trainName,
         classCode: selClass.value,
-        alarmTime: '⚡ Instant Grab Active',
+        alarmTime: currentLang === 'bn' ? '⚡ লাইভ ওয়াচডগ সক্রিয় (প্রতি ২ মিনিট)' : '⚡ Live Watchdog Active (Every 2m)',
         status: 'Instant Active',
         priorities: config.priorities,
         createdAt: Date.now()

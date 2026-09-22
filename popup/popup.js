@@ -487,7 +487,7 @@ function playChime() {
     gain.connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + 0.6);
-  } catch (e) {}
+  } catch (e) { }
 }
 
 // Helper: Page Switcher
@@ -532,7 +532,7 @@ function updateBadgeCount(count) {
   }
 
   if (chrome?.runtime?.sendMessage) {
-    chrome.runtime.sendMessage({ action: 'SYNC_BADGE', count: num }).catch(() => {});
+    chrome.runtime.sendMessage({ action: 'SYNC_BADGE', count: num }).catch(() => { });
   }
 }
 
@@ -541,7 +541,7 @@ function getScheduledBookings(callback) {
   if (chrome?.storage?.local) {
     chrome.storage.local.get(['scheduledBookings'], (res) => {
       if (Array.isArray(res?.scheduledBookings)) {
-        try { localStorage.setItem('scheduledBookings', JSON.stringify(res.scheduledBookings)); } catch (e) {}
+        try { localStorage.setItem('scheduledBookings', JSON.stringify(res.scheduledBookings)); } catch (e) { }
         callback(res.scheduledBookings);
       } else {
         try {
@@ -566,7 +566,7 @@ function saveScheduledBookings(list, callback) {
   const safeList = Array.isArray(list) ? list : [];
   try {
     localStorage.setItem('scheduledBookings', JSON.stringify(safeList));
-  } catch (e) {}
+  } catch (e) { }
 
   updateBadgeCount(safeList.length);
 
@@ -574,7 +574,7 @@ function saveScheduledBookings(list, callback) {
     if (window.parent && window.parent !== window) {
       window.parent.postMessage({ type: 'SYNC_SCHEDULES', count: safeList.length }, '*');
     }
-  } catch (e) {}
+  } catch (e) { }
 
   if (chrome?.storage?.local) {
     chrome.storage.local.set({ scheduledBookings: safeList }, () => {
@@ -677,8 +677,8 @@ function renderSchedulesList(schedules) {
       const isInstant = item.type === 'instant' || item.alarmTime === '⚡ Instant Grab Active';
       const isWestRoute = item.zone === 'west' || ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'].includes(item.to);
       const alarmTime = item.alarmTime || (isWestRoute ? '07:50 AM' : '01:50 PM');
-      const zoneNameStr = isWestRoute 
-        ? (currentLang === 'bn' ? 'পশ্চিমাঞ্চল' : 'West Zone') 
+      const zoneNameStr = isWestRoute
+        ? (currentLang === 'bn' ? 'পশ্চিমাঞ্চল' : 'West Zone')
         : (currentLang === 'bn' ? 'পূর্বাঞ্চল' : 'East Zone');
 
       const statusText = isInstant
@@ -708,7 +708,7 @@ function renderSchedulesList(schedules) {
       });
 
       container.appendChild(card);
-    } catch(err) {
+    } catch (err) {
       console.error('Error rendering schedule card:', err);
     }
   });
@@ -720,7 +720,7 @@ function deleteSchedule(id) {
     saveScheduledBookings(updated, () => {
       renderSchedulesList(updated);
       if (chrome?.runtime?.sendMessage) {
-        chrome.runtime.sendMessage({ action: 'CANCEL_SCHEDULE', id }).catch(() => {});
+        chrome.runtime.sendMessage({ action: 'CANCEL_SCHEDULE', id }).catch(() => { });
       }
       showToast(UI_TEXT[currentLang].toastSchedDeleted);
     });
@@ -789,11 +789,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Set default date to today
+  // Set default date and strictly prevent past date selection (min = today, max = 10 days)
   const journeyDateEl = document.getElementById('journeyDate');
   if (journeyDateEl) {
     const today = new Date();
-    journeyDateEl.value = today.toISOString().split('T')[0];
+    const todayStr = today.toISOString().split('T')[0];
+    const max10 = new Date();
+    max10.setDate(max10.getDate() + 10);
+    const max10Str = max10.toISOString().split('T')[0];
+    journeyDateEl.min = todayStr;
+    journeyDateEl.max = max10Str;
+    if (!journeyDateEl.value || journeyDateEl.value < todayStr) {
+      journeyDateEl.value = todayStr;
+    }
   }
 
   // Route Change Listener (Chronological AM to PM Sorting with Timing Display)
@@ -1083,7 +1091,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnGrabText) btnGrabText.innerText = currentLang === 'bn' ? 'তাত্ক্ষণিক ফাস্ট-গ্র্যাব (লক)' : 'Instant Fast-Grab (Lock)';
 
     const stealthNotice = document.getElementById('lblStealthNotice');
-    if (stealthNotice) stealthNotice.innerHTML = currentLang === 'bn' 
+    if (stealthNotice) stealthNotice.innerHTML = currentLang === 'bn'
       ? '<span>🛡️ ১০০% হিউম্যানাইজড স্টিলথ সক্রিয় • অ্যাকাউন্ট ব্যান ঝুঁকিহীন</span>'
       : '<span>🛡️ 100% Humanized Stealth Active • Zero Account Ban</span>';
 
@@ -1220,12 +1228,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const cfg = saveCurrentConfig();
     const WEST_STATIONS = ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'];
     const isWest = WEST_STATIONS.includes(cfg.to) || WEST_STATIONS.includes(cfg.from);
+    
+    const selectedDate = new Date((cfg.date || '') + 'T00:00:00');
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((selectedDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+    const isWithin10Days = diffDays <= 10;
+
     const scheduleId = `geticket_sched_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
-    const alarmTime = isWest ? '07:50 AM' : '01:50 PM';
+    const alarmTime = isWithin10Days 
+      ? (currentLang === 'bn' ? '⚡ লাইভ ওয়াচডগ সক্রিয় (প্রতি ২ মিনিট)' : '⚡ Live Watchdog Active (Every 2m)')
+      : (isWest ? '07:50 AM' : '01:50 PM');
 
     const newBooking = {
       id: scheduleId,
-      type: 'schedule',
+      type: isWithin10Days ? 'instant' : 'schedule',
       from: cfg.from,
       to: cfg.to,
       date: cfg.date,
@@ -1246,17 +1263,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (chrome?.runtime?.sendMessage) {
           chrome.runtime.sendMessage({
-            action: 'SCHEDULE_BOOKING',
+            action: isWithin10Days ? 'TRIGGER_INSTANT_GRAB' : 'SCHEDULE_BOOKING',
             id: scheduleId,
-            bookingInfo: newBooking
-          }).catch(() => {});
+            bookingInfo: newBooking,
+            from: cfg.from,
+            to: cfg.to,
+            date: cfg.date,
+            passengers: cfg.passengers,
+            trainName: cfg.trainName,
+            classCode: cfg.classCode
+          }).catch(() => { });
         }
 
         playChime();
         const trainDisp = getTrainDisplayName(cfg.trainName, currentLang);
         showToast(currentLang === 'bn'
-          ? `🎉 সফল! (${trainDisp}) ট্রেনের অগ্রিম শিডিউল সক্রিয় করা হয়েছে!`
-          : `🎉 Success! (${trainDisp}) Advance Schedule Armed!`);
+          ? `🎉 সফল! (${trainDisp}) শিডিউল সক্রিয় করা হয়েছে!`
+          : `🎉 Success! (${trainDisp}) Schedule Armed!`);
 
         setTimeout(() => switchPage('schedules'), 350);
       });
@@ -1282,7 +1305,7 @@ document.addEventListener('DOMContentLoaded', () => {
       passengers: cfg.passengers,
       trainName: cfg.trainName,
       classCode: cfg.classCode,
-      alarmTime: '⚡ Instant Grab Active',
+      alarmTime: currentLang === 'bn' ? '⚡ লাইভ ওয়াচডগ সক্রিয় (প্রতি ২ মিনিট)' : '⚡ Live Watchdog Active (Every 2m)',
       status: 'Instant Active',
       priorities: cfg.priorities,
       createdAt: new Date().toISOString()
@@ -1304,7 +1327,7 @@ document.addEventListener('DOMContentLoaded', () => {
             passengers: cfg.passengers,
             trainName: cfg.trainName,
             classCode: cfg.classCode
-          }).catch(() => {});
+          }).catch(() => { });
         }
 
         // 2. Direct message to active railway tab
@@ -1319,15 +1342,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 passengers: cfg.passengers,
                 trainName: cfg.trainName,
                 classCode: cfg.classCode
-              }).catch(() => {});
+              }).catch(() => { });
             }
           });
         }
 
         const trainDisp = getTrainDisplayName(cfg.trainName, currentLang);
         showToast(currentLang === 'bn'
-          ? `⚡ (${trainDisp}) সিট তাৎক্ষণিক লক শুরু হয়েছে ও লিস্টে যোগ হয়েছে!`
-          : `⚡ (${trainDisp}) Instant Grab started & added to Lists!`);
+          ? `⚡ (${trainDisp}) সিট তাৎক্ষণিক লক ও লাইভ ওয়াচডগ শুরু হয়েছে (লিস্টে যুক্ত)! `
+          : `⚡ (${trainDisp}) Instant Grab & Live Watchdog active (added to Lists)!`);
       });
     });
   }
@@ -1396,7 +1419,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (chrome?.storage?.local) {
       chrome.storage.local.set({ railwayVault: { phone, pass } }, () => {
         if (chrome?.runtime?.sendMessage) {
-          chrome.runtime.sendMessage({ action: 'START_SESSION_GUARD' }).catch(() => {});
+          chrome.runtime.sendMessage({ action: 'START_SESSION_GUARD' }).catch(() => { });
         }
         playChime();
         showToast(UI_TEXT[currentLang].toastVaultSaved);

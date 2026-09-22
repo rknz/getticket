@@ -129,26 +129,50 @@
 /* Mobile Screen Adaptation (100% fits within phone viewports) */
 @media (max-width: 640px) {
   #geticket-hud-root {
-    bottom: 16px !important;
-    right: 16px !important;
+    bottom: 12px !important;
+    right: 12px !important;
   }
   .gt-bubble {
-    width: 52px;
-    height: 52px;
+    width: 46px !important;
+    height: 46px !important;
   }
   .gt-bubble img {
-    width: 32px;
-    height: 32px;
+    width: 26px !important;
+    height: 26px !important;
   }
   .gt-panel {
-    bottom: 78px !important;
-    left: 10px !important;
-    right: 10px !important;
+    bottom: 66px !important;
+    left: 6px !important;
+    right: 6px !important;
     width: auto !important;
-    max-width: 440px !important;
+    max-width: 380px !important;
     margin: 0 auto !important;
-    max-height: 84vh !important;
-    border-radius: 18px !important;
+    max-height: 88vh !important;
+    border-radius: 16px !important;
+  }
+  .gt-body {
+    padding: 8px 10px !important;
+    gap: 7px !important;
+  }
+  .gt-header {
+    padding: 8px 10px 5px 10px !important;
+  }
+  .gt-title-text {
+    font-size: 12.5px !important;
+  }
+  .gt-select, .gt-input {
+    font-size: 11px !important;
+    height: 30px !important;
+    padding: 3px 5px !important;
+  }
+  .gt-prio-row .gt-select {
+    font-size: 10px !important;
+    height: 28px !important;
+    padding: 2px 4px !important;
+  }
+  .gt-btn-primary {
+    padding: 8px 10px !important;
+    font-size: 11.5px !important;
   }
 }
 
@@ -321,39 +345,50 @@
   display: flex;
 }
 
-/* Form Controls */
+/* Form Controls (Mobile-Optimized & Crisp) */
 .gt-field-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  display: flex !important;
+  gap: 5px !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
 }
 
 .gt-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
 }
 
 .gt-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--gt-hud-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  color: var(--gt-hud-muted) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.3px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .gt-select, .gt-input {
-  width: 100%;
-  padding: 7px 9px;
-  border-radius: 8px;
-  border: 1px solid var(--gt-hud-card-border);
-  background: var(--gt-hud-bg);
-  color: var(--gt-hud-text);
-  font-size: 12px;
-  font-weight: 600;
-  outline: none;
-  transition: border-color 0.15s;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  padding: 4px 6px 4px 8px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--gt-hud-card-border) !important;
+  background: var(--gt-hud-bg) !important;
+  color: var(--gt-hud-text) !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  outline: none !important;
+  transition: border-color 0.15s !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
 }
 
 .gt-select:focus, .gt-input:focus {
@@ -399,24 +434,33 @@
 }
 
 .gt-prio-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 11px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.gt-prio-row .gt-select {
+  font-size: 10.5px !important;
+  padding: 3px 4px 3px 6px !important;
+  height: 29px !important;
+  min-width: 0 !important;
 }
 
 .gt-prio-tag {
-  width: 24px;
-  height: 20px;
-  background: var(--gt-accent);
-  color: #fff;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 10px;
-  flex-shrink: 0;
+  width: 20px !important;
+  height: 20px !important;
+  background: var(--gt-accent) !important;
+  color: #fff !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 800 !important;
+  font-size: 9.5px !important;
+  flex-shrink: 0 !important;
 }
 
 /* Primary Action Buttons */
