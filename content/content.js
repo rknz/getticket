@@ -207,9 +207,12 @@
     function tryNextRule() {
       if (currentRuleIdx >= priorities.length) {
         isExecutingGrab = false;
+        const trainLabel = (config.trainName === 'ANY_TRAIN' || !config.trainName)
+          ? (currentLang === 'bn' ? 'যেকোনো ট্রেন' : 'Any Available Train')
+          : config.trainName;
         const noSeatMsg = currentLang === 'bn' 
-          ? `⚠️ (${config.trainName || 'ট্রেনে'}) এই মুহূর্তে কোনো সিট খালি নেই। লাইভ ওয়াচডগ সক্রিয় (প্রতি ২ মিনিট পর পর অটো-চেক হবে)!` 
-          : `⚠️ (${config.trainName || 'Train'}) No seats available right now. Live Watchdog Active (Auto-checking every 2 mins)!`;
+          ? `⚠️ (${trainLabel}) এই মুহূর্তে কোনো সিট খালি নেই। লাইভ ওয়াচডগ সক্রিয় (প্রতি ২ মিনিট পর পর অটো-চেক হবে)!` 
+          : `⚠️ (${trainLabel}) No seats available right now. Live Watchdog Active (Auto-checking every 2 mins)!`;
         
         setHudStatus(noSeatMsg, '#f59e0b');
         start2MinWatchdog(config.trainName, config.routeFrom, config.routeTo, config.targetDate, config.passengers, config.priorities[0]?.classCode);
@@ -217,22 +220,57 @@
       }
 
       const rule = priorities[currentRuleIdx];
-      setHudStatus(currentLang === 'bn' ? `প্রায়োরিটি ${rule.level} (${rule.classCode}) চেক করা হচ্ছে...` : `Checking Priority ${rule.level} (${rule.classCode})...`, '#0284c7');
+      const targetClass = (rule.classCode || 'S_CHAIR').toUpperCase();
+      setHudStatus(currentLang === 'bn' ? `প্রায়োরিটি ${rule.level} (${targetClass === 'ANY' ? 'যেকোনো শ্রেণি' : targetClass}) চেক করা হচ্ছে...` : `Checking Priority ${rule.level} (${targetClass})...`, '#0284c7');
 
-      const classButtons = document.querySelectorAll('.class-btn, .trip-btn, [class*="trip-seat"], [class*="class-name"], button');
+      // 1. Get all train trip cards on Railway search page
+      const tripCards = Array.from(document.querySelectorAll('.single-trip, .trip-item, .train-item, [class*="trip-wrapper"], [class*="train-card"]'));
       let targetClassEl = null;
 
-      classButtons.forEach(btn => {
-        const txt = btn.innerText.toUpperCase();
-        if (txt.includes(rule.classCode) || 
-           (rule.classCode === 'S_CHAIR' && (txt.includes('SHOVON') || txt.includes('শোভন'))) ||
-           (rule.classCode === 'SNIGDHA' && (txt.includes('SNIGDHA') || txt.includes('স্নিগ্ধা'))) ||
-           (rule.classCode === 'F_CHAIR' && (txt.includes('FIRST') || txt.includes('১ম')))) {
-          if (!txt.includes('0 SEAT') && !txt.includes('০ টি') && !txt.includes('BOOKED') && !txt.includes('বুকড')) {
+      if (tripCards.length > 0) {
+        for (const card of tripCards) {
+          const cardText = card.innerText.toUpperCase();
+          // Filter by specific train name if not ANY_TRAIN
+          if (config.trainName && config.trainName !== 'ANY_TRAIN') {
+            const cleanTrainName = config.trainName.toUpperCase();
+            if (!cardText.includes(cleanTrainName)) continue;
+          }
+
+          const classButtons = card.querySelectorAll('.class-btn, .trip-btn, [class*="trip-seat"], [class*="class-name"], button');
+          for (const btn of classButtons) {
+            const txt = btn.innerText.toUpperCase();
+            const isAvailable = !txt.includes('0 SEAT') && !txt.includes('০ টি') && !txt.includes('BOOKED') && !txt.includes('বুকড') && !btn.classList.contains('disabled');
+            if (!isAvailable) continue;
+
+            if (targetClass === 'ANY' ||
+                txt.includes(targetClass) || 
+                (targetClass === 'S_CHAIR' && (txt.includes('SHOVON') || txt.includes('শোভন'))) ||
+                (targetClass === 'SNIGDHA' && (txt.includes('SNIGDHA') || txt.includes('স্নিগ্ধা'))) ||
+                (targetClass === 'F_CHAIR' && (txt.includes('FIRST') || txt.includes('১ম')))) {
+              targetClassEl = btn;
+              break;
+            }
+          }
+          if (targetClassEl) break;
+        }
+      } else {
+        // Fallback: search across all buttons on page
+        const classButtons = document.querySelectorAll('.class-btn, .trip-btn, [class*="trip-seat"], [class*="class-name"], button');
+        for (const btn of classButtons) {
+          const txt = btn.innerText.toUpperCase();
+          const isAvailable = !txt.includes('0 SEAT') && !txt.includes('০ টি') && !txt.includes('BOOKED') && !txt.includes('বুকড') && !btn.classList.contains('disabled');
+          if (!isAvailable) continue;
+
+          if (targetClass === 'ANY' ||
+              txt.includes(targetClass) || 
+              (targetClass === 'S_CHAIR' && (txt.includes('SHOVON') || txt.includes('শোভন'))) ||
+              (targetClass === 'SNIGDHA' && (txt.includes('SNIGDHA') || txt.includes('স্নিগ্ধা'))) ||
+              (targetClass === 'F_CHAIR' && (txt.includes('FIRST') || txt.includes('১ম')))) {
             targetClassEl = btn;
+            break;
           }
         }
-      });
+      }
 
       if (targetClassEl) {
         safeHumanClick(targetClassEl, () => {
@@ -991,6 +1029,7 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
 
       // Classes
       const classOpts = [
+        { val: "ANY", en: "✨ Any Available Class", bn: "✨ যেকোনো উপলব্ধ শ্রেণি" },
         { val: "S_CHAIR", en: "Shovon Chair", bn: "শোভন চেয়ার" },
         { val: "SNIGDHA", en: "Snigdha AC", bn: "স্নিগ্ধা এসি" },
         { val: "F_CHAIR", en: "1st Class Chair", bn: "১ম শ্রেণি চেয়ার" },
@@ -1027,11 +1066,21 @@ FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
       }
       list = sortTrainsChronologically(list);
       selTrain.innerHTML = '';
+
+      // 1. Any Available Train Option
+      const anyOpt = new Option(
+        currentLang === 'bn' ? '⚡ যেকোনো উপলব্ধ ট্রেন (সবচেয়ে দ্রুত)' : '⚡ Any Available Train (Fastest Available)',
+        'ANY_TRAIN'
+      );
+      if (config.trainName === 'ANY_TRAIN') anyOpt.selected = true;
+      selTrain.appendChild(anyOpt);
+
+      // 2. Specific Trains on Route
       list.forEach((t, idx) => {
         const trName = currentLang === 'bn' ? (t.nameBn || t.nameEn) : t.nameEn;
         const timeStr = t.arr ? `${t.dep} ➔ ${t.arr}` : t.dep;
         const opt = new Option(`${trName} (${timeStr})`, t.nameEn);
-        if (t.nameEn === config.trainName || idx === 0) opt.selected = true;
+        if (t.nameEn === config.trainName || (!config.trainName && idx === 0)) opt.selected = true;
         selTrain.appendChild(opt);
       });
       updateFareAndConfig();

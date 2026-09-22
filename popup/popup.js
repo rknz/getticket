@@ -66,20 +66,22 @@ const PASSENGERS_OPTS = {
 
 const CLASSES_OPTS = {
   en: [
+    { value: "ANY", text: "✨ Any Available Class" },
     { value: "S_CHAIR", text: "Shovon Chair" },
-    { value: "SHOVON", text: "Shovon" },
     { value: "SNIGDHA", text: "Snigdha AC" },
     { value: "F_CHAIR", text: "1st Class Chair" },
     { value: "AC_S", text: "AC Seat" },
-    { value: "AC_B", text: "AC Berth" }
+    { value: "AC_B", text: "AC Berth" },
+    { value: "SHOVON", text: "Shovon" }
   ],
   bn: [
+    { value: "ANY", text: "✨ যেকোনো উপলব্ধ শ্রেণি" },
     { value: "S_CHAIR", text: "শোভন চেয়ার" },
-    { value: "SHOVON", text: "সাধারণ শোভন" },
     { value: "SNIGDHA", text: "স্নিগ্ধা এসি" },
     { value: "F_CHAIR", text: "১ম শ্রেণি চেয়ার" },
     { value: "AC_S", text: "এসি সিট" },
-    { value: "AC_B", text: "এসি বার্থ" }
+    { value: "AC_B", text: "এসি বার্থ" },
+    { value: "SHOVON", text: "সাধারণ শোভন" }
   ]
 };
 
@@ -865,17 +867,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Route is Valid: Populate Trains with Timings (e.g. Padma Express (11:00 PM ➔ 04:40 AM))
-    isCurrentRouteValid = true;
-    if (btnArm) { btnArm.disabled = false; btnArm.style.opacity = '1'; }
-    if (btnGrab) { btnGrab.disabled = false; btnGrab.style.opacity = '1'; }
+    // 1. Any Available Train (Fastest Available) Option
+    const anyTrainOpt = document.createElement('option');
+    anyTrainOpt.value = 'ANY_TRAIN';
+    anyTrainOpt.innerText = currentLang === 'bn' 
+      ? '⚡ যেকোনো উপলব্ধ ট্রেন (সবচেয়ে দ্রুত)' 
+      : '⚡ Any Available Train (Fastest Available)';
+    if (curTrain === 'ANY_TRAIN') anyTrainOpt.selected = true;
+    trainDropdown.appendChild(anyTrainOpt);
 
+    // 2. Specific Trains on the Route
     trains.forEach((t, idx) => {
       const trainName = currentLang === 'bn' ? (t.nameBn || t.nameEn) : t.nameEn;
       const timeStr = t.arr ? `${t.dep} ➔ ${t.arr}` : t.dep;
       const opt = document.createElement('option');
       opt.value = t.nameEn;
       opt.innerText = `${trainName} (${timeStr})`;
-      if (t.nameEn === curTrain || idx === 0) opt.selected = true;
+      if (t.nameEn === curTrain || (!curTrain && idx === 0)) opt.selected = true;
       trainDropdown.appendChild(opt);
     });
 
