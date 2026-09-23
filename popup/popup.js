@@ -1,5 +1,5 @@
 /**
- * GeTicket Pro - Popup Controller (v2.8)
+ * GeTicket Pro - Popup Controller (v3.0)
  * Strict Single-Language Purity (Pure English default <-> Pure Bengali)
  * Dual-Mode Engine: Instant Ticket Grab & Advance 8:00 AM Schedule,
  * Live Railway Server API Fetcher with Real-Time Bearer Auth Bridge,

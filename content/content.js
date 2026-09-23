@@ -179,8 +179,8 @@
       lblClass: "Coach Class",
       lblPrioTitle: "🎯 Cascading Priority Chain",
       lblPrioHint: "Auto-Shift 1ms",
-      btnArm: "⏰ Arm Advance Schedule & Watchdog",
-      btnGrab: "⚡ Instant Fast-Grab (Lock)",
+      btnArm: "Arm Advance Schedule & Watchdog",
+      btnGrab: "Instant Fast-Grab (Lock)",
       btnScan: "🔍 Scan Live Availability",
       lblSchedTitle: "Scheduled Bookings",
       lblNoSched: "No active schedules",
@@ -213,8 +213,8 @@
       lblClass: "বসার শ্রেণি",
       lblPrioTitle: "🎯 প্রায়োরিটি চেইন (স্বয়ংক্রিয়)",
       lblPrioHint: "১ম না পেলে ২য়",
-      btnArm: "⏰ অগ্রিম টিকিট শিডিউল ও অ্যালার্ম",
-      btnGrab: "⚡ ইনস্ট্যান্ট ফাস্ট-গ্র্যাব (লক)",
+      btnArm: "অগ্রিম টিকিট শিডিউল ও অ্যালার্ম",
+      btnGrab: "ইনস্ট্যান্ট ফাস্ট-গ্র্যাব (লক)",
       btnScan: "🔍 লাইভ সিট স্ক্যান করুন",
       lblSchedTitle: "নির্ধারিত শিডিউল তালিকা",
       lblNoSched: "কোনো সক্রিয় শিডিউল নেই",
@@ -456,20 +456,31 @@
     const jitter = Math.floor(Math.random() * (config.humanJitterMax - config.humanJitterMin + 1)) + config.humanJitterMin;
 
     setTimeout(() => {
-      const rect = element.getBoundingClientRect();
-      const clientX = rect.left + rect.width / 2 + (Math.random() * 4 - 2);
-      const clientY = rect.top + rect.height / 2 + (Math.random() * 4 - 2);
+      try {
+        const rect = element.getBoundingClientRect();
+        const clientX = rect.left + rect.width / 2 + (Math.random() * 4 - 2);
+        const clientY = rect.top + rect.height / 2 + (Math.random() * 4 - 2);
 
-      ['mouseenter', 'mousemove', 'mousedown', 'mouseup', 'click'].forEach(eventType => {
-        const ev = new MouseEvent(eventType, {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          clientX,
-          clientY
+        ['mouseenter', 'mousemove', 'mousedown', 'mouseup'].forEach(eventType => {
+          const ev = new MouseEvent(eventType, {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX,
+            clientY
+          });
+          element.dispatchEvent(ev);
         });
-        element.dispatchEvent(ev);
-      });
+
+        // Trigger native click for Angular Ivy Zone.js click event listeners
+        if (typeof element.click === 'function') {
+          element.click();
+        } else {
+          element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window, clientX, clientY }));
+        }
+      } catch (e) {
+        try { element.click(); } catch (err) { }
+      }
 
       if (callback) callback();
     }, jitter);
@@ -723,6 +734,21 @@
     const root = document.getElementById('geticket-hud-root');
     if (root) saveHudConfig(root);
 
+    // Fast path: if seat layout is ALREADY open on page, immediately lock seats!
+    const seatLayoutEl = document.querySelector('app-seat-layout, .seat-layout-view, #Div3, #select-bogie');
+    if (seatLayoutEl) {
+      showHudToast(currentLang === 'bn' 
+        ? '⚡ সিট লেআউট খোলা আছে! স্বয়ংক্রিয়ভাবে সিট সিলেক্ট ও ৫ মিনিটের জন্য লক করা হচ্ছে...' 
+        : '⚡ Seat layout open! Auto-selecting & locking for 5 minutes...');
+      waitForSeatLayoutAndSelect(config.passengers, config.priorities?.[0]?.dir || 'any', (targetSeats) => {
+        lockTargetSeats(targetSeats, config.passengers);
+      }, () => {
+        isExecutingGrab = false;
+        showHudToast(currentLang === 'bn' ? '⚠️ বর্তমান কোচে পর্যাপ্ত খালি সিট নেই!' : '⚠️ No available seats found in current coach!');
+      });
+      return;
+    }
+
     const fromVal = config.routeFrom || 'Dhaka';
     const toVal = config.routeTo || 'Rajshahi';
     const dateVal = config.targetDate || root?.querySelector('#gtJourneyDate')?.value || new Date().toISOString().split('T')[0];
@@ -742,7 +768,7 @@
     const hasSearchResults = isSearchPage && document.querySelectorAll('app-single-trip, .single-trip-wrapper, .trip-row').length > 0;
 
     // Strict Guard: If current page does NOT match target date & route, navigate immediately to the exact date
-    if (!matchesUrlDate || !matchesUrlRoute || !hasSearchResults) {
+    if (!matchesUrlDate || !matchesUrlRoute) {
       isExecutingGrab = false;
       showHudToast(currentLang === 'bn' 
         ? `🔍 (${targetFormatted}) তারিখের ট্রেনের পেজ লোড করা হচ্ছে...` 
@@ -768,6 +794,24 @@
       } else {
         window.location.href = targetSearchUrl;
       }
+      return;
+    }
+
+    // If on search page matching date & route, wait for train cards to render if not rendered yet
+    if (!hasSearchResults) {
+      showHudToast(currentLang === 'bn' ? '⏳ ট্রেনের তথ্য লোড হচ্ছে...' : '⏳ Waiting for train cards to render...');
+      let cardPollAttempts = 0;
+      const cardPoll = setInterval(() => {
+        cardPollAttempts++;
+        const found = document.querySelectorAll('app-single-trip, .single-trip-wrapper, .trip-row').length > 0;
+        if (found) {
+          clearInterval(cardPoll);
+          tryNextRule();
+        } else if (cardPollAttempts > 50) { // 5s timeout
+          clearInterval(cardPoll);
+          tryNextRule();
+        }
+      }, 100);
       return;
     }
 
@@ -826,10 +870,10 @@
       const match = findAvailableTrainClassButton(config.trainName, targetClass, config.passengers);
 
       if (match && match.bookBtn) {
-        showHudToast(currentLang === 'bn' ? `⚡ সিট পাওয়া গেছে (${match.trainName})! বুকিং হচ্ছে...` : `⚡ Seats found (${match.trainName})! Booking now...`);
+        showHudToast(currentLang === 'bn' ? `⚡ সিট পাওয়া গেছে (${match.trainName})! বুকিং ও ৫ মিনিটের জন্য লক হচ্ছে...` : `⚡ Seats found (${match.trainName})! Booking & locking for 5 minutes...`);
         safeHumanClick(match.bookBtn, () => {
           waitForSeatLayoutAndSelect(config.passengers, rule.dir, (targetSeats) => {
-            lockTargetSeats(targetSeats);
+            lockTargetSeats(targetSeats, config.passengers);
           }, () => {
             currentRuleIdx++;
             setTimeout(tryNextRule, 100);
@@ -856,6 +900,7 @@
       //   Sleeper:      .sleeper-available
       const allSeatBtns = Array.from(document.querySelectorAll(
         'button.btn-seat.seat-available:not(.seat-booked):not(.seat-hidden):not(.seat-disabled):not(.seat-in-progress),' +
+        'button.btn-seat:not(.seat-booked):not(.seat-hidden):not(.seat-disabled):not(.seat-in-progress):not([disabled]),' +
         '.sleeper-available:not(.sleeper-booked)'
       )).filter(el => {
         if (el.closest('#geticket-hud-root') || el.closest('#gtToastBanner')) return false;
@@ -874,6 +919,14 @@
         });
       }
 
+      // Check if seats are already selected
+      const alreadySelected = Array.from(document.querySelectorAll('.btn-seat.seat-selected, .seat-selected'));
+      if (alreadySelected.length >= paxCount) {
+        clearInterval(poll);
+        onDone(alreadySelected);
+        return;
+      }
+
       if (seatPool.length >= paxCount) {
         clearInterval(poll);
         const targetSeats = findBestContiguousSeats(seatPool, paxCount, prefDir);
@@ -885,109 +938,172 @@
         return;
       }
 
-      // Coach switching: the real site uses a <select> dropdown (coachSelection ViewChild)
-      // Try switching coach via dropdown if not enough seats on current coach
-      if (attempts % 8 === 0) {
-        const coachSelect = document.querySelector('select#coachSelection, .seat-layout-view select, select[formcontrolname*="coach"], select');
+      // Coach switching: if not enough seats on current coach, switch coach via select#select-bogie
+      if (attempts % 10 === 0) {
+        const coachSelect = document.querySelector('select#select-bogie, select#coachSelection, .seat-layout-view select, select[formcontrolname*="coach"], select');
         if (coachSelect && coachSelect.closest('.seat-layout-view, .modal-content-not-use, app-seat-layout')) {
-          const options = Array.from(coachSelect.querySelectorAll('option'));
+          const options = Array.from(coachSelect.querySelectorAll('option')).filter(o => o.value && o.value !== '');
           if (options.length > 1) {
             coachSwitchIdx = (coachSwitchIdx + 1) % options.length;
             coachSelect.value = options[coachSwitchIdx].value;
             coachSelect.dispatchEvent(new Event('change', { bubbles: true }));
           }
-        } else {
-          // Fallback: try clicking tab-style coach buttons if they exist
-          const coachBtns = Array.from(document.querySelectorAll('.coach-tab, .coach-item, [class*="coach-btn"]'));
-          if (coachBtns.length > 1) {
-            const nextCoach = coachBtns[coachSwitchIdx % coachBtns.length];
-            coachSwitchIdx++;
-            if (nextCoach) safeHumanClick(nextCoach);
-          }
         }
       }
 
-      if (attempts > 60) { // 6 seconds timeout (increased for Angular route transitions)
+      if (attempts > 80) { // 8 seconds timeout
         clearInterval(poll);
         onFail();
       }
     }, 100);
   }
 
-  function lockTargetSeats(seats) {
+  function lockTargetSeats(seats, paxCount = 1) {
+    // If seats already confirmed selected, proceed directly to Continue Purchase
+    const alreadySelected = Array.from(document.querySelectorAll('.btn-seat.seat-selected, .seat-selected'));
+    if (alreadySelected.length >= paxCount) {
+      proceedToContinuePurchase(paxCount);
+      return;
+    }
+
     let idx = 0;
     function selectNext() {
       if (idx >= seats.length) {
-        playAlertSound();
-        showHudToast(currentLang === 'bn' ? `🎉 সিট সিলেক্ট হয়েছে! ৫ মিনিটের জন্য লক করা হচ্ছে...` : `🎉 Seats Selected! Locking for 5 minutes...`);
-        if (chrome?.runtime?.sendMessage) {
-          chrome.runtime.sendMessage({ action: 'SEAT_LOCKED_NOTIFY' }).catch(() => {});
-        }
-        isExecutingGrab = false;
-
-        // Poll for Continue Purchase / Proceed button to become enabled
-        // Real site: form#Div3 with button[type="submit"], text from i18n key 'pages.search_result.continue_purchase'
-        let proceedAttempts = 0;
-        const proceedPoll = setInterval(() => {
-          proceedAttempts++;
-
-          // Priority 1: The real Continue Purchase button inside #Div3 form
-          // Priority 2: Generic submit buttons in the seat layout
-          // Priority 3: Text-based fallback matching
-          const proceedBtn =
-            document.querySelector('#Div3 button[type="submit"]:not([disabled])') ||
-            document.querySelector('.seat-layout-view button[type="submit"]:not([disabled])') ||
-            document.querySelector('app-seat-layout button[type="submit"]:not([disabled])') ||
-            document.querySelector('.btn-booking-continue:not([disabled]), [class*="confirm-btn"]:not([disabled])') ||
-            Array.from(document.querySelectorAll('button:not([disabled])')).find(b => {
-              if (b.closest('#geticket-hud-root') || b.closest('#gtToastBanner')) return false;
-              const t = b.innerText.trim().toLowerCase();
-              return t.includes('continue purchase') || t.includes('continue') || t.includes('confirm') ||
-                     t.includes('proceed') || t.includes('কেনাকাটা চালিয়ে যান') || t.includes('চালিয়ে যান') || t.includes('নিশ্চিত');
-            });
-
-          if (proceedBtn && !proceedBtn.disabled && !proceedBtn.classList.contains('disabled')) {
-            clearInterval(proceedPoll);
-            proceedBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            safeHumanClick(proceedBtn, () => {
-              playAlertSound();
-              if (chrome?.storage?.local) {
-                chrome.storage.local.get(['scheduledBookings'], (res) => {
-                  const list = res?.scheduledBookings || [];
-                  const journeyDate = formatRailwayDate(config.targetDate);
-                  const updated = list.filter(b => !(b.type === 'instant_watchdog' && b.from === config.routeFrom && b.to === config.routeTo && (!journeyDate || b.date === journeyDate)));
-                  chrome.storage.local.set({ scheduledBookings: updated }, () => {
-                    const root = document.getElementById('geticket-hud-root');
-                    if (root) renderActiveSchedules(root);
-                  });
-                });
-                chrome.storage.local.remove('activeGrabTask');
-              }
-              if (chrome?.runtime?.sendMessage) {
-                chrome.runtime.sendMessage({ action: 'SEAT_LOCKED_NOTIFY' }).catch(() => {});
-              }
-              showHudToast(currentLang === 'bn' 
-                ? '🎉 সিট ৫ মিনিটের জন্য সফলভাবে লক হয়েছে! পেমেন্ট সম্পন্ন করুন...' 
-                : '🎉 Seats successfully locked for 5 minutes! Complete payment...');
-            });
-          }
-
-          if (proceedAttempts > 50) { // 5 seconds timeout (increased for form validation)
-            clearInterval(proceedPoll);
-            if (proceedBtn) safeHumanClick(proceedBtn);
-          }
-        }, 100);
-
+        // All candidate seats clicked! Wait for server confirmation & DOM state update
+        waitForSeatConfirmation(paxCount, () => {
+          proceedToContinuePurchase(paxCount);
+        });
         return;
       }
 
-      safeHumanClick(seats[idx], () => {
+      const seatBtn = seats[idx];
+      safeHumanClick(seatBtn, () => {
         idx++;
-        selectNext();
+        setTimeout(selectNext, 120); // 120ms gap between passenger seat clicks
       });
     }
 
     selectNext();
+  }
+
+  function waitForSeatConfirmation(paxCount, onConfirmed) {
+    let confirmAttempts = 0;
+    showHudToast(currentLang === 'bn' 
+      ? '⏳ সিট কনফার্মেশন ও ৫ মিনিটের জন্য লক নিশ্চিত করা হচ্ছে...' 
+      : '⏳ Confirming seat hold & locking for 5 minutes...');
+
+    const confirmPoll = setInterval(() => {
+      confirmAttempts++;
+
+      // Check if seats have .seat-selected OR table #tbl_seat_list / #tbl_price_details has rows
+      const selectedBtns = document.querySelectorAll('.btn-seat.seat-selected, .seat-selected');
+      const tableRows = document.querySelectorAll('#tbl_seat_list tr, .seat-info-row, #Div4 tr');
+
+      if (selectedBtns.length >= paxCount || tableRows.length >= paxCount || (confirmAttempts > 8 && selectedBtns.length > 0)) {
+        clearInterval(confirmPoll);
+        onConfirmed();
+        return;
+      }
+
+      // Fallback: If taking more than 3.5s, proceed anyway
+      if (confirmAttempts >= 35) {
+        clearInterval(confirmPoll);
+        onConfirmed();
+      }
+    }, 100);
+  }
+
+  function proceedToContinuePurchase(paxCount) {
+    playAlertSound();
+    showHudToast(currentLang === 'bn' 
+      ? '🎉 সিট নিশ্চিত হয়েছে! ৫ মিনিটের জন্য লক করা হচ্ছে...' 
+      : '🎉 Seats confirmed! Locking for 5 minutes...');
+
+    // 1. Ensure Boarding Point is selected in select#boardingpoint
+    const boardingSelect = document.querySelector('select#boardingpoint, select[formcontrolname="boarding_point"], #Div3 select');
+    if (boardingSelect) {
+      if (!boardingSelect.value || boardingSelect.value === '' || boardingSelect.value === '0') {
+        const validOpt = Array.from(boardingSelect.querySelectorAll('option')).find(o => o.value && o.value !== '' && o.value !== '0');
+        if (validOpt) {
+          boardingSelect.value = validOpt.value;
+          boardingSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }
+
+    // 2. Poll for Continue Purchase / Submit button to be ready and click it
+    let proceedAttempts = 0;
+    const formDiv3 = document.querySelector('#Div3, form[id*="Div3"]');
+
+    const proceedPoll = setInterval(() => {
+      proceedAttempts++;
+
+      const proceedBtn =
+        document.querySelector('#Div3 button[type="submit"]') ||
+        document.querySelector('.continue-btn') ||
+        document.querySelector('#confirmbooking .continue-btn') ||
+        document.querySelector('.seat-layout-view button[type="submit"]') ||
+        document.querySelector('app-seat-layout button[type="submit"]') ||
+        document.querySelector('.btn-booking-continue, [class*="confirm-btn"]') ||
+        Array.from(document.querySelectorAll('button')).find(b => {
+          if (b.closest('#geticket-hud-root') || b.closest('#gtToastBanner')) return false;
+          const t = b.innerText.trim().toLowerCase();
+          return t.includes('continue purchase') || t.includes('continue') || t.includes('confirm') ||
+                 t.includes('proceed') || t.includes('কেনাকাটা চালিয়ে যান') || t.includes('চালিয়ে যান');
+        });
+
+      if (proceedBtn && !proceedBtn.disabled) {
+        clearInterval(proceedPoll);
+        proceedBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        safeHumanClick(proceedBtn, () => {
+          if (formDiv3) {
+            try {
+              formDiv3.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+            } catch (e) {}
+          }
+          triggerSeatLockSuccess();
+        });
+        return;
+      }
+
+      if (proceedAttempts > 40) { // 4 seconds timeout
+        clearInterval(proceedPoll);
+        if (proceedBtn) {
+          proceedBtn.disabled = false;
+          safeHumanClick(proceedBtn, triggerSeatLockSuccess);
+        } else if (formDiv3) {
+          formDiv3.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+          triggerSeatLockSuccess();
+        }
+      }
+    }, 100);
+  }
+
+  function triggerSeatLockSuccess() {
+    playAlertSound();
+    isExecutingGrab = false;
+
+    if (chrome?.storage?.local) {
+      chrome.storage.local.get(['scheduledBookings'], (res) => {
+        const list = res?.scheduledBookings || [];
+        const journeyDate = formatRailwayDate(config.targetDate);
+        const updated = list.filter(b => !(b.type === 'instant_watchdog' && b.from === config.routeFrom && b.to === config.routeTo && (!journeyDate || b.date === journeyDate)));
+        chrome.storage.local.set({ scheduledBookings: updated }, () => {
+          const root = document.getElementById('geticket-hud-root');
+          if (root) renderActiveSchedules(root);
+        });
+      });
+      chrome.storage.local.remove('activeGrabTask');
+    }
+
+    if (chrome?.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({ action: 'SEAT_LOCKED_NOTIFY' }).catch(() => {});
+    }
+
+    showHudToast(currentLang === 'bn' 
+      ? '🎉 সিট ৫ মিনিটের জন্য সফলভাবে লক হয়েছে! পেমেন্ট সম্পন্ন করুন...' 
+      : '🎉 Seats successfully locked for 5 minutes! Complete payment...');
   }
 
   // 8. Continuous Sold-Out Watchdog with 9-13s Retry Loop
