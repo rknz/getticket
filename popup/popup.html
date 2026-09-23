@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GeTicket Pro Control</title>
+  <title>GeTicket Pro Control Panel</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -17,7 +17,7 @@
         </div>
         <div class="brand-title-wrap">
           <h1 id="hdrTitle">GeTicket Pro</h1>
-          <span class="version-badge">v2.7</span>
+          <span class="version-badge">v2.8</span>
         </div>
       </div>
 
@@ -30,6 +30,15 @@
         <button class="tool-btn" id="btnPopTheme" title="Toggle Theme">☀️</button>
       </div>
     </header>
+
+    <!-- Real-Time Railway Auth Status Strip -->
+    <div class="auth-status-bar" id="authStatusBar">
+      <div class="auth-status-info">
+        <span class="auth-status-dot" id="authStatusDot">🟡</span>
+        <span class="auth-status-text" id="authStatusText">Checking Railway session...</span>
+      </div>
+      <button type="button" class="btn-auth-action" id="btnAuthAction" title="Login with Vault credentials">⚡ Auto Login</button>
+    </div>
 
     <!-- Clock Strip -->
     <div class="server-clock-bar">
@@ -143,7 +152,7 @@
 
         <!-- Stealth Guarantee -->
         <div class="stealth-indicator" id="lblStealthNotice">
-          <span>🛡️ 100% Humanized Stealth Active • Zero Account Ban</span>
+          <span>🛡️ 100% Real-Time Engine Active • Zero Account Ban</span>
         </div>
       </section>
 
@@ -184,9 +193,14 @@
             <input type="password" id="vaultPass" class="input-control" placeholder="••••••••">
           </div>
 
-          <button class="action-btn btn-arm" id="btnSaveVault" style="padding: 9px;">
-            🔒 <span id="btnSaveVaultText">Save Railway Account to Vault</span>
-          </button>
+          <div style="display: flex; gap: 8px;">
+            <button class="action-btn btn-arm" id="btnSaveVault" style="padding: 9px; flex: 1;">
+              🔒 <span id="btnSaveVaultText">Save to Vault</span>
+            </button>
+            <button class="action-btn btn-grab" id="btnDirectLogin" style="padding: 9px; flex: 1;">
+              ⚡ <span id="btnDirectLoginText">Login Now</span>
+            </button>
+          </div>
         </div>
 
         <!-- Live Fare & bKash Summary -->

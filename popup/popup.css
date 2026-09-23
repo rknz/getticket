@@ -166,6 +166,55 @@ h1 {
   color: #ef4444;
 }
 
+/* Real-Time Railway Auth Status Bar */
+.auth-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin-top: 5px;
+  margin-bottom: 2px;
+  font-size: 11px;
+}
+
+.auth-status-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.auth-status-dot {
+  font-size: 10px;
+}
+
+.auth-status-text {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-auth-action {
+  background: linear-gradient(135deg, var(--primary), #0284c7);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.btn-auth-action:hover {
+  opacity: 0.9;
+}
+
 /* Clock Strip */
 .server-clock-bar {
   display: flex;

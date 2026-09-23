@@ -1,12 +1,11 @@
 /**
- * GeTicket Pro - Popup Controller
+ * GeTicket Pro - Popup Controller (v2.8)
  * Strict Single-Language Purity (Pure English default <-> Pure Bengali)
  * Dual-Mode Engine: Instant Ticket Grab & Advance 8:00 AM Schedule,
- * Live Railway Server API Fetcher, Master Train Database (40+ Trains),
- * Type-To-Search Station Autocomplete, Active Schedules Notification Badge & Manager.
+ * Live Railway Server API Fetcher with Real-Time Bearer Auth Bridge,
+ * Master Train Database, Active Schedules Notification Badge & Manager.
  */
 
-// 1. Comprehensive Bangladesh Railway Stations (All Major Railway Junctions)
 // 1. Comprehensive Bangladesh Railway Stations (Verbatim Official Railway Portal Names)
 const STATIONS = {
   en: [
@@ -98,7 +97,6 @@ const DIRECTIONS_OPTS = {
   ]
 };
 
-// Chronological Train Sorting Engine (Strict AM to PM Ascending Order)
 function parseTimeToMinutes(timeStr) {
   if (!timeStr) return 0;
   const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -116,9 +114,8 @@ function sortTrainsChronologically(trainsList) {
   return [...trainsList].sort((a, b) => parseTimeToMinutes(a.dep) - parseTimeToMinutes(b.dep));
 }
 
-// 2. Comprehensive Master Train Schedule Database (Only Legitimate Online Intercity Trains, Sorted AM to PM)
+// 2. Comprehensive Master Train Schedule Database
 const ROUTE_TRAIN_MAP = {
-  // Dhaka <-> Chattogram Corridors (Online Intercity Only, Chronological AM to PM)
   "Dhaka-Chattogram": [
     { nameEn: "Tourist Express", nameBn: "পর্যটক এক্সপ্রেস", code: "815", dep: "06:15 AM", arr: "11:50 AM", durationEn: "5h 35m", durationBn: "৫ ঘণ্টা ৩৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
     { nameEn: "Sonar Bangla Express", nameBn: "সোনার বাংলা এক্সপ্রেস", code: "787", dep: "07:00 AM", arr: "12:15 PM", durationEn: "5h 15m", durationBn: "৫ ঘণ্টা ১৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" },
@@ -139,38 +136,21 @@ const ROUTE_TRAIN_MAP = {
     { nameEn: "Turna Express", nameBn: "তূর্ণা এক্সপ্রেস", code: "741", dep: "11:00 PM", arr: "05:15 AM", durationEn: "6h 15m", durationBn: "৬ ঘণ্টা ১৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
     { nameEn: "Tourist Express", nameBn: "পর্যটক এক্সপ্রেস", code: "816", dep: "11:30 PM", arr: "05:00 AM", durationEn: "5h 30m", durationBn: "৫ ঘণ্টা ৩০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" }
   ],
-
-  // Jamalpur <-> Mymensingh Corridors (Direct Trains, Chronological AM to PM)
-  "Jamalpur-Mymensingh": [
-    { nameEn: "Jamuna Express", nameBn: "যমুনা এক্সপ্রেস", code: "746", dep: "02:30 AM", arr: "03:55 AM", durationEn: "1h 25m", durationBn: "১ ঘণ্টা ২৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
-    { nameEn: "Brahmaputra Express", nameBn: "ব্রহ্মপুত্র এক্সপ্রেস", code: "744", dep: "06:40 AM", arr: "08:00 AM", durationEn: "1h 20m", durationBn: "১ ঘণ্টা ২০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Dewanganj Commuter", nameBn: "দেওয়ানগঞ্জ কমিউটার", code: "48", dep: "03:15 PM", arr: "04:45 PM", durationEn: "1h 30m", durationBn: "১ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "708", dep: "03:30 PM", arr: "04:50 PM", durationEn: "1h 20m", durationBn: "১ ঘণ্টা ২০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
-    { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "736", dep: "05:45 PM", arr: "07:05 PM", durationEn: "1h 20m", durationBn: "১ ঘণ্টা ২০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "786", dep: "08:10 PM", arr: "09:35 PM", durationEn: "1h 25m", durationBn: "১ ঘণ্টা ২৫ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
+  "Dhaka-Rajshahi": [
+    { nameEn: "Dhumketu Express", nameBn: "ধূমকেতু এক্সপ্রেস", code: "769", dep: "06:00 AM", arr: "11:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
+    { nameEn: "Bonolota Express", nameBn: "বনলতা এক্সপ্রেস", code: "791", dep: "01:30 PM", arr: "06:00 PM", durationEn: "4h 30m", durationBn: "৪ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
+    { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "753", dep: "02:30 PM", arr: "08:20 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Padma Express", nameBn: "পদ্মা এক্সপ্রেস", code: "759", dep: "11:00 PM", arr: "04:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
   ],
-  "Mymensingh-Jamalpur": [
-    { nameEn: "Dewanganj Commuter", nameBn: "দেওয়ানগঞ্জ কমিউটার", code: "47", dep: "09:45 AM", arr: "11:15 AM", durationEn: "1h 30m", durationBn: "১ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "707", dep: "10:35 AM", arr: "11:50 AM", durationEn: "1h 15m", durationBn: "১ ঘণ্টা ১৫ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
-    { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "735", dep: "02:30 PM", arr: "03:45 PM", durationEn: "1h 15m", durationBn: "১ ঘণ্টা ১৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "785", dep: "04:45 PM", arr: "06:10 PM", durationEn: "1h 25m", durationBn: "১ ঘণ্টা ২৫ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" },
-    { nameEn: "Jamuna Express", nameBn: "যমুনা এক্সপ্রেস", code: "745", dep: "08:05 PM", arr: "09:40 PM", durationEn: "1h 35m", durationBn: "১ ঘণ্টা ৩৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
-    { nameEn: "Brahmaputra Express", nameBn: "ব্রহ্মপুত্র এক্সপ্রেস", code: "743", dep: "09:35 PM", arr: "11:20 PM", durationEn: "1h 45m", durationBn: "১ ঘণ্টা ৪৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
+  "Rajshahi-Dhaka": [
+    { nameEn: "Bonolota Express", nameBn: "বনলতা এক্সপ্রেস", code: "792", dep: "07:00 AM", arr: "11:30 AM", durationEn: "4h 30m", durationBn: "৪ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
+    { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "754", dep: "07:40 AM", arr: "01:30 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Padma Express", nameBn: "পদ্মা এক্সপ্রেস", code: "760", dep: "04:00 PM", arr: "09:40 PM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" },
+    { nameEn: "Dhumketu Express", nameBn: "ধূমকেতু এক্সপ্রেস", code: "770", dep: "11:20 PM", arr: "04:50 AM", durationEn: "5h 30m", durationBn: "৫ ঘণ্টা ৩০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" }
   ],
-
-  // Chattogram <-> Mymensingh Corridors
-  "Chattogram-Mymensingh": [
-    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "785", dep: "09:15 AM", arr: "04:40 PM", durationEn: "7h 25m", durationBn: "৭ ঘণ্টা ২৫ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
-  ],
-  "Mymensingh-Chattogram": [
-    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "786", dep: "09:40 PM", arr: "05:00 AM", durationEn: "7h 20m", durationBn: "৭ ঘণ্টা ২০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
-  ],
-
-  // Dhaka <-> Jamalpur Corridors (Chronological AM to PM)
   "Dhaka-Jamalpur": [
     { nameEn: "Dewanganj Commuter", nameBn: "দেওয়ানগঞ্জ কমিউটার", code: "47", dep: "05:40 AM", arr: "11:15 AM", durationEn: "5h 35m", durationBn: "৫ ঘণ্টা ৩৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
     { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "707", dep: "07:30 AM", arr: "11:50 AM", durationEn: "4h 20m", durationBn: "৪ ঘণ্টা ২০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
-    { nameEn: "Balaka Commuter", nameBn: "বলাকা কমিউটার", code: "49", dep: "10:30 AM", arr: "04:00 PM", durationEn: "5h 30m", durationBn: "৫ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
     { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "735", dep: "11:30 AM", arr: "03:45 PM", durationEn: "4h 15m", durationBn: "৪ ঘণ্টা ১৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
     { nameEn: "Jamuna Express", nameBn: "যমুনা এক্সপ্রেস", code: "745", dep: "04:45 PM", arr: "09:40 PM", durationEn: "4h 55m", durationBn: "৪ ঘণ্টা ৫৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
     { nameEn: "Brahmaputra Express", nameBn: "ব্রহ্মপুত্র এক্সপ্রেস", code: "743", dep: "06:15 PM", arr: "11:20 PM", durationEn: "5h 05m", durationBn: "৫ ঘণ্টা ০৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
@@ -181,222 +161,31 @@ const ROUTE_TRAIN_MAP = {
     { nameEn: "Dewanganj Commuter", nameBn: "দেওয়ানগঞ্জ কমিউটার", code: "48", dep: "03:15 PM", arr: "08:45 PM", durationEn: "5h 30m", durationBn: "৫ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
     { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "708", dep: "03:30 PM", arr: "08:10 PM", durationEn: "4h 40m", durationBn: "৪ ঘণ্টা ৪০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
     { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "736", dep: "05:45 PM", arr: "10:30 PM", durationEn: "4h 45m", durationBn: "৪ ঘণ্টা ৪৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
-  ],
-
-  // Chattogram <-> Jamalpur Corridors
-  "Chattogram-Jamalpur": [
-    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "785", dep: "09:15 AM", arr: "06:10 PM", durationEn: "8h 55m", durationBn: "৮ ঘণ্টা ৫৫ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
-  ],
-  "Jamalpur-Chattogram": [
-    { nameEn: "Bijoy Express", nameBn: "বিজয় এক্সপ্রেস", code: "786", dep: "08:10 PM", arr: "05:00 AM", durationEn: "8h 50m", durationBn: "৮ ঘণ্টা ৫০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
-  ],
-
-  // Dhaka <-> Cox's Bazar Corridors (Chronological AM to PM)
-  "Dhaka-Cox's Bazar": [
-    { nameEn: "Tourist Express", nameBn: "পর্যটক এক্সপ্রেস", code: "815", dep: "06:15 AM", arr: "03:00 PM", durationEn: "8h 45m", durationBn: "৮ ঘণ্টা ৪৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
-    { nameEn: "Cox's Bazar Express", nameBn: "কক্সবাজার এক্সপ্রেস", code: "813", dep: "10:30 PM", arr: "07:20 AM", durationEn: "8h 50m", durationBn: "৮ ঘণ্টা ৫০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" }
-  ],
-  "Cox's Bazar-Dhaka": [
-    { nameEn: "Cox's Bazar Express", nameBn: "কক্সবাজার এক্সপ্রেস", code: "814", dep: "12:30 PM", arr: "09:30 PM", durationEn: "9h 00m", durationBn: "৯ ঘণ্টা", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
-    { nameEn: "Tourist Express", nameBn: "পর্যটক এক্সপ্রেস", code: "816", dep: "08:00 PM", arr: "05:00 AM", durationEn: "9h 00m", durationBn: "৯ ঘণ্টা", offDay: 0, offEn: "Sunday", offBn: "রবিবার" }
-  ],
-
-  // Dhaka <-> Sylhet Corridors (Chronological AM to PM)
-  "Dhaka-Sylhet": [
-    { nameEn: "Parabat Express", nameBn: "পারাবত এক্সপ্রেস", code: "709", dep: "06:20 AM", arr: "01:00 PM", durationEn: "6h 40m", durationBn: "৬ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" },
-    { nameEn: "Jayantika Express", nameBn: "জয়ন্তিকা এক্সপ্রেস", code: "717", dep: "11:15 AM", arr: "07:00 PM", durationEn: "7h 45m", durationBn: "৭ ঘণ্টা ৪৫ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
-    { nameEn: "Kalni Express", nameBn: "কালনী এক্সপ্রেস", code: "773", dep: "03:00 PM", arr: "09:30 PM", durationEn: "6h 30m", durationBn: "৬ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
-    { nameEn: "Upaban Express", nameBn: "উপবন এক্সপ্রেস", code: "739", dep: "08:30 PM", arr: "05:00 AM", durationEn: "8h 30m", durationBn: "৮ ঘণ্টা ৩০ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
-  ],
-  "Sylhet-Dhaka": [
-    { nameEn: "Kalni Express", nameBn: "কালনী এক্সপ্রেস", code: "774", dep: "06:45 AM", arr: "01:00 PM", durationEn: "6h 15m", durationBn: "৬ ঘণ্টা ১৫ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
-    { nameEn: "Jayantika Express", nameBn: "জয়ন্তিকা এক্সপ্রেস", code: "718", dep: "11:30 AM", arr: "07:15 PM", durationEn: "7h 45m", durationBn: "৭ ঘণ্টা ৪৫ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
-    { nameEn: "Parabat Express", nameBn: "পারাবত এক্সপ্রেস", code: "710", dep: "03:45 PM", arr: "10:20 PM", durationEn: "6h 35m", durationBn: "৬ ঘণ্টা ৩৫ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" },
-    { nameEn: "Upaban Express", nameBn: "উপবন এক্সপ্রেস", code: "740", dep: "11:30 PM", arr: "06:45 AM", durationEn: "7h 15m", durationBn: "৭ ঘণ্টা ১৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
-  ],
-
-  // Chattogram <-> Sylhet Corridors (Chronological AM to PM)
-  "Chattogram-Sylhet": [
-    { nameEn: "Paharika Express", nameBn: "পাহাড়িকা এক্সপ্রেস", code: "719", dep: "07:50 AM", arr: "04:30 PM", durationEn: "8h 40m", durationBn: "৮ ঘণ্টা ৪০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
-    { nameEn: "Udayan Express", nameBn: "উদয়ন এক্সপ্রেস", code: "723", dep: "09:45 PM", arr: "06:00 AM", durationEn: "8h 15m", durationBn: "৮ ঘণ্টা ১৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" }
-  ],
-  "Sylhet-Chattogram": [
-    { nameEn: "Paharika Express", nameBn: "পাহাড়িকা এক্সপ্রেস", code: "720", dep: "10:15 AM", arr: "07:35 PM", durationEn: "9h 20m", durationBn: "৯ ঘণ্টা ২০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
-    { nameEn: "Udayan Express", nameBn: "উদয়ন এক্সপ্রেস", code: "724", dep: "10:00 PM", arr: "06:20 AM", durationEn: "8h 20m", durationBn: "৮ ঘণ্টা ২০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" }
-  ],
-
-  // Dhaka <-> Rajshahi Corridors (Chronological AM to PM)
-  "Dhaka-Rajshahi": [
-    { nameEn: "Dhumketu Express", nameBn: "ধূমকেতু এক্সপ্রেস", code: "769", dep: "06:00 AM", arr: "11:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
-    { nameEn: "Bonolota Express", nameBn: "বনলতা এক্সপ্রেস", code: "791", dep: "01:30 PM", arr: "06:00 PM", durationEn: "4h 30m", durationBn: "৪ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
-    { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "753", dep: "02:30 PM", arr: "08:20 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
-    { nameEn: "Madhumati Express", nameBn: "মধুমতি এক্সপ্রেস", code: "755", dep: "03:00 PM", arr: "10:30 PM", durationEn: "7h 30m", durationBn: "৭ ঘণ্টা ৩০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
-    { nameEn: "Padma Express", nameBn: "পদ্মা এক্সপ্রেস", code: "759", dep: "11:00 PM", arr: "04:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
-  ],
-  "Rajshahi-Dhaka": [
-    { nameEn: "Bonolota Express", nameBn: "বনলতা এক্সপ্রেস", code: "792", dep: "07:00 AM", arr: "11:30 AM", durationEn: "4h 30m", durationBn: "৪ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
-    { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "754", dep: "07:40 AM", arr: "01:30 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
-    { nameEn: "Padma Express", nameBn: "পদ্মা এক্সপ্রেস", code: "760", dep: "04:00 PM", arr: "09:40 PM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" },
-    { nameEn: "Dhumketu Express", nameBn: "ধূমকেতু এক্সপ্রেস", code: "770", dep: "11:20 PM", arr: "04:50 AM", durationEn: "5h 30m", durationBn: "৫ ঘণ্টা ৩০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" }
-  ],
-
-  // Dhaka <-> Khulna Corridors (Chronological AM to PM)
-  "Dhaka-Khulna": [
-    { nameEn: "Sundarban Express", nameBn: "সুন্দরবন এক্সপ্রেস", code: "725", dep: "08:15 AM", arr: "03:50 PM", durationEn: "7h 35m", durationBn: "৭ ঘণ্টা ৩৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" },
-    { nameEn: "Chitra Express", nameBn: "চিত্রা এক্সপ্রেস", code: "763", dep: "07:00 PM", arr: "03:40 AM", durationEn: "8h 40m", durationBn: "৮ ঘণ্টা ৪০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
-    { nameEn: "Benapole Express", nameBn: "বেনাপোল এক্সপ্রেস", code: "795", dep: "11:45 PM", arr: "07:20 AM", durationEn: "7h 35m", durationBn: "৭ ঘণ্টা ৩৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
-  ],
-  "Khulna-Dhaka": [
-    { nameEn: "Chitra Express", nameBn: "চিত্রা এক্সপ্রেস", code: "764", dep: "09:00 AM", arr: "05:30 PM", durationEn: "8h 30m", durationBn: "৮ ঘণ্টা ৩০ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
-    { nameEn: "Sundarban Express", nameBn: "সুন্দরবন এক্সপ্রেস", code: "726", dep: "10:15 PM", arr: "05:10 AM", durationEn: "6h 55m", durationBn: "৬ ঘণ্টা ৫৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
-  ],
-
-  // Dhaka <-> Rangpur Corridors (Chronological AM to PM)
-  "Dhaka-Rangpur": [
-    { nameEn: "Rangpur Express", nameBn: "রংপুর এক্সপ্রেস", code: "771", dep: "09:10 AM", arr: "07:05 PM", durationEn: "9h 55m", durationBn: "৯ ঘণ্টা ৫৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
-    { nameEn: "Kurigram Express", nameBn: "কুড়িগ্রাম এক্সপ্রেস", code: "797", dep: "08:45 PM", arr: "06:15 AM", durationEn: "9h 30m", durationBn: "৯ ঘণ্টা ৩০ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
-  ],
-  "Rangpur-Dhaka": [
-    { nameEn: "Kurigram Express", nameBn: "কুড়িগ্রাম এক্সপ্রেস", code: "798", dep: "07:15 AM", arr: "05:15 PM", durationEn: "10h 00m", durationBn: "১০ ঘণ্টা", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" },
-    { nameEn: "Rangpur Express", nameBn: "রংপুর এক্সপ্রেস", code: "772", dep: "08:10 PM", arr: "06:05 AM", durationEn: "9h 55m", durationBn: "৯ ঘণ্টা ৫৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" }
-  ],
-
-  // Dhaka <-> Panchagarh Corridors (Chronological AM to PM)
-  "Dhaka-Panchagarh": [
-    { nameEn: "Ekota Express", nameBn: "একতা এক্সপ্রেস", code: "705", dep: "10:15 AM", arr: "09:00 PM", durationEn: "10h 45m", durationBn: "১০ ঘণ্টা ৪৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Drutojan Express", nameBn: "দ্রুতযান এক্সপ্রেস", code: "757", dep: "08:00 PM", arr: "06:30 AM", durationEn: "10h 30m", durationBn: "১০ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Panchagarh Express", nameBn: "পঞ্চগড় এক্সপ্রেস", code: "793", dep: "10:45 PM", arr: "08:50 AM", durationEn: "10h 05m", durationBn: "১০ ঘণ্টা ০৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
-  ],
-  "Panchagarh-Dhaka": [
-    { nameEn: "Drutojan Express", nameBn: "দ্রুতযান এক্সপ্রেস", code: "758", dep: "08:10 AM", arr: "06:40 PM", durationEn: "10h 30m", durationBn: "১০ ঘণ্টা ৩০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Panchagarh Express", nameBn: "পঞ্চগড় এক্সপ্রেস", code: "794", dep: "12:30 PM", arr: "10:35 PM", durationEn: "10h 05m", durationBn: "১০ ঘণ্টা ০৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Ekota Express", nameBn: "একতা এক্সপ্রেস", code: "706", dep: "09:10 PM", arr: "07:45 AM", durationEn: "10h 35m", durationBn: "১০ ঘণ্টা ৩৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
-  ],
-
-  // Dhaka <-> Mymensingh Corridors (Chronological AM to PM)
-  "Dhaka-Mymensingh": [
-    { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "707", dep: "07:30 AM", arr: "10:30 AM", durationEn: "3h 00m", durationBn: "৩ ঘণ্টা", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
-    { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "735", dep: "11:30 AM", arr: "02:25 PM", durationEn: "2h 55m", durationBn: "২ ঘণ্টা ৫৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Mohanganj Express", nameBn: "মোহনগঞ্জ এক্সপ্রেস", code: "789", dep: "01:15 PM", arr: "04:40 PM", durationEn: "3h 25m", durationBn: "৩ ঘণ্টা ২৫ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
-    { nameEn: "Jamuna Express", nameBn: "যমুনা এক্সপ্রেস", code: "745", dep: "04:45 PM", arr: "08:00 PM", durationEn: "3h 15m", durationBn: "৩ ঘণ্টা ১৫ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
-    { nameEn: "Brahmaputra Express", nameBn: "ব্রহ্মপুত্র এক্সপ্রেস", code: "743", dep: "06:15 PM", arr: "09:30 PM", durationEn: "3h 15m", durationBn: "৩ ঘণ্টা ১৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Haor Express", nameBn: "হাওর এক্সপ্রেস", code: "777", dep: "10:15 PM", arr: "01:30 AM", durationEn: "3h 15m", durationBn: "৩ ঘণ্টা ১৫ মি.", offDay: 3, offEn: "Wednesday", offBn: "বুধবার" }
-  ],
-  "Mymensingh-Dhaka": [
-    { nameEn: "Jamuna Express", nameBn: "যমুনা এক্সপ্রেস", code: "746", dep: "04:10 AM", arr: "07:40 AM", durationEn: "3h 30m", durationBn: "৩ ঘণ্টা ৩০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
-    { nameEn: "Brahmaputra Express", nameBn: "ব্রহ্মপুত্র এক্সপ্রেস", code: "744", dep: "08:10 AM", arr: "11:50 AM", durationEn: "3h 40m", durationBn: "৩ ঘণ্টা ৪০ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" },
-    { nameEn: "Teesta Express", nameBn: "তিস্তা এক্সপ্রেস", code: "708", dep: "05:05 PM", arr: "08:10 PM", durationEn: "3h 05m", durationBn: "৩ ঘণ্টা ০৫ মি.", offDay: 1, offEn: "Monday", offBn: "সোমবার" },
-    { nameEn: "Agnibeena Express", nameBn: "অগ্নিবীণা এক্সপ্রেস", code: "736", dep: "07:15 PM", arr: "10:30 PM", durationEn: "3h 15m", durationBn: "৩ ঘণ্টা ১৫ মি.", offDay: -1, offEn: "No Off-Day", offBn: "কোনো বন্ধ নেই" }
   ]
 };
 
-// Auto-sort all train corridors chronologically:
-for (const key in ROUTE_TRAIN_MAP) {
-  ROUTE_TRAIN_MAP[key] = sortTrainsChronologically(ROUTE_TRAIN_MAP[key]);
-}
-
-// Backward-compatible alias routing
-ROUTE_TRAIN_MAP["Dhaka-Chittagong"] = ROUTE_TRAIN_MAP["Dhaka-Chattogram"];
-ROUTE_TRAIN_MAP["Chittagong-Dhaka"] = ROUTE_TRAIN_MAP["Chattogram-Dhaka"];
-ROUTE_TRAIN_MAP["Chittagong-Jamalpur"] = ROUTE_TRAIN_MAP["Chattogram-Jamalpur"];
-ROUTE_TRAIN_MAP["Jamalpur-Chittagong"] = ROUTE_TRAIN_MAP["Jamalpur-Chattogram"];
-ROUTE_TRAIN_MAP["Chittagong-Sylhet"] = ROUTE_TRAIN_MAP["Chattogram-Sylhet"];
-ROUTE_TRAIN_MAP["Sylhet-Chittagong"] = ROUTE_TRAIN_MAP["Sylhet-Chattogram"];
-ROUTE_TRAIN_MAP["Chittagong-Mymensingh"] = ROUTE_TRAIN_MAP["Chattogram-Mymensingh"];
-ROUTE_TRAIN_MAP["Mymensingh-Chittagong"] = ROUTE_TRAIN_MAP["Mymensingh-Chattogram"];
-
-// 3. Official Bangladesh Railway Fares Database
+// 3. Exact Official Railway Fare Rates
 const FARE_RATES = {
-  "Jamalpur-Mymensingh": { S_CHAIR: 60, SHOVON: 45, SNIGDHA: 115, F_CHAIR: 90, AC_S: 140, AC_B: 210 },
-  "Mymensingh-Jamalpur": { S_CHAIR: 60, SHOVON: 45, SNIGDHA: 115, F_CHAIR: 90, AC_S: 140, AC_B: 210 },
-  "Chattogram-Mymensingh": { S_CHAIR: 340, SHOVON: 260, SNIGDHA: 650, F_CHAIR: 490, AC_S: 780, AC_B: 1170 },
-  "Mymensingh-Chattogram": { S_CHAIR: 340, SHOVON: 260, SNIGDHA: 650, F_CHAIR: 490, AC_S: 780, AC_B: 1170 },
-  "Dhaka-Jamalpur": { S_CHAIR: 205, SHOVON: 165, SNIGDHA: 391, F_CHAIR: 310, AC_S: 466, AC_B: 690 },
-  "Jamalpur-Dhaka": { S_CHAIR: 205, SHOVON: 165, SNIGDHA: 391, F_CHAIR: 310, AC_S: 466, AC_B: 690 },
-  "Chattogram-Jamalpur": { S_CHAIR: 375, SHOVON: 290, SNIGDHA: 715, F_CHAIR: 540, AC_S: 855, AC_B: 1280 },
-  "Jamalpur-Chattogram": { S_CHAIR: 375, SHOVON: 290, SNIGDHA: 715, F_CHAIR: 540, AC_S: 855, AC_B: 1280 },
-  "Dhaka-Chattogram": { S_CHAIR: 380, SHOVON: 285, SNIGDHA: 725, F_CHAIR: 560, AC_S: 865, AC_B: 1295 },
-  "Chattogram-Dhaka": { S_CHAIR: 380, SHOVON: 285, SNIGDHA: 725, F_CHAIR: 560, AC_S: 865, AC_B: 1295 },
-  "Dhaka-Cox's Bazar": { S_CHAIR: 505, SHOVON: 395, SNIGDHA: 965, F_CHAIR: 740, AC_S: 1150, AC_B: 1725 },
-  "Cox's Bazar-Dhaka": { S_CHAIR: 505, SHOVON: 395, SNIGDHA: 965, F_CHAIR: 740, AC_S: 1150, AC_B: 1725 },
-  "Dhaka-Sylhet": { S_CHAIR: 320, SHOVON: 265, SNIGDHA: 610, F_CHAIR: 470, AC_S: 730, AC_B: 1090 },
-  "Sylhet-Dhaka": { S_CHAIR: 320, SHOVON: 265, SNIGDHA: 610, F_CHAIR: 470, AC_S: 730, AC_B: 1090 },
-  "Chattogram-Sylhet": { S_CHAIR: 375, SHOVON: 290, SNIGDHA: 715, F_CHAIR: 540, AC_S: 855, AC_B: 1280 },
-  "Sylhet-Chattogram": { S_CHAIR: 375, SHOVON: 290, SNIGDHA: 715, F_CHAIR: 540, AC_S: 855, AC_B: 1280 },
-  "Dhaka-Rajshahi": { S_CHAIR: 340, SHOVON: 285, SNIGDHA: 650, F_CHAIR: 510, AC_S: 780, AC_B: 1170 },
-  "Rajshahi-Dhaka": { S_CHAIR: 340, SHOVON: 285, SNIGDHA: 650, F_CHAIR: 510, AC_S: 780, AC_B: 1170 },
-  "Dhaka-Khulna": { S_CHAIR: 460, SHOVON: 360, SNIGDHA: 880, F_CHAIR: 670, AC_S: 1050, AC_B: 1575 },
-  "Khulna-Dhaka": { S_CHAIR: 460, SHOVON: 360, SNIGDHA: 880, F_CHAIR: 670, AC_S: 1050, AC_B: 1575 },
-  "Dhaka-Rangpur": { S_CHAIR: 450, SHOVON: 350, SNIGDHA: 860, F_CHAIR: 650, AC_S: 1030, AC_B: 1545 },
-  "Rangpur-Dhaka": { S_CHAIR: 450, SHOVON: 350, SNIGDHA: 860, F_CHAIR: 650, AC_S: 1030, AC_B: 1545 },
-  "Dhaka-Panchagarh": { S_CHAIR: 550, SHOVON: 430, SNIGDHA: 1050, F_CHAIR: 800, AC_S: 1260, AC_B: 1890 },
-  "Panchagarh-Dhaka": { S_CHAIR: 550, SHOVON: 430, SNIGDHA: 1050, F_CHAIR: 800, AC_S: 1260, AC_B: 1890 },
-  "Dhaka-Mymensingh": { S_CHAIR: 150, SHOVON: 120, SNIGDHA: 285, F_CHAIR: 220, AC_S: 345, AC_B: 515 },
-  "Mymensingh-Dhaka": { S_CHAIR: 150, SHOVON: 120, SNIGDHA: 285, F_CHAIR: 220, AC_S: 345, AC_B: 515 },
-  "Dhaka-Cumilla": { S_CHAIR: 160, SHOVON: 130, SNIGDHA: 305, F_CHAIR: 235, AC_S: 365, AC_B: 545 },
-  "Cumilla-Dhaka": { S_CHAIR: 160, SHOVON: 130, SNIGDHA: 305, F_CHAIR: 235, AC_S: 365, AC_B: 545 },
-  "Dhaka-Feni": { S_CHAIR: 265, SHOVON: 215, SNIGDHA: 510, F_CHAIR: 390, AC_S: 605, AC_B: 910 },
-  "Feni-Dhaka": { S_CHAIR: 265, SHOVON: 215, SNIGDHA: 510, F_CHAIR: 390, AC_S: 605, AC_B: 910 },
-  "Dhaka-Sreemangal": { S_CHAIR: 240, SHOVON: 195, SNIGDHA: 460, F_CHAIR: 350, AC_S: 550, AC_B: 825 },
-  "Sreemangal-Dhaka": { S_CHAIR: 240, SHOVON: 195, SNIGDHA: 460, F_CHAIR: 350, AC_S: 550, AC_B: 825 },
-  "Dhaka-Bogra": { S_CHAIR: 395, SHOVON: 315, SNIGDHA: 755, F_CHAIR: 580, AC_S: 905, AC_B: 1355 },
-  "Bogra-Dhaka": { S_CHAIR: 395, SHOVON: 315, SNIGDHA: 755, F_CHAIR: 580, AC_S: 905, AC_B: 1355 },
-  "Dhaka-Dinajpur": { S_CHAIR: 465, SHOVON: 370, SNIGDHA: 890, F_CHAIR: 685, AC_S: 1065, AC_B: 1600 },
-  "Dinajpur-Dhaka": { S_CHAIR: 465, SHOVON: 370, SNIGDHA: 890, F_CHAIR: 685, AC_S: 1065, AC_B: 1600 },
-  "Dhaka-Benapole": { S_CHAIR: 480, SHOVON: 385, SNIGDHA: 920, F_CHAIR: 710, AC_S: 1100, AC_B: 1650 },
-  "Benapole-Dhaka": { S_CHAIR: 480, SHOVON: 385, SNIGDHA: 920, F_CHAIR: 710, AC_S: 1100, AC_B: 1650 },
-  "Dhaka-Ishwardi": { S_CHAIR: 265, SHOVON: 210, SNIGDHA: 510, F_CHAIR: 390, AC_S: 610, AC_B: 915 },
-  "Ishwardi-Dhaka": { S_CHAIR: 265, SHOVON: 210, SNIGDHA: 510, F_CHAIR: 390, AC_S: 610, AC_B: 915 }
+  "Dhaka-Chattogram": { "S_CHAIR": 405, "SNIGDHA": 777, "F_CHAIR": 540, "AC_S": 932, "AC_B": 1398, "SHOVON": 340 },
+  "Dhaka-Rajshahi": { "S_CHAIR": 375, "SNIGDHA": 719, "F_CHAIR": 500, "AC_S": 863, "AC_B": 1294, "SHOVON": 315 },
+  "Dhaka-Jamalpur": { "S_CHAIR": 205, "SNIGDHA": 391, "F_CHAIR": 270, "AC_S": 466, "AC_B": 699, "SHOVON": 170 }
 };
 
-// Aliases for Fares
-FARE_RATES["Dhaka-Chittagong"] = FARE_RATES["Dhaka-Chattogram"];
-FARE_RATES["Chittagong-Dhaka"] = FARE_RATES["Chattogram-Dhaka"];
-FARE_RATES["Chittagong-Jamalpur"] = FARE_RATES["Chattogram-Jamalpur"];
-FARE_RATES["Jamalpur-Chittagong"] = FARE_RATES["Jamalpur-Chattogram"];
-FARE_RATES["Chittagong-Sylhet"] = FARE_RATES["Chattogram-Sylhet"];
-FARE_RATES["Sylhet-Chittagong"] = FARE_RATES["Sylhet-Chattogram"];
-FARE_RATES["Chittagong-Mymensingh"] = FARE_RATES["Chattogram-Mymensingh"];
-FARE_RATES["Mymensingh-Chittagong"] = FARE_RATES["Mymensingh-Chattogram"];
-
-// 4. Strict Single-Language UI Dictionary
 const UI_TEXT = {
   en: {
     hdrTitle: "GeTicket Pro",
-    hdrStatus: "● Stealth Safe",
     tabSetup: "🎯 Setup",
     tabSchedules: "📅 Lists",
-    tabPriority: "⚡ Priority",
-    tabVault: "🔐 Vault",
-    lblModeInstant: "Instant Buy Now",
-    lblModeSchedule: "Advance 8:00 AM",
-    pillToday: "Today",
-    pillTomorrow: "Tomorrow",
-    pill3Days: "3 Days",
-    pill5Days: "5 Days",
-    pill7Days: "7 Days",
-    pill10Days: "10 Days",
+    tabVault: "💳 Vault",
     lblFrom: "From Station",
     lblTo: "To Station",
     lblDate: "Journey Date",
     lblPax: "Passengers",
     lblTrain: "Train Name",
     lblClass: "Coach Class",
-    lblTotalFareText: "Total in bKash:",
-    btnActionInstant: "⚡ Instant Grab & Lock Seats",
-    btnActionSchedule: "⏰ Arm Schedule & Set Alarm",
     lblSchedTitle: "Scheduled Bookings",
     lblNoSched: "No active schedules",
-    lblNoSchedSub: "Switch to Advance 8:00 AM mode on Setup tab to arm an automatic ticket alarm.",
-    lblPrioTitle: "Cascading Rules",
-    lblPrioHint: "Auto-Shift",
-    tagP1: "Priority 1 (First)",
-    statP1: "● Primary Target",
-    tagP2: "Priority 2 (Fallback)",
-    statP2: "● 1ms Failover",
-    tagP3: "Priority 3 (Backup)",
-    statP3: "● Last Resort",
-    btnSavePrioText: "Save Priority Rules",
+    lblNoSchedSub: "Set your route and click 'Arm Advance Schedule' on Setup tab.",
     lblVaultTitle: "Account Vault",
     lblVaultHint: "Encrypted",
     lblVaultPhone: "Railway Mobile",
@@ -404,58 +193,31 @@ const UI_TEXT = {
     lblVaultGuardHead: "✓ Anti-Logout Guard Active",
     lblVaultGuardDesc: "Keeps your railway session warm from 7:50 AM to prevent unexpected logout during morning peak rush.",
     btnSaveVaultText: "Save to Vault",
+    btnDirectLoginText: "Login Now",
     toastSchedSaved: "✓ Schedule Armed & Added to List!",
     toastSchedDeleted: "✓ Schedule Removed",
-    toastPrioSaved: "✓ Priority Rules Saved!",
     toastVaultSaved: "🔒 Railway Account Saved in Vault!",
-    serverSynced: "Railway Live Server Synced",
-    dbActive: "Master Railway Database Active",
-    searchingLive: "Querying Live Railway API...",
-    noDirectTrain: "No direct trains operate between these two stations.",
-    soldOut: "Sold Out (0 Seats Available)",
-    liveAvail: "avail.",
+    liveAvail: "seats left",
     liveSold: "Sold Out",
-    liveBookBtn: "Book Now",
-    liveChkFailed: "Live check failed",
+    liveBookBtn: "⚡ Book Now",
+    liveChkFailed: "Live check failed (Please login to Railway)",
     lblLiveEmpty: "No live data. Try again.",
     scanningLive: "Scanning live availability..."
   },
   bn: {
     hdrTitle: "জি-টিকিট প্রো",
-    hdrStatus: "● সুরক্ষিত স্টিলথ",
     tabSetup: "🎯 সেটআপ",
     tabSchedules: "📅 শিডিউল",
-    tabPriority: "⚡ প্রায়োরিটি",
     tabVault: "🔐 ভল্ট",
-    lblModeInstant: "রিলিজ টিকিট এখনই কাটুন",
-    lblModeSchedule: "অগ্রিম সকাল ৮:০০ শিডিউল",
-    pillToday: "আজকের",
-    pillTomorrow: "আগামীকাল",
-    pill3Days: "৩ দিন",
-    pill5Days: "৫ দিন",
-    pill7Days: "৭ দিন",
-    pill10Days: "১০ দিন",
     lblFrom: "যাত্রার স্টেশন",
     lblTo: "গন্তব্য স্টেশন",
     lblDate: "যাত্রার তারিখ",
     lblPax: "যাত্রী সংখ্যা",
     lblTrain: "ট্রেনের নাম",
     lblClass: "বসার শ্রেণি",
-    lblTotalFareText: "বিকাশে সর্বমোট:",
-    btnActionInstant: "⚡ রিলিজকৃত টিকিট এখনই কাটুন",
-    btnActionSchedule: "⏰ শিডিউল ও অ্যালার্ম সেট করুন",
     lblSchedTitle: "নির্ধারিত শিডিউল তালিকা",
     lblNoSched: "কোনো সক্রিয় শিডিউল নেই",
     lblNoSchedSub: "সেটআপ ট্যাব থেকে অগ্রিম শিডিউল যুক্ত করলে সকাল ০৭:৫০ এ স্বয়ংক্রিয় অ্যালার্ম বাজবে।",
-    lblPrioTitle: "ক্যাসকেডিং প্রায়োরিটি রুল",
-    lblPrioHint: "অটো-সুইচ",
-    tagP1: "প্রায়োরিটি ১ (প্রথম পছন্দ)",
-    statP1: "● মূল টার্গেট",
-    tagP2: "প্রায়োরিটি ২ (দ্বিতীয় পছন্দ)",
-    statP2: "● ১ মিলিসেকেন্ড সুইচ",
-    tagP3: "প্রায়োরিটি ৩ (ব্যাকআপ)",
-    statP3: "● শেষ বিকল্প",
-    btnSavePrioText: "প্রায়োরিটি রুল সেভ করুন",
     lblVaultTitle: "সুরক্ষিত ভল্ট",
     lblVaultHint: "এনক্রিপ্টেড",
     lblVaultPhone: "রেলওয়ে মোবাইল নম্বর",
@@ -463,32 +225,26 @@ const UI_TEXT = {
     lblVaultGuardHead: "✓ অ্যান্টি-লগআউট সেশন গার্ড সক্রিয়",
     lblVaultGuardDesc: "সকাল ৭:৫০ থেকে ব্রাউজার সেশন সচল রাখবে যাতে ৮টার ভিড়ে লগআউট না হয়ে যায়।",
     btnSaveVaultText: "ভল্টে সেভ করুন",
+    btnDirectLoginText: "এখনই লগইন করুন",
     toastSchedSaved: "✓ শিডিউল ও অ্যালার্ম যুক্ত হয়েছে!",
     toastSchedDeleted: "✓ শিডিউল মুছে ফেলা হয়েছে",
-    toastPrioSaved: "✓ প্রায়োরিটি রুল সেভ হয়েছে!",
     toastVaultSaved: "🔒 অ্যাকাউন্ট লোকাল ভল্টে সংরক্ষিত!",
-    serverSynced: "রেলওয়ে লাইভ সার্ভার সংযুক্ত",
-    dbActive: "রেলওয়ে মাস্টার ডাটাবেজ সক্রিয়",
-    searchingLive: "রেলওয়ে লাইভ সার্ভার খোঁজা হচ্ছে...",
-    noDirectTrain: "এই রুটে কোনো সরাসরি ট্রেন চলাচল করে না।",
-    soldOut: "বুকিং শেষ (০ টি সিট খালি)",
-    liveAvail: "খালি",
-    liveSold: "বুকড",
-    liveBookBtn: "এখনই বুক করুন",
-    liveChkFailed: "লাইভ চেক ব্যর্থ",
-    lblLiveEmpty: "লাইভ তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।",
+    liveAvail: "টি আসন খালি",
+    liveSold: "বুকড (০ টি)",
+    liveBookBtn: "⚡ এখনই বুক করুন",
+    liveChkFailed: "লাইভ চেক ব্যর্থ (অনুগ্রহ করে প্রথমে লগইন করুন)",
+    lblLiveEmpty: "লাইভ তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।",
     scanningLive: "লাইভ সিট স্ক্যান হচ্ছে..."
   }
 };
 
 let currentTheme = 'light';
 let currentLang = 'en';
-let currentMode = 'instant'; // 'instant' | 'schedule'
-let liveServerData = null; // Caches real API response from railway server
+let liveServerData = null;
 let isCurrentRouteValid = true;
-let isPopupEngineActive = true; // tracks popup power button state
+let isPopupEngineActive = true;
+let isRailwayLoggedIn = false;
 
-// Web Audio API Chime
 function playChime() {
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -506,7 +262,6 @@ function playChime() {
   } catch (e) { }
 }
 
-// Helper: Page Switcher
 function switchPage(pageId) {
   document.querySelectorAll('.nav-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.page === pageId);
@@ -517,7 +272,6 @@ function switchPage(pageId) {
 }
 window.switchPage = switchPage;
 
-// Helper: Toast Message
 function showToast(msg) {
   const toast = document.getElementById('statusToast');
   if (toast) {
@@ -527,13 +281,8 @@ function showToast(msg) {
   }
 }
 
-// Helper: Update Badge Everywhere (Header, Tab, Toolbar Icon)
 function updateBadgeCount(count) {
   const num = parseInt(count, 10) || 0;
-
-  const lblBadge = document.getElementById('lblBadgeCount');
-  if (lblBadge) lblBadge.innerText = String(num);
-
   const miniBadge = document.getElementById('miniBadgeCount');
   if (miniBadge) miniBadge.innerText = String(num);
 
@@ -541,192 +290,81 @@ function updateBadgeCount(count) {
   if (schedCount) {
     schedCount.innerText = currentLang === 'bn' ? `${num} টি সক্রিয়` : `${num} Active`;
   }
-
-  if (chrome?.action?.setBadgeText) {
-    chrome.action.setBadgeText({ text: num > 0 ? String(num) : '' });
-    chrome.action.setBadgeBackgroundColor({ color: '#0284c7' });
-  }
-
-  if (chrome?.runtime?.sendMessage) {
-    chrome.runtime.sendMessage({ action: 'SYNC_BADGE', count: num }).catch(() => { });
-  }
 }
 
-// Storage Helpers
 function getScheduledBookings(callback) {
   if (chrome?.storage?.local) {
     chrome.storage.local.get(['scheduledBookings'], (res) => {
-      if (Array.isArray(res?.scheduledBookings)) {
-        try { localStorage.setItem('scheduledBookings', JSON.stringify(res.scheduledBookings)); } catch (e) { }
-        callback(res.scheduledBookings);
-      } else {
-        try {
-          const raw = localStorage.getItem('scheduledBookings') || '[]';
-          callback(JSON.parse(raw));
-        } catch (e) {
-          callback([]);
-        }
-      }
+      callback(Array.isArray(res?.scheduledBookings) ? res.scheduledBookings : []);
     });
   } else {
-    try {
-      const raw = localStorage.getItem('scheduledBookings') || '[]';
-      callback(JSON.parse(raw));
-    } catch (e) {
-      callback([]);
-    }
+    callback([]);
   }
 }
 
 function saveScheduledBookings(list, callback) {
   const safeList = Array.isArray(list) ? list : [];
-  try {
-    localStorage.setItem('scheduledBookings', JSON.stringify(safeList));
-  } catch (e) { }
-
   updateBadgeCount(safeList.length);
-
-  try {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'SYNC_SCHEDULES', count: safeList.length }, '*');
-    }
-  } catch (e) { }
-
   if (chrome?.storage?.local) {
     chrome.storage.local.set({ scheduledBookings: safeList }, () => {
       if (callback) callback();
     });
-  } else {
-    if (callback) callback();
+  } else if (callback) {
+    callback();
   }
 }
 
-// Language Name Resolvers (Smart Prefix, Abbreviation & Fuzzy Autocomplete)
-function resolveStationValue(inputVal) {
-  if (!inputVal) return "Dhaka";
-  const trimmed = inputVal.trim().toLowerCase();
-
-  // Fast Abbreviation & Prefix Aliases
-  if (trimmed === 'dhk' || trimmed === 'dha' || trimmed === 'ঢা') return 'Dhaka';
-  if (trimmed === 'ctg' || trimmed === 'chi' || trimmed === 'chattogram' || trimmed === 'chattagram' || trimmed === 'chittagong' || trimmed === 'চট' || trimmed === 'চট্টগ্রাম') return 'Chattogram';
-  if (trimmed === 'jmp' || trimmed === 'jam' || trimmed === 'jamal' || trimmed === 'জা' || trimmed === 'জাম') return 'Jamalpur';
-  if (trimmed === 'mym' || trimmed === 'mmn' || trimmed === 'ময়' || trimmed === 'ময়') return 'Mymensingh';
-  if (trimmed === 'cox' || trimmed === 'কক্স') return "Cox's Bazar";
-  if (trimmed === 'syl' || trimmed === 'সি') return 'Sylhet';
-  if (trimmed === 'raj' || trimmed === 'রাজ') return 'Rajshahi';
-  if (trimmed === 'khu' || trimmed === 'খুল') return 'Khulna';
-  if (trimmed === 'ran' || trimmed === 'রং') return 'Rangpur';
-  if (trimmed === 'din' || trimmed === 'দিনা') return 'Dinajpur';
-  if (trimmed === 'pan' || trimmed === 'পঞ্চ') return 'Panchagarh';
-  if (trimmed === 'ben' || trimmed === 'বেনা') return 'Benapole';
-  if (trimmed === 'ishw' || trimmed === 'ঈশ্বর') return 'Ishwardi';
-  if (trimmed === 'bog' || trimmed === 'বগু') return 'Bogra';
-  if (trimmed === 'com' || trimmed === 'cumilla' || trimmed === 'comilla' || trimmed === 'কুমি' || trimmed === 'কুমিল্লা') return 'Cumilla';
-  if (trimmed === 'fen' || trimmed === 'ফেন' || trimmed === 'ফেনী') return 'Feni';
-  if (trimmed === 'sree' || trimmed === 'শ্রী') return 'Sreemangal';
-
-  // 1. Exact Match
-  for (const s of STATIONS.en) {
-    if (s.value.toLowerCase() === trimmed || s.text.toLowerCase() === trimmed) return s.value;
-  }
-  for (const s of STATIONS.bn) {
-    if (s.text === inputVal.trim() || s.value.toLowerCase() === trimmed) return s.value;
-  }
-
-  // 2. StartsWith Prefix Match
-  for (const s of STATIONS.en) {
-    if (s.value.toLowerCase().startsWith(trimmed) || s.text.toLowerCase().startsWith(trimmed)) return s.value;
-  }
-  for (const s of STATIONS.bn) {
-    if (s.text.startsWith(inputVal.trim())) return s.value;
-  }
-
-  return inputVal.trim();
-}
-
-function getStationName(val, lang) {
-  const list = STATIONS[lang] || STATIONS.en;
-  const item = list.find(s => s.value === val);
-  return item ? item.text : val;
-}
-
-function getClassName(val, lang) {
-  const list = CLASSES_OPTS[lang] || CLASSES_OPTS.en;
-  const item = list.find(c => c.value === val);
-  return item ? item.text : val;
-}
-
-function getTrainDisplayName(nameEn, lang) {
-  for (const route in ROUTE_TRAIN_MAP) {
-    const found = ROUTE_TRAIN_MAP[route].find(t => t.nameEn === nameEn);
-    if (found) {
-      return lang === 'bn' ? `${found.nameBn} (${found.code})` : `${found.nameEn} (${found.code})`;
-    }
-  }
-  return nameEn;
-}
-
-// Render Page 2: Active Schedules List
-function renderSchedulesList(schedules) {
+function renderSchedulesList(bookings) {
   const container = document.getElementById('schedulesContainer');
-  const empty = document.getElementById('emptyScheduleState');
+  const emptyState = document.getElementById('emptyScheduleState');
   if (!container) return;
 
   container.innerHTML = '';
-  updateBadgeCount(schedules ? schedules.length : 0);
+  const list = Array.isArray(bookings) ? bookings : [];
+  updateBadgeCount(list.length);
 
-  if (!schedules || schedules.length === 0) {
-    if (empty) empty.style.display = 'block';
+  if (list.length === 0) {
+    if (emptyState) emptyState.style.display = 'block';
     return;
   }
+  if (emptyState) emptyState.style.display = 'none';
 
-  if (empty) empty.style.display = 'none';
+  list.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'schedule-card';
 
-  schedules.forEach((item) => {
-    try {
-      const card = document.createElement('div');
-      card.className = 'schedule-card-item';
+    const fromStation = getStationName(item.from, currentLang);
+    const toStation = getStationName(item.to, currentLang);
+    const trainDisplay = getTrainDisplayName(item.trainName, currentLang);
+    const isInstant = item.type === 'instant';
 
-      const fromStation = getStationName(item.from, currentLang);
-      const toStation = getStationName(item.to, currentLang);
-      const trainDisplay = getTrainDisplayName(item.trainName, currentLang);
-      const isInstant = item.type === 'instant' || item.alarmTime === '⚡ Instant Grab Active';
-      const isWestRoute = item.zone === 'west' || ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'].includes(item.to);
-      const alarmTime = item.alarmTime || (isWestRoute ? '07:50 AM' : '01:50 PM');
-      const zoneNameStr = isWestRoute
-        ? (currentLang === 'bn' ? 'পশ্চিমাঞ্চল' : 'West Zone')
-        : (currentLang === 'bn' ? 'পূর্বাঞ্চল' : 'East Zone');
+    const statusColor = isInstant ? '#10b981' : 'var(--primary)';
+    const statusText = isInstant
+      ? (currentLang === 'bn' ? '⚡ তাৎক্ষণিক ফাস্ট-গ্র্যাব সক্রিয়' : '⚡ Instant Fast-Grab Active')
+      : (currentLang === 'bn' ? `⏰ অ্যালার্ম সক্রিয় (${item.date})` : `⏰ Alarm Armed (${item.date})`);
 
-      const statusText = isInstant
-        ? (currentLang === 'bn' ? '⚡ তাৎক্ষণিক ফাস্ট-গ্র্যাব সক্রিয়' : '⚡ Instant Fast-Grab Active')
-        : (currentLang === 'bn' ? `⏰ অ্যালার্ম: ${alarmTime} (${zoneNameStr} সক্রিয়)` : `⏰ Alarm: ${alarmTime} (${zoneNameStr} Armed)`);
-      const statusColor = isInstant ? '#10b981' : 'var(--primary)';
+    const paxCount = item.passengers || 1;
+    const paxText = currentLang === 'bn' ? `${paxCount} জন যাত্রী` : `${paxCount} Pax`;
+    const classDisplay = (CLASSES_OPTS[currentLang] || CLASSES_OPTS.en).find(c => c.value === item.classCode)?.text || item.classCode || 'Shovon Chair';
 
-      const paxCount = item.passengers || 1;
-      const paxText = currentLang === 'bn' ? `${paxCount} জন যাত্রী` : `${paxCount} Pax`;
-      const classDisplay = (CLASSES_OPTS[currentLang] || CLASSES_OPTS.en).find(c => c.value === item.classCode)?.text || item.classCode || 'Shovon Chair';
+    card.innerHTML = `
+      <div style="flex: 1; padding-right: 8px;">
+        <div class="sched-info-title">🚄 ${trainDisplay}</div>
+        <div class="sched-info-meta">📍 ${fromStation} ➔ ${toStation}</div>
+        <div class="sched-info-meta">📅 ${item.date} • 👥 ${paxText} • 💺 ${classDisplay}</div>
+        <div class="sched-info-meta" style="color: ${statusColor}; font-weight: 700; margin-top: 4px;">${statusText}</div>
+      </div>
+      <div>
+        <button class="btn-del-sched" data-id="${item.id}" title="${currentLang === 'bn' ? 'মুছে ফেলুন' : 'Delete'}">🗑️</button>
+      </div>
+    `;
 
-      card.innerHTML = `
-        <div style="flex: 1; padding-right: 8px;">
-          <div class="sched-info-title">🚄 ${trainDisplay}</div>
-          <div class="sched-info-meta">📍 ${fromStation} ➔ ${toStation}</div>
-          <div class="sched-info-meta">📅 ${item.date} • 👥 ${paxText} • 💺 ${classDisplay}</div>
-          <div class="sched-info-meta" style="color: ${statusColor}; font-weight: 700; margin-top: 4px;">${statusText}</div>
-        </div>
-        <div>
-          <button class="btn-del-sched" data-id="${item.id}" title="${currentLang === 'bn' ? 'মুছে ফেলুন' : 'Delete'}">🗑️</button>
-        </div>
-      `;
+    card.querySelector('.btn-del-sched').addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteSchedule(item.id);
+    });
 
-      card.querySelector('.btn-del-sched').addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteSchedule(item.id);
-      });
-
-      container.appendChild(card);
-    } catch (err) {
-      console.error('Error rendering schedule card:', err);
-    }
+    container.appendChild(card);
   });
 }
 
@@ -743,6 +381,53 @@ function deleteSchedule(id) {
   });
 }
 
+// 4. Real-Time Auth State & Status Checker
+function checkAndDisplayAuthStatus() {
+  const dot = document.getElementById('authStatusDot');
+  const text = document.getElementById('authStatusText');
+  const btn = document.getElementById('btnAuthAction');
+
+  if (chrome?.runtime?.sendMessage) {
+    chrome.runtime.sendMessage({ action: 'CHECK_AUTH_STATUS' }, (res) => {
+      if (res && res.isLoggedIn) {
+        isRailwayLoggedIn = true;
+        const userName = res.user?.name || res.user?.mobile_number || 'Session Active';
+        if (dot) dot.innerText = '🟢';
+        if (text) {
+          text.innerText = currentLang === 'bn' ? `রেলওয়ে লগইন সক্রিয়: ${userName}` : `Railway Logged In: ${userName}`;
+          text.style.color = '#10b981';
+        }
+        if (btn) {
+          btn.innerText = currentLang === 'bn' ? '🌐 পোর্টাল' : '🌐 Open Portal';
+          btn.onclick = () => {
+            chrome.tabs.create({ url: 'https://eticket.railway.gov.bd/booking/train/search' });
+          };
+        }
+      } else {
+        isRailwayLoggedIn = false;
+        if (dot) dot.innerText = '🔴';
+        if (text) {
+          text.innerText = currentLang === 'bn' ? 'রেলওয়েতে লগইন করা নেই' : 'Not Logged In to Railway';
+          text.style.color = '#ef4444';
+        }
+        if (btn) {
+          btn.innerText = currentLang === 'bn' ? '⚡ অটো লগইন' : '⚡ Auto Login';
+          btn.onclick = () => {
+            chrome.runtime.sendMessage({ action: 'TRIGGER_AUTO_LOGIN' }, (r) => {
+              if (r && r.error === 'NO_VAULT_CREDENTIALS') {
+                showToast(currentLang === 'bn' ? '⚠️ ভল্টে মোবাইল ও পাসওয়ার্ড সেভ করুন!' : '⚠️ Save phone & password in Vault first!');
+                switchPage('vault');
+              } else {
+                showToast(currentLang === 'bn' ? '🔑 লগইন পেজ খোলা হচ্ছে...' : '🔑 Opening login page...');
+              }
+            });
+          };
+        }
+      }
+    });
+  }
+}
+
 // 5. Live Railway Server API Integration
 async function fetchLiveTrainsFromServer(fromStation, toStation, journeyDate) {
   return new Promise((resolve) => {
@@ -754,13 +439,15 @@ async function fetchLiveTrainsFromServer(fromStation, toStation, journeyDate) {
         date: journeyDate
       }, (response) => {
         if (response && response.success) {
-          // Normalise: API may return data.trains or data.trips depending on endpoint version
           const trains = response.data?.trains || response.data?.trips || response.trains;
           if (trains && trains.length > 0) {
-            liveServerData = { ...response.data, trains }; // always expose as .trains
-            resolve(trains);
+            liveServerData = { ...response.data, trains };
+            resolve({ trains, live: true });
             return;
           }
+        } else if (response && response.unauthorized) {
+          resolve({ unauthorized: true });
+          return;
         }
         resolve(null);
       });
@@ -770,17 +457,575 @@ async function fetchLiveTrainsFromServer(fromStation, toStation, journeyDate) {
   });
 }
 
-// Main Controller Initializer
-document.addEventListener('DOMContentLoaded', () => {
+function getStationName(val, lang) {
+  const list = STATIONS[lang] || STATIONS.en;
+  const match = list.find(s => s.value.toLowerCase() === (val || '').toLowerCase());
+  return match ? match.text : val;
+}
 
-  // Tab navigation (Setup, Lists, Vault)
-  document.querySelectorAll('.nav-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      switchPage(tab.dataset.page);
+function resolveStationValue(textOrVal) {
+  if (!textOrVal) return "Dhaka";
+  for (const lang of ['en', 'bn']) {
+    const list = STATIONS[lang];
+    const match = list.find(s => s.text.toLowerCase() === textOrVal.toLowerCase() || s.value.toLowerCase() === textOrVal.toLowerCase());
+    if (match) return match.value;
+  }
+  return textOrVal;
+}
+
+function getTrainDisplayName(nameEn, lang) {
+  if (nameEn === 'ANY_TRAIN' || !nameEn) {
+    return lang === 'bn' ? 'যেকোনো উপলব্ধ ট্রেন' : 'Any Available Train';
+  }
+  for (const key in ROUTE_TRAIN_MAP) {
+    const match = ROUTE_TRAIN_MAP[key].find(t => t.nameEn === nameEn);
+    if (match) return lang === 'bn' ? match.nameBn : match.nameEn;
+  }
+  return nameEn;
+}
+
+function populateDropdowns() {
+  const fromInput = document.getElementById('routeFrom');
+  const toInput = document.getElementById('routeTo');
+  const paxSel = document.getElementById('passengerCount');
+  const prefClass = document.getElementById('prefClass');
+
+  const p1Class = document.getElementById('p1Class');
+  const p2Class = document.getElementById('p2Class');
+  const p3Class = document.getElementById('p3Class');
+
+  const p1Dir = document.getElementById('p1Dir');
+  const p2Dir = document.getElementById('p2Dir');
+  const p3Dir = document.getElementById('p3Dir');
+
+  const curFrom = fromInput?.value ? resolveStationValue(fromInput.value) : "Dhaka";
+  const curTo = toInput?.value ? resolveStationValue(toInput.value) : "Rajshahi";
+  const curPax = paxSel?.value || "1";
+  const curPref = prefClass?.value || "S_CHAIR";
+
+  if (fromInput) {
+    fromInput.innerHTML = '';
+    (STATIONS[currentLang] || STATIONS.en).forEach(s => {
+      fromInput.appendChild(new Option(s.text, s.value));
     });
+    fromInput.value = curFrom;
+  }
+
+  if (toInput) {
+    toInput.innerHTML = '';
+    (STATIONS[currentLang] || STATIONS.en).forEach(s => {
+      toInput.appendChild(new Option(s.text, s.value));
+    });
+    toInput.value = curTo;
+  }
+
+  if (paxSel) {
+    paxSel.innerHTML = '';
+    (PASSENGERS_OPTS[currentLang] || PASSENGERS_OPTS.en).forEach(p => {
+      paxSel.appendChild(new Option(p.text, p.value));
+    });
+    paxSel.value = curPax;
+  }
+
+  [prefClass, p1Class, p2Class, p3Class].forEach(sel => {
+    if (!sel) return;
+    const curVal = sel.value || (sel === p2Class ? 'SNIGDHA' : sel === p3Class ? 'F_CHAIR' : curPref);
+    sel.innerHTML = '';
+    (CLASSES_OPTS[currentLang] || CLASSES_OPTS.en).forEach(c => {
+      sel.appendChild(new Option(c.text, c.value));
+    });
+    sel.value = curVal;
   });
 
-  // Live Clock Updater (Ticks every 50ms)
+  [p1Dir, p2Dir, p3Dir].forEach(sel => {
+    if (!sel) return;
+    const curVal = sel.value || (sel === p2Dir ? 'middle' : sel === p3Dir ? 'any' : 'straight');
+    sel.innerHTML = '';
+    (DIRECTIONS_OPTS[currentLang] || DIRECTIONS_OPTS.en).forEach(d => {
+      sel.appendChild(new Option(d.text, d.value));
+    });
+    sel.value = curVal;
+  });
+}
+
+function applyThemeAndLang() {
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  document.documentElement.setAttribute('data-lang', currentLang);
+
+  const t = UI_TEXT[currentLang] || UI_TEXT.en;
+
+  const btnTheme = document.getElementById('btnPopTheme');
+  if (btnTheme) btnTheme.innerText = currentTheme === 'light' ? '☀️' : '🌙';
+
+  const btnLang = document.getElementById('btnPopLang');
+  if (btnLang) btnLang.innerText = currentLang === 'en' ? 'EN' : 'বাং';
+
+  const hdrTitle = document.getElementById('hdrTitle');
+  if (hdrTitle) hdrTitle.innerText = t.hdrTitle;
+
+  const tabSetup = document.getElementById('tabSetup');
+  if (tabSetup) tabSetup.innerText = t.tabSetup;
+
+  const tabSchedules = document.getElementById('tabSchedules');
+  if (tabSchedules) {
+    const miniBadge = document.getElementById('miniBadgeCount');
+    const bCount = miniBadge ? miniBadge.innerText : '0';
+    tabSchedules.innerHTML = `${t.tabSchedules} <span class="tab-mini-badge" id="miniBadgeCount">${bCount}</span>`;
+  }
+
+  const tabVault = document.getElementById('tabVault');
+  if (tabVault) tabVault.innerText = t.tabVault;
+
+  const lblClock = document.getElementById('lblClockStrip');
+  if (lblClock) lblClock.innerText = currentLang === 'bn' ? 'রেলওয়ে সার্ভার টাইম' : 'RAILWAY SERVER TIME';
+
+  const lblFrom = document.getElementById('lblFrom');
+  if (lblFrom) lblFrom.innerText = t.lblFrom;
+  const lblTo = document.getElementById('lblTo');
+  if (lblTo) lblTo.innerText = t.lblTo;
+  const lblDate = document.getElementById('lblDate');
+  if (lblDate) lblDate.innerText = t.lblDate;
+  const lblPax = document.getElementById('lblPax');
+  if (lblPax) lblPax.innerText = t.lblPax;
+  const lblTrain = document.getElementById('lblTrain');
+  if (lblTrain) lblTrain.innerText = t.lblTrain;
+  const lblClass = document.getElementById('lblClass');
+  if (lblClass) lblClass.innerText = t.lblClass;
+
+  const lblPrioTitle = document.getElementById('lblPrioTitle');
+  if (lblPrioTitle) lblPrioTitle.innerText = currentLang === 'bn' ? '🎯 ক্যাসকেডিং প্রায়োরিটি চেইন' : '🎯 Cascading Priority Chain';
+
+  const btnArmText = document.getElementById('btnArmText');
+  if (btnArmText) btnArmText.innerText = currentLang === 'bn' ? 'অগ্রিম শিডিউল ও অ্যালার্ম সক্রিয় করুন' : 'Arm Advance Schedule & Watchdog';
+
+  const btnGrabText = document.getElementById('btnGrabText');
+  if (btnGrabText) btnGrabText.innerText = currentLang === 'bn' ? 'তাত্ক্ষণিক ফাস্ট-গ্র্যাব (লক)' : 'Instant Fast-Grab (Lock)';
+
+  const btnScanText = document.getElementById('btnScanText');
+  if (btnScanText) btnScanText.innerText = currentLang === 'bn' ? 'লাইভ সিট স্ক্যান' : 'Scan Live Availability';
+
+  const btnSaveVaultText = document.getElementById('btnSaveVaultText');
+  if (btnSaveVaultText) btnSaveVaultText.innerText = t.btnSaveVaultText;
+
+  const btnDirectLoginText = document.getElementById('btnDirectLoginText');
+  if (btnDirectLoginText) btnDirectLoginText.innerText = t.btnDirectLoginText;
+
+  populateDropdowns();
+  onRouteChanged();
+  checkAndDisplayAuthStatus();
+}
+
+async function onRouteChanged(forceServerSync = false) {
+  const rawFrom = document.getElementById('routeFrom')?.value || 'Dhaka';
+  const rawTo = document.getElementById('routeTo')?.value || 'Rajshahi';
+  const dateVal = document.getElementById('journeyDate')?.value || new Date().toISOString().split('T')[0];
+
+  const from = resolveStationValue(rawFrom);
+  const to = resolveStationValue(rawTo);
+  const routeKey = `${from}-${to}`;
+
+  const trainDropdown = document.getElementById('trainName');
+  if (!trainDropdown) return;
+  const curTrain = trainDropdown.value;
+
+  let trains = [];
+
+  // Attempt live server fetch
+  const liveResult = await fetchLiveTrainsFromServer(from, to, dateVal);
+  if (liveResult && liveResult.trains && liveResult.trains.length > 0) {
+    trains = liveResult.trains.map(lt => ({
+      nameEn: lt.train_name || lt.name,
+      nameBn: lt.train_name_bn || lt.train_name || lt.name,
+      code: lt.train_model || lt.train_id || "700",
+      dep: lt.departure_time || "08:00 AM",
+      arr: lt.arrival_time || "02:00 PM",
+      durationEn: lt.travel_time || "6h 00m",
+      durationBn: lt.travel_time || "৬ ঘণ্টা",
+      seatTypes: lt.seat_types || []
+    }));
+  } else {
+    // Fallback to local master database
+    trains = ROUTE_TRAIN_MAP[routeKey] || ROUTE_TRAIN_MAP[`${to}-${from}`] || [];
+  }
+
+  trains = sortTrainsChronologically(trains);
+  trainDropdown.innerHTML = '';
+
+  const btnArm = document.getElementById('btnArmSchedule');
+  const btnGrab = document.getElementById('btnGrabNow');
+
+  if (!trains || trains.length === 0) {
+    isCurrentRouteValid = false;
+    const noTrainOpt = document.createElement('option');
+    noTrainOpt.disabled = true;
+    noTrainOpt.selected = true;
+    noTrainOpt.value = '';
+    noTrainOpt.innerText = currentLang === 'bn' ? 'কোনো সরাসরি ট্রেন নেই' : 'No direct trains available';
+    trainDropdown.appendChild(noTrainOpt);
+
+    if (btnArm) { btnArm.disabled = true; btnArm.style.opacity = '0.5'; }
+    if (btnGrab) { btnGrab.disabled = true; btnGrab.style.opacity = '0.5'; }
+    return;
+  }
+
+  isCurrentRouteValid = true;
+  if (btnArm) { btnArm.disabled = false; btnArm.style.opacity = '1'; }
+  if (btnGrab) { btnGrab.disabled = false; btnGrab.style.opacity = '1'; }
+
+  const anyTrainOpt = document.createElement('option');
+  anyTrainOpt.value = 'ANY_TRAIN';
+  anyTrainOpt.innerText = currentLang === 'bn' 
+    ? '⚡ যেকোনো উপলব্ধ ট্রেন (সবচেয়ে দ্রুত)' 
+    : '⚡ Any Available Train (Fastest Available)';
+  if (curTrain === 'ANY_TRAIN') anyTrainOpt.selected = true;
+  trainDropdown.appendChild(anyTrainOpt);
+
+  trains.forEach((t, idx) => {
+    const trainName = currentLang === 'bn' ? (t.nameBn || t.nameEn) : t.nameEn;
+    const timeStr = t.arr ? `${t.dep} ➔ ${t.arr}` : t.dep;
+    const opt = document.createElement('option');
+    opt.value = t.nameEn;
+    opt.innerText = `${trainName} (${timeStr})`;
+    if (t.nameEn === curTrain || (!curTrain && idx === 0)) opt.selected = true;
+    trainDropdown.appendChild(opt);
+  });
+
+  updateCalculations();
+}
+
+function updateCalculations() {
+  if (!isCurrentRouteValid) return;
+
+  const rawFrom = document.getElementById('routeFrom')?.value || 'Dhaka';
+  const rawTo = document.getElementById('routeTo')?.value || 'Rajshahi';
+  const from = resolveStationValue(rawFrom);
+  const to = resolveStationValue(rawTo);
+  const chosenClass = document.getElementById('prefClass')?.value || 'S_CHAIR';
+  const pax = parseInt(document.getElementById('passengerCount')?.value, 10) || 1;
+
+  const routeKey = `${from}-${to}`;
+  const routeFares = FARE_RATES[routeKey] || FARE_RATES["Dhaka-Rajshahi"];
+  const unitPrice = routeFares ? (routeFares[chosenClass] || 205) : 205;
+
+  const baseTotal = unitPrice * pax;
+  const serviceCharge = 20 * pax;
+  const subtotal = baseTotal + serviceCharge;
+  const bkashFee = Math.round(subtotal * 0.015);
+  const totalPay = subtotal + bkashFee;
+  const recommended = Math.ceil((totalPay + 5) / 10) * 10;
+
+  const valBase = document.getElementById('valBaseFare');
+  const valStation = document.getElementById('valStationFee');
+  const valBkash = document.getElementById('valBkashFee');
+  const valTotal = document.getElementById('valTotalFare');
+  const valAdviceNote = document.getElementById('lblFareAdviceNote');
+
+  if (valBase) valBase.innerText = `৳${unitPrice} × ${pax} = ৳${baseTotal}`;
+  if (valStation) valStation.innerText = `৳${serviceCharge}`;
+  if (valBkash) valBkash.innerText = `৳${bkashFee}`;
+  if (valTotal) valTotal.innerText = `৳${totalPay}`;
+  if (valAdviceNote) {
+    valAdviceNote.innerText = currentLang === 'bn'
+      ? `💡 সকাল ৮:০০ টার আগে বিকাশে অন্তত ৳${recommended} ব্যালেন্স রাখুন!`
+      : `💡 Keep at least ৳${recommended} in bKash before 8:00 AM!`;
+  }
+}
+
+function saveCurrentConfig() {
+  const from = resolveStationValue(document.getElementById('routeFrom')?.value || 'Dhaka');
+  const to = resolveStationValue(document.getElementById('routeTo')?.value || 'Rajshahi');
+  const date = document.getElementById('journeyDate')?.value || new Date().toISOString().split('T')[0];
+  const passengers = parseInt(document.getElementById('passengerCount')?.value, 10) || 1;
+  const trainName = document.getElementById('trainName')?.value || 'ANY_TRAIN';
+  const classCode = document.getElementById('prefClass')?.value || 'S_CHAIR';
+
+  const p1C = document.getElementById('p1Class')?.value || classCode;
+  const p1D = document.getElementById('p1Dir')?.value || 'straight';
+  const p2C = document.getElementById('p2Class')?.value || 'SNIGDHA';
+  const p2D = document.getElementById('p2Dir')?.value || 'middle';
+  const p3C = document.getElementById('p3Class')?.value || 'F_CHAIR';
+  const p3D = document.getElementById('p3Dir')?.value || 'any';
+
+  const priorities = [
+    { level: 1, classCode: p1C, dir: p1D, coach: 'ANY' },
+    { level: 2, classCode: p2C, dir: p2D, coach: 'ANY' },
+    { level: 3, classCode: p3C, dir: p3D, coach: 'ANY' }
+  ];
+
+  const configUpdate = { routeFrom: from, routeTo: to, targetDate: date, passengers, trainName, prefClass: classCode, priorities };
+  if (chrome?.storage?.local) {
+    chrome.storage.local.set({ geTicketConfig: configUpdate });
+  }
+  return { from, to, date, passengers, trainName, classCode, priorities };
+}
+
+// Handler: Arm Advance Schedule
+function handleArmSchedule() {
+  if (!isPopupEngineActive) {
+    showToast(currentLang === 'bn' ? '⏸️ ইঞ্জিন বন্ধ আছে। সক্রিয় করুন।' : '⏸️ Engine is paused. Activate first.');
+    return;
+  }
+  if (!isCurrentRouteValid) {
+    showToast(currentLang === 'bn' ? '⚠️ এই রুটে সরাসরি ট্রেন নেই!' : '⚠️ Route unavailable!');
+    return;
+  }
+
+  const cfg = saveCurrentConfig();
+  const westZone = ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'];
+  const isWest = westZone.includes(cfg.to) || westZone.includes(cfg.from);
+
+  const selectedDate = new Date(cfg.date);
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((selectedDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+  const isWithin10Days = diffDays <= 10;
+
+  let targetTimestamp = null;
+  if (!isWithin10Days) {
+    const releaseDay = new Date(selectedDate);
+    releaseDay.setDate(releaseDay.getDate() - 10);
+    releaseDay.setHours(isWest ? 7 : 13, 50, 0, 0);
+    targetTimestamp = releaseDay.getTime();
+    if (targetTimestamp <= Date.now()) targetTimestamp = null;
+  }
+
+  const scheduleId = `geticket_sched_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
+  const newBooking = {
+    id: scheduleId,
+    type: isWithin10Days ? 'instant' : 'advance',
+    from: cfg.from,
+    to: cfg.to,
+    date: cfg.date,
+    passengers: cfg.passengers,
+    trainName: cfg.trainName,
+    classCode: cfg.classCode,
+    isWestZone: isWest,
+    targetTimestamp,
+    priorities: cfg.priorities,
+    createdAt: new Date().toISOString()
+  };
+
+  getScheduledBookings((bookings) => {
+    const updated = [newBooking, ...bookings.filter(b => b.id !== scheduleId)];
+    saveScheduledBookings(updated, () => {
+      renderSchedulesList(updated);
+      playChime();
+
+      if (chrome?.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({
+          action: isWithin10Days ? 'TRIGGER_INSTANT_GRAB' : 'SCHEDULE_BOOKING',
+          id: scheduleId,
+          targetTimestamp,
+          bookingInfo: newBooking,
+          from: cfg.from,
+          to: cfg.to,
+          date: cfg.date,
+          passengers: cfg.passengers,
+          trainName: cfg.trainName,
+          classCode: cfg.classCode,
+          priorities: cfg.priorities
+        }).catch(() => { });
+      }
+
+      showToast(currentLang === 'bn' ? '✓ শিডিউল ও অ্যালার্ম আর্ম হয়েছে (লিস্টে যুক্ত)!' : '✓ Schedule Armed & added to Lists!');
+    });
+  });
+}
+
+// Handler: Instant Fast-Grab
+function handleInstantGrab(overrideTrain, overrideClass) {
+  if (!isPopupEngineActive) {
+    showToast(currentLang === 'bn' ? '⏸️ ইঞ্জিন বন্ধ আছে। সক্রিয় করুন।' : '⏸️ Engine is paused. Activate first.');
+    return;
+  }
+  if (!isCurrentRouteValid) {
+    showToast(currentLang === 'bn' ? '⚠️ এই রুটে সরাসরি ট্রেন নেই!' : '⚠️ Route unavailable!');
+    return;
+  }
+
+  const cfg = saveCurrentConfig();
+  if (overrideTrain) cfg.trainName = overrideTrain;
+  if (overrideClass) cfg.classCode = overrideClass;
+
+  const instantId = `geticket_instant_${Date.now()}`;
+  const newBooking = {
+    id: instantId,
+    type: 'instant',
+    from: cfg.from,
+    to: cfg.to,
+    date: cfg.date,
+    passengers: cfg.passengers,
+    trainName: cfg.trainName,
+    classCode: cfg.classCode,
+    priorities: cfg.priorities,
+    createdAt: new Date().toISOString()
+  };
+
+  getScheduledBookings((bookings) => {
+    const updated = [newBooking, ...bookings.filter(b => b.id !== instantId)];
+    saveScheduledBookings(updated, () => {
+      renderSchedulesList(updated);
+      playChime();
+
+      if (chrome?.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({
+          action: 'TRIGGER_INSTANT_GRAB',
+          from: cfg.from,
+          to: cfg.to,
+          date: cfg.date,
+          passengers: cfg.passengers,
+          trainName: cfg.trainName,
+          classCode: cfg.classCode,
+          priorities: cfg.priorities
+        }).catch(() => { });
+      }
+
+      const trainDisp = getTrainDisplayName(cfg.trainName, currentLang);
+      showToast(currentLang === 'bn'
+        ? `⚡ (${trainDisp}) সিট তাৎক্ষণিক লকিং শুরু হয়েছে!`
+        : `⚡ (${trainDisp}) Instant Grab started!`);
+    });
+  });
+}
+
+// Handler: Scan Live Availability
+async function handleScanLive() {
+  if (!isPopupEngineActive) {
+    showToast(currentLang === 'bn' ? '⏸️ ইঞ্জিন বন্ধ আছে। সক্রিয় করুন।' : '⏸️ Engine is paused. Activate first.');
+    return;
+  }
+
+  const btnScan = document.getElementById('btnScanLive');
+  const panel = document.getElementById('liveResultsPanel');
+  const listEl = document.getElementById('liveResultsList');
+  const emptyEl = document.getElementById('liveResultsEmpty');
+  const metaEl = document.getElementById('lblLiveResultsMeta');
+
+  if (!btnScan || !panel || !listEl) return;
+
+  btnScan.disabled = true;
+  btnScan.innerText = UI_TEXT[currentLang].scanningLive;
+  panel.style.display = 'flex';
+  listEl.innerHTML = '';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  const rawFrom = document.getElementById('routeFrom')?.value || 'Dhaka';
+  const rawTo = document.getElementById('routeTo')?.value || 'Rajshahi';
+  const dateVal = document.getElementById('journeyDate')?.value || new Date().toISOString().split('T')[0];
+  const from = resolveStationValue(rawFrom);
+  const to = resolveStationValue(rawTo);
+
+  const res = await fetchLiveTrainsFromServer(from, to, dateVal);
+
+  btnScan.disabled = false;
+  btnScan.innerText = UI_TEXT[currentLang].liveBookBtn ? (currentLang === 'bn' ? '🔍 লাইভ সিট স্ক্যান' : '🔍 Scan Live Availability') : '🔍 Scan';
+
+  if (res && res.unauthorized) {
+    if (metaEl) metaEl.innerText = UI_TEXT[currentLang].liveChkFailed;
+    if (emptyEl) {
+      emptyEl.style.display = 'block';
+      emptyEl.innerHTML = currentLang === 'bn'
+        ? '⚠️ লাইভ সিট দেখার জন্য রেলওয়েতে লগইন থাকতে হবে। উপরের <b>⚡ অটো লগইন</b> বাটনে চাপুন।'
+        : '⚠️ Active Railway login required to view live seats. Click <b>⚡ Auto Login</b> above.';
+    }
+    return;
+  }
+
+  const trains = (res && res.trains) ? res.trains : [];
+
+  if (!trains || trains.length === 0) {
+    if (metaEl) metaEl.innerText = UI_TEXT[currentLang].liveChkFailed;
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+
+  if (metaEl) {
+    metaEl.innerText = currentLang === 'bn' ? `${trains.length} টি ট্রেন • ${dateVal}` : `${trains.length} trains • ${dateVal}`;
+  }
+
+  const CLASS_LABELS = {};
+  (CLASSES_OPTS[currentLang] || CLASSES_OPTS.en).forEach(c => { CLASS_LABELS[c.value] = c.text; });
+
+  trains.forEach(train => {
+    const trainName = currentLang === 'bn' ? (train.train_name_bn || train.train_name || train.name) : (train.train_name || train.name);
+    const trainCode = train.train_model || train.train_id || '';
+    const dep = train.departure_time || '';
+    const arr = train.arrival_time || '';
+    const trainKey = train.train_name || train.name || '';
+
+    const card = document.createElement('div');
+    card.className = 'live-train-card';
+
+    const header = document.createElement('div');
+    header.className = 'live-train-name';
+    header.innerHTML = `<span>🚄 ${trainName}${trainCode ? ` (${trainCode})` : ''}</span>`;
+
+    const timeRow = document.createElement('div');
+    timeRow.className = 'live-train-time';
+    if (dep && arr) timeRow.textContent = `🕐 ${dep} ➔ ${arr}`;
+    else if (dep) timeRow.textContent = `🕐 Departs ${dep}`;
+
+    const chipsWrap = document.createElement('div');
+    chipsWrap.className = 'live-seat-chips';
+
+    const seatTypes = train.seat_types || [];
+    seatTypes.forEach(st => {
+      const code = st.type || st.class || '';
+      const fare = st.fare || '';
+      const totalSeats = parseInt(st.total_seat, 10);
+      const assignedSeats = parseInt(st.assigned_seat, 10);
+      const remainingFromField = parseInt(st.remaining_seat, 10) || parseInt(st.available_seat, 10);
+
+      let countText = '';
+      let countClass = 'unknown';
+      if (!isNaN(remainingFromField)) {
+        countText = `${remainingFromField} ${UI_TEXT[currentLang].liveAvail}`;
+        countClass = remainingFromField > 0 ? 'available' : 'sold';
+      } else if (!isNaN(totalSeats) && !isNaN(assignedSeats)) {
+        const rem = Math.max(0, totalSeats - assignedSeats);
+        countText = `${rem} ${UI_TEXT[currentLang].liveAvail}`;
+        countClass = rem > 0 ? 'available' : 'sold';
+      } else {
+        countText = UI_TEXT[currentLang].liveSold;
+        countClass = 'sold';
+      }
+
+      const chip = document.createElement('div');
+      chip.className = 'live-seat-chip';
+      chip.innerHTML = `
+        <div class="live-seat-chip-name">${CLASS_LABELS[code] || code}</div>
+        <div class="live-seat-chip-fare">${fare ? `৳${fare}` : ''}</div>
+        <div class="live-seat-chip-count ${countClass}">${countText}</div>
+      `;
+
+      chip.addEventListener('click', () => {
+        handleInstantGrab(trainKey, code);
+      });
+
+      chipsWrap.appendChild(chip);
+    });
+
+    const bookBtn = document.createElement('button');
+    bookBtn.className = 'live-train-book';
+    bookBtn.textContent = UI_TEXT[currentLang].liveBookBtn;
+    bookBtn.addEventListener('click', () => {
+      handleInstantGrab(trainKey, 'S_CHAIR');
+    });
+
+    card.appendChild(header);
+    if (timeRow.textContent) card.appendChild(timeRow);
+    card.appendChild(chipsWrap);
+    card.appendChild(bookBtn);
+    listEl.appendChild(card);
+  });
+}
+
+// Initializer
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchPage(tab.dataset.page));
+  });
+
   function updatePopupClock() {
     const el = document.getElementById('popServerClock');
     if (!el) return;
@@ -793,7 +1038,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   setInterval(updatePopupClock, 50);
 
-  // Quick Swap Stations Button (⇄)
   const btnSwapStations = document.getElementById('btnSwapStations');
   if (btnSwapStations) {
     btnSwapStations.addEventListener('click', () => {
@@ -809,928 +1053,93 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Set default date and strictly prevent past date selection (min = today, max = 10 days)
   const journeyDateEl = document.getElementById('journeyDate');
   if (journeyDateEl) {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
-    const max10 = new Date();
-    max10.setDate(max10.getDate() + 10);
-    const max10Str = max10.toISOString().split('T')[0];
     journeyDateEl.min = todayStr;
-    journeyDateEl.max = max10Str;
     if (!journeyDateEl.value || journeyDateEl.value < todayStr) {
       journeyDateEl.value = todayStr;
     }
   }
 
-  // Route Change Listener (Chronological AM to PM Sorting with Timing Display)
-  async function onRouteChanged(forceServerSync = false) {
-    const rawFrom = document.getElementById('routeFrom')?.value || 'Dhaka';
-    const rawTo = document.getElementById('routeTo')?.value || 'Rajshahi';
-    const dateVal = document.getElementById('journeyDate')?.value || new Date().toISOString().split('T')[0];
-
-    const from = resolveStationValue(rawFrom);
-    const to = resolveStationValue(rawTo);
-    const routeKey = `${from}-${to}`;
-
-    const trainDropdown = document.getElementById('trainName');
-    if (!trainDropdown) return;
-    const curTrain = trainDropdown.value;
-
-    let trains = [];
-
-    // 1. Attempt live server fetch
-    const liveTrains = await fetchLiveTrainsFromServer(from, to, dateVal);
-    if (liveTrains && liveTrains.length > 0) {
-      trains = liveTrains.map(lt => ({
-        nameEn: lt.train_name || lt.name,
-        nameBn: lt.train_name_bn || lt.train_name || lt.name,
-        code: lt.train_model || lt.train_id || "700",
-        dep: lt.departure_time || "08:00 AM",
-        arr: lt.arrival_time || "02:00 PM",
-        durationEn: lt.travel_time || "6h 00m",
-        durationBn: lt.travel_time || "৬ ঘণ্টা",
-        offDay: -1,
-        offEn: "No Off-Day",
-        offBn: "কোনো বন্ধ নেই",
-        seatTypes: lt.seat_types || []
-      }));
-    } else {
-      // 2. Fallback to DOM-scraped trains from the active railway tab (recent only)
-      const scrapedTrains = await new Promise(resolve => {
-        if (!chrome?.storage?.local) { resolve(null); return; }
-        chrome.storage.local.get(['liveScrapedTrains', 'liveScrapedMeta'], r => {
-          const meta = r.liveScrapedMeta;
-          const isRecent = meta && (Date.now() - meta.scrapedAt) < 4 * 60 * 1000; // 4-min max age
-          resolve(isRecent && r.liveScrapedTrains?.length > 0 ? r.liveScrapedTrains : null);
-        });
-      });
-
-      if (scrapedTrains) {
-        trains = scrapedTrains; // already in { nameEn, nameBn, code, dep, arr } format
-      } else {
-        // 3. Final fallback to our master database
-        trains = ROUTE_TRAIN_MAP[routeKey] || ROUTE_TRAIN_MAP[`${to}-${from}`] || [];
-      }
-    }
-
-    // Ensure trains are strictly sorted by departure time (AM to PM)
-    trains = sortTrainsChronologically(trains);
-
-    trainDropdown.innerHTML = '';
-
-    const btnArm = document.getElementById('btnArmSchedule');
-    const btnGrab = document.getElementById('btnGrabNow');
-
-    // Route Validation: Check if any train exists
-    if (!trains || trains.length === 0) {
-      isCurrentRouteValid = false;
-      const noTrainOpt = document.createElement('option');
-      noTrainOpt.disabled = true;
-      noTrainOpt.selected = true;
-      noTrainOpt.value = '';
-      noTrainOpt.innerText = currentLang === 'bn' ? 'কোনো সরাসরি ট্রেন নেই' : 'No direct trains available';
-      trainDropdown.appendChild(noTrainOpt);
-
-      if (btnArm) { btnArm.disabled = true; btnArm.style.opacity = '0.5'; }
-      if (btnGrab) { btnGrab.disabled = true; btnGrab.style.opacity = '0.5'; }
-      return;
-    }
-
-    // Route is Valid: Populate Trains with Timings (e.g. Padma Express (11:00 PM ➔ 04:40 AM))
-    // 1. Any Available Train (Fastest Available) Option
-    const anyTrainOpt = document.createElement('option');
-    anyTrainOpt.value = 'ANY_TRAIN';
-    anyTrainOpt.innerText = currentLang === 'bn' 
-      ? '⚡ যেকোনো উপলব্ধ ট্রেন (সবচেয়ে দ্রুত)' 
-      : '⚡ Any Available Train (Fastest Available)';
-    if (curTrain === 'ANY_TRAIN') anyTrainOpt.selected = true;
-    trainDropdown.appendChild(anyTrainOpt);
-
-    // 2. Specific Trains on the Route
-    trains.forEach((t, idx) => {
-      const trainName = currentLang === 'bn' ? (t.nameBn || t.nameEn) : t.nameEn;
-      const timeStr = t.arr ? `${t.dep} ➔ ${t.arr}` : t.dep;
-      const opt = document.createElement('option');
-      opt.value = t.nameEn;
-      opt.innerText = `${trainName} (${timeStr})`;
-      if (t.nameEn === curTrain || (!curTrain && idx === 0)) opt.selected = true;
-      trainDropdown.appendChild(opt);
-    });
-
-    updateCalculations();
-  }
-
-  // Live Calculations (Vault Fare Breakdown & Summary)
-  function updateCalculations() {
-    if (!isCurrentRouteValid) return;
-
-    const rawFrom = document.getElementById('routeFrom')?.value || 'Dhaka';
-    const rawTo = document.getElementById('routeTo')?.value || 'Rajshahi';
-    const from = resolveStationValue(rawFrom);
-    const to = resolveStationValue(rawTo);
-    const trainKey = document.getElementById('trainName')?.value;
-    const pax = parseInt(document.getElementById('passengerCount')?.value, 10) || 1;
-    const chosenClass = document.getElementById('prefClass')?.value || 'S_CHAIR';
-
-    const routeKey = `${from}-${to}`;
-    const revRouteKey = `${to}-${from}`;
-
-    // Determine Exact Fare: Check Live Server seat_types first, then fallback to FARE_RATES
-    let unitPrice = 205;
-    if (liveServerData?.trains) {
-      const liveTrain = liveServerData.trains.find(lt => (lt.train_name || lt.name) === trainKey);
-      if (liveTrain?.seat_types) {
-        const match = liveTrain.seat_types.find(st => st.type === chosenClass);
-        if (match && match.fare) unitPrice = match.fare;
-      }
-    } else {
-      const routeFares = FARE_RATES[routeKey] || FARE_RATES[revRouteKey] || FARE_RATES["Dhaka-Rajshahi"] || FARE_RATES["Dhaka-Jamalpur"];
-      unitPrice = routeFares ? (routeFares[chosenClass] || 205) : 205;
-    }
-
-    const baseTotal = unitPrice * pax;
-    const serviceCharge = 20 * pax;
-    const subtotal = baseTotal + serviceCharge;
-    const bkashFee = Math.round(subtotal * 0.015);
-    const totalPay = subtotal + bkashFee;
-    const recommended = Math.ceil((totalPay + 5) / 10) * 10;
-
-    // Vault Tab Summary Elements
-    const valBase = document.getElementById('valBaseFare');
-    const valStation = document.getElementById('valStationFee');
-    const valBkash = document.getElementById('valBkashFee');
-    const valTotal = document.getElementById('valTotalFare');
-    const valAdviceNote = document.getElementById('lblFareAdviceNote');
-
-    if (valBase) valBase.innerText = `৳${unitPrice} × ${pax} = ৳${baseTotal}`;
-    if (valStation) valStation.innerText = `৳${serviceCharge}`;
-    if (valBkash) valBkash.innerText = `৳${bkashFee}`;
-    if (valTotal) valTotal.innerText = `৳${totalPay}`;
-    if (valAdviceNote) {
-      valAdviceNote.innerText = currentLang === 'bn'
-        ? `💡 সকাল ৮:০০ টার আগে বিকাশে অন্তত ৳${recommended} ব্যালেন্স রাখুন!`
-        : `💡 Keep at least ৳${recommended} in bKash before 8:00 AM!`;
-    }
-  }
-
-  // Populate Dropdown Options
-  function populateDropdowns() {
-    const fromInput = document.getElementById('routeFrom');
-    const toInput = document.getElementById('routeTo');
-    const dlistFrom = document.getElementById('stationListFrom');
-    const dlistTo = document.getElementById('stationListTo');
-    const paxSel = document.getElementById('passengerCount');
-    const prefClass = document.getElementById('prefClass');
-
-    const p1Class = document.getElementById('p1Class');
-    const p2Class = document.getElementById('p2Class');
-    const p3Class = document.getElementById('p3Class');
-
-    const p1Dir = document.getElementById('p1Dir');
-    const p2Dir = document.getElementById('p2Dir');
-    const p3Dir = document.getElementById('p3Dir');
-
-    const curFrom = fromInput?.value ? resolveStationValue(fromInput.value) : "Dhaka";
-    const curTo = toInput?.value ? resolveStationValue(toInput.value) : "Rajshahi";
-    const curPax = paxSel?.value || "2";
-    const curPref = prefClass?.value || "S_CHAIR";
-
-    const curP1C = p1Class?.value || "S_CHAIR";
-    const curP2C = p2Class?.value || "SNIGDHA";
-    const curP3C = p3Class?.value || "F_CHAIR";
-
-    const curP1D = p1Dir?.value || "straight";
-    const curP2D = p2Dir?.value || "middle";
-    const curP3D = p3Dir?.value || "any";
-
-    // Station Selectors
-    if (fromInput) {
-      if (fromInput.tagName === 'SELECT') {
-        fromInput.innerHTML = '';
-        (STATIONS[currentLang] || STATIONS.en).forEach(s => {
-          fromInput.appendChild(new Option(s.text, s.value));
-        });
-        fromInput.value = curFrom;
-      } else {
-        if (dlistFrom) {
-          dlistFrom.innerHTML = '';
-          (STATIONS[currentLang] || STATIONS.en).forEach(s => {
-            dlistFrom.appendChild(new Option(s.text, s.text));
-          });
-        }
-        fromInput.value = getStationName(curFrom, currentLang);
-      }
-    }
-
-    if (toInput) {
-      if (toInput.tagName === 'SELECT') {
-        toInput.innerHTML = '';
-        (STATIONS[currentLang] || STATIONS.en).forEach(s => {
-          toInput.appendChild(new Option(s.text, s.value));
-        });
-        toInput.value = curTo;
-      } else {
-        if (dlistTo) {
-          dlistTo.innerHTML = '';
-          (STATIONS[currentLang] || STATIONS.en).forEach(s => {
-            dlistTo.appendChild(new Option(s.text, s.text));
-          });
-        }
-        toInput.value = getStationName(curTo, currentLang);
-      }
-    }
-
-    // Passengers
-    if (paxSel) {
-      paxSel.innerHTML = '';
-      (PASSENGERS_OPTS[currentLang] || PASSENGERS_OPTS.en).forEach(p => {
-        paxSel.appendChild(new Option(p.text, p.value));
-      });
-      paxSel.value = curPax;
-    }
-
-    // Coach Classes
-    [prefClass, p1Class, p2Class, p3Class].forEach(sel => {
-      if (!sel) return;
-      sel.innerHTML = '';
-      (CLASSES_OPTS[currentLang] || CLASSES_OPTS.en).forEach(c => {
-        sel.appendChild(new Option(c.text, c.value));
-      });
-    });
-    if (prefClass) prefClass.value = curPref;
-    if (p1Class) p1Class.value = curP1C;
-    if (p2Class) p2Class.value = curP2C;
-    if (p3Class) p3Class.value = curP3C;
-
-    // Directions
-    [p1Dir, p2Dir, p3Dir].forEach(sel => {
-      if (!sel) return;
-      sel.innerHTML = '';
-      (DIRECTIONS_OPTS[currentLang] || DIRECTIONS_OPTS.en).forEach(d => {
-        sel.appendChild(new Option(d.text, d.value));
-      });
-    });
-    if (p1Dir) p1Dir.value = curP1D;
-    if (p2Dir) p2Dir.value = curP2D;
-    if (p3Dir) p3Dir.value = curP3D;
-  }
-
-  // Apply Theme & Language
-  function applyThemeAndLang() {
-    document.documentElement.setAttribute('data-theme', currentTheme);
-    document.documentElement.setAttribute('data-lang', currentLang);
-
-    const themeBtn = document.getElementById('btnPopTheme');
-    if (themeBtn) themeBtn.innerText = currentTheme === 'light' ? '☀️' : '🌙';
-    const langBtn = document.getElementById('btnPopLang');
-    if (langBtn) langBtn.innerText = currentLang === 'en' ? 'EN' : 'বাং';
-
-    const t = UI_TEXT[currentLang];
-    const hdrTitle = document.getElementById('hdrTitle');
-    if (hdrTitle) hdrTitle.innerText = t.hdrTitle;
-
-    // Tabs
-    const tabSetup = document.getElementById('tabSetup');
-    if (tabSetup) tabSetup.childNodes[0].nodeValue = t.tabSetup + ' ';
-
-    const tabSched = document.getElementById('tabSchedules');
-    if (tabSched) tabSched.childNodes[0].nodeValue = t.tabSchedules + ' ';
-
-    const tabVault = document.getElementById('tabVault');
-    if (tabVault) tabVault.innerText = t.tabVault;
-
-    // Clock
-    const lblClock = document.getElementById('lblClockStrip');
-    if (lblClock) lblClock.innerText = currentLang === 'bn' ? 'রেলওয়ে সার্ভার টাইম' : 'RAILWAY SERVER TIME';
-
-    // Page 1: Setup
-    const lblFrom = document.getElementById('lblFrom');
-    if (lblFrom) lblFrom.innerText = t.lblFrom;
-    const lblTo = document.getElementById('lblTo');
-    if (lblTo) lblTo.innerText = t.lblTo;
-    const lblDate = document.getElementById('lblDate');
-    if (lblDate) lblDate.innerText = t.lblDate;
-    const lblPax = document.getElementById('lblPax');
-    if (lblPax) lblPax.innerText = t.lblPax;
-    const lblTrain = document.getElementById('lblTrain');
-    if (lblTrain) lblTrain.innerText = t.lblTrain;
-    const lblClass = document.getElementById('lblClass');
-    if (lblClass) lblClass.innerText = t.lblClass;
-
-    // Priority
-    const lblPrioTitle = document.getElementById('lblPrioTitle');
-    if (lblPrioTitle) lblPrioTitle.innerText = currentLang === 'bn' ? '🎯 ক্যাসকেডিং প্রায়োরিটি চেইন' : '🎯 Cascading Priority Chain';
-
-    // Action buttons
-    const btnArmText = document.getElementById('btnArmText');
-    if (btnArmText) btnArmText.innerText = currentLang === 'bn' ? 'অগ্রিম শিডিউল ও অ্যালার্ম সক্রিয় করুন' : 'Arm Advance Schedule & Watchdog';
-
-    const btnGrabText = document.getElementById('btnGrabText');
-    if (btnGrabText) btnGrabText.innerText = currentLang === 'bn' ? 'তাত্ক্ষণিক ফাস্ট-গ্র্যাব (লক)' : 'Instant Fast-Grab (Lock)';
-
-    const stealthNotice = document.getElementById('lblStealthNotice');
-    if (stealthNotice) stealthNotice.innerHTML = currentLang === 'bn'
-      ? '<span>🛡️ ১০০% হিউম্যানাইজড স্টিলথ সক্রিয় • অ্যাকাউন্ট ব্যান ঝুঁকিহীন</span>'
-      : '<span>🛡️ 100% Humanized Stealth Active • Zero Account Ban</span>';
-
-    // Page 2: Lists
-    const lblSchedTitle = document.getElementById('lblSchedTitle');
-    if (lblSchedTitle) lblSchedTitle.innerText = t.lblSchedTitle;
-    const lblNoSched = document.getElementById('lblNoSched');
-    if (lblNoSched) lblNoSched.innerText = t.lblNoSched;
-    const lblNoSchedSub = document.getElementById('lblNoSchedSub');
-    if (lblNoSchedSub) lblNoSchedSub.innerText = t.lblNoSchedSub;
-
-    // Page 3: Vault
-    const lblVaultTitle = document.getElementById('lblVaultTitle');
-    if (lblVaultTitle) lblVaultTitle.innerText = t.lblVaultTitle;
-    const lblVaultHint = document.getElementById('lblVaultHint');
-    if (lblVaultHint) lblVaultHint.innerText = t.lblVaultHint;
-    const lblVaultPhone = document.getElementById('lblVaultPhone');
-    if (lblVaultPhone) lblVaultPhone.innerText = t.lblVaultPhone;
-    const lblVaultPass = document.getElementById('lblVaultPass');
-    if (lblVaultPass) lblVaultPass.innerText = t.lblVaultPass;
-    const btnSaveVaultText = document.getElementById('btnSaveVaultText');
-    if (btnSaveVaultText) btnSaveVaultText.innerText = currentLang === 'bn' ? 'রেলওয়ে অ্যাকাউন্ট ভল্টে সেভ করুন' : 'Save Railway Account to Vault';
-
-    const lblFareCardHead = document.getElementById('lblFareCardHead');
-    if (lblFareCardHead) lblFareCardHead.innerText = currentLang === 'bn' ? '💳 লাইভ ভাড়া ও বিকাশ সামারি' : '💳 Live Fare & bKash Summary';
-    const lblBaseFareText = document.getElementById('lblBaseFareText');
-    if (lblBaseFareText) lblBaseFareText.innerText = currentLang === 'bn' ? 'মূল টিকিট ভাড়া:' : 'Base Ticket Fare:';
-    const lblStationFeeText = document.getElementById('lblStationFeeText');
-    if (lblStationFeeText) lblStationFeeText.innerText = currentLang === 'bn' ? 'রেলওয়ে চার্জ (৳২০):' : 'Railway Charge (৳20):';
-    const lblBkashFeeText = document.getElementById('lblBkashFeeText');
-    if (lblBkashFeeText) lblBkashFeeText.innerText = currentLang === 'bn' ? 'বিকাশ গেটওয়ে চার্জ (১.৫%):' : 'bKash Charge (1.5%):';
-    const lblTotalKeepCaption = document.getElementById('lblTotalKeepCaption');
-    if (lblTotalKeepCaption) lblTotalKeepCaption.innerText = currentLang === 'bn' ? 'বিকাশে সর্বমোট যা রাখতে হবে' : 'TOTAL TO KEEP IN BKASH';
-
-    const lblVaultGuardHead = document.getElementById('lblVaultGuardHead');
-    if (lblVaultGuardHead) lblVaultGuardHead.innerText = t.lblVaultGuardHead;
-    const lblVaultGuardDesc = document.getElementById('lblVaultGuardDesc');
-    if (lblVaultGuardDesc) lblVaultGuardDesc.innerText = t.lblVaultGuardDesc;
-
-    // Live Availability Scanner
-    const btnScanText = document.getElementById('btnScanText');
-    if (btnScanText) btnScanText.innerText = currentLang === 'bn' ? 'লাইভ সিট স্ক্যান' : 'Scan Live Availability';
-    const lblLiveResultsTitle = document.getElementById('lblLiveResultsTitle');
-    if (lblLiveResultsTitle) lblLiveResultsTitle.innerText = currentLang === 'bn' ? '🚄 লাইভ সিট তথ্য' : '🚄 Live Availability';
-    const lblLiveEmpty = document.getElementById('lblLiveEmpty');
-    if (lblLiveEmpty) lblLiveEmpty.innerText = currentLang === 'bn' ? 'লাইভ তথ্য পাওয়া যায়নি। আবার চেষ্টা করুন।' : 'No live data. Try again.';
-
-    populateDropdowns();
-    onRouteChanged();
-
-    getScheduledBookings((bookings) => {
-      renderSchedulesList(bookings);
-    });
-  }
-
-  // Load Stored Settings
-  function loadStoredSettings() {
-    if (chrome?.storage?.local) {
-      chrome.storage.local.get(['gt_theme', 'gt_lang', 'geTicketConfig', 'railwayVault', 'scheduledBookings'], (data) => {
-        if (data.gt_theme) currentTheme = data.gt_theme;
-        if (data.gt_lang) currentLang = data.gt_lang;
-        applyThemeAndLang();
-
-        if (data.geTicketConfig) {
-          const c = data.geTicketConfig;
-          if (c.routeFrom && document.getElementById('routeFrom')) document.getElementById('routeFrom').value = c.routeFrom;
-          if (c.routeTo && document.getElementById('routeTo')) document.getElementById('routeTo').value = c.routeTo;
-          if (c.targetDate && document.getElementById('journeyDate')) document.getElementById('journeyDate').value = c.targetDate;
-          if (c.passengers && document.getElementById('passengerCount')) document.getElementById('passengerCount').value = c.passengers;
-          if (c.prefClass && document.getElementById('prefClass')) document.getElementById('prefClass').value = c.prefClass;
-
-          if (c.priorities && c.priorities.length >= 3) {
-            if (document.getElementById('p1Class')) document.getElementById('p1Class').value = c.priorities[0].classCode;
-            if (document.getElementById('p1Dir')) document.getElementById('p1Dir').value = c.priorities[0].dir;
-            if (document.getElementById('p2Class')) document.getElementById('p2Class').value = c.priorities[1].classCode;
-            if (document.getElementById('p2Dir')) document.getElementById('p2Dir').value = c.priorities[1].dir;
-            if (document.getElementById('p3Class')) document.getElementById('p3Class').value = c.priorities[2].classCode;
-            if (document.getElementById('p3Dir')) document.getElementById('p3Dir').value = c.priorities[2].dir;
-          }
-        }
-
-        if (data.railwayVault) {
-          const phoneEl = document.getElementById('vaultPhone');
-          const passEl = document.getElementById('vaultPass');
-          if (phoneEl && data.railwayVault.phone) phoneEl.value = data.railwayVault.phone;
-          if (passEl && data.railwayVault.pass) passEl.value = data.railwayVault.pass;
-        }
-
-        renderSchedulesList(data.scheduledBookings || []);
-        onRouteChanged();
-      });
-    } else {
-      currentTheme = localStorage.getItem('gt_theme') || 'light';
-      currentLang = localStorage.getItem('gt_lang') || 'en';
-      applyThemeAndLang();
-      getScheduledBookings((bookings) => {
-        renderSchedulesList(bookings);
-      });
-      onRouteChanged();
-    }
-  }
-
-  // Save Priority Configuration helper
-  function saveCurrentConfig() {
-    const from = resolveStationValue(document.getElementById('routeFrom')?.value || 'Dhaka');
-    const to = resolveStationValue(document.getElementById('routeTo')?.value || 'Rajshahi');
-    const date = document.getElementById('journeyDate')?.value || new Date().toISOString().split('T')[0];
-    const passengers = parseInt(document.getElementById('passengerCount')?.value, 10) || 1;
-    const trainName = document.getElementById('trainName')?.value || 'Padma Express';
-    const classCode = document.getElementById('prefClass')?.value || 'S_CHAIR';
-
-    const p1C = document.getElementById('p1Class')?.value || classCode;
-    const p1D = document.getElementById('p1Dir')?.value || 'straight';
-    const p2C = document.getElementById('p2Class')?.value || 'SNIGDHA';
-    const p2D = document.getElementById('p2Dir')?.value || 'middle';
-    const p3C = document.getElementById('p3Class')?.value || 'F_CHAIR';
-    const p3D = document.getElementById('p3Dir')?.value || 'any';
-
-    const priorities = [
-      { level: 1, classCode: p1C, dir: p1D, coach: 'ANY' },
-      { level: 2, classCode: p2C, dir: p2D, coach: 'ANY' },
-      { level: 3, classCode: p3C, dir: p3D, coach: 'ANY' }
-    ];
-
-    const configUpdate = { routeFrom: from, routeTo: to, targetDate: date, passengers, trainName, prefClass: classCode, priorities };
-    if (chrome?.storage?.local) {
-      chrome.storage.local.get(['geTicketConfig'], (res) => {
-        const full = { ...(res.geTicketConfig || {}), ...configUpdate };
-        chrome.storage.local.set({ geTicketConfig: full });
-      });
-    }
-    return { from, to, date, passengers, trainName, classCode, priorities };
-  }
-
-  // ARM ADVANCE SCHEDULE & WATCHDOG
-  function handleArmSchedule() {
-    if (!isPopupEngineActive) {
-      showToast(currentLang === 'bn' ? '⏸️ ইঞ্জিন বন্ধ আছে। সক্রিয় করুন।' : '⏸️ Engine is paused. Activate first.');
-      return;
-    }
-    if (!isCurrentRouteValid) {
-      showToast(currentLang === 'bn' ? '⚠️ এই রুটে সরাসরি ট্রেন নেই!' : '⚠️ Route unavailable!');
-      return;
-    }
-
-    const cfg = saveCurrentConfig();
-    const WEST_STATIONS = ['Rajshahi', 'Khulna', 'Rangpur', 'Dinajpur', 'Panchagarh', 'Benapole', 'Ishwardi', 'Bogra'];
-    const isWest = WEST_STATIONS.includes(cfg.to) || WEST_STATIONS.includes(cfg.from);
-    
-    const selectedDate = new Date((cfg.date || '') + 'T00:00:00');
-    const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0);
-    const diffDays = Math.round((selectedDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
-    const isWithin10Days = diffDays <= 10;
-
-    // Compute the exact alarm timestamp for advance bookings (>10 days ahead).
-    // Tickets release 10 days before the journey at 08:00 AM (West) or 02:00 PM (East).
-    // Fire the alarm 10 minutes early so we can open the tab and be ready.
-    let targetTimestamp = null;
-    if (!isWithin10Days) {
-      const releaseDay = new Date(selectedDate);
-      releaseDay.setDate(releaseDay.getDate() - 10);
-      releaseDay.setHours(isWest ? 7 : 13, 50, 0, 0); // 07:50 AM West / 01:50 PM East
-      targetTimestamp = releaseDay.getTime();
-      if (targetTimestamp <= Date.now()) targetTimestamp = null; // already passed
-    }
-
-    const scheduleId = `geticket_sched_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
-    const alarmTime = isWithin10Days 
-      ? (currentLang === 'bn' ? '⚡ লাইভ ওয়াচডগ সক্রিয় (প্রতি ২ মিনিট)' : '⚡ Live Watchdog Active (Every 2m)')
-      : (isWest ? '07:50 AM' : '01:50 PM');
-
-    const newBooking = {
-      id: scheduleId,
-      type: isWithin10Days ? 'instant' : 'schedule',
-      from: cfg.from,
-      to: cfg.to,
-      date: cfg.date,
-      passengers: cfg.passengers,
-      trainName: cfg.trainName,
-      classCode: cfg.classCode,
-      zone: isWest ? 'west' : 'east',
-      alarmTime,
-      releaseTime: isWest ? '08:00 AM' : '02:00 PM',
-      priorities: cfg.priorities,
-      createdAt: new Date().toISOString()
-    };
-
-    getScheduledBookings((bookings) => {
-      const updated = [newBooking, ...bookings.filter(b => b.id !== scheduleId)];
-      saveScheduledBookings(updated, () => {
-        renderSchedulesList(updated);
-
-        if (chrome?.runtime?.sendMessage) {
-          chrome.runtime.sendMessage({
-            action: isWithin10Days ? 'TRIGGER_INSTANT_GRAB' : 'SCHEDULE_BOOKING',
-            id: scheduleId,
-            targetTimestamp,   // computed above; null for instant bookings
-            bookingInfo: newBooking,
-            from: cfg.from,
-            to: cfg.to,
-            date: cfg.date,
-            passengers: cfg.passengers,
-            trainName: cfg.trainName,
-            classCode: cfg.classCode
-          }).catch(() => { });
-        }
-
-        playChime();
-        const trainDisp = getTrainDisplayName(cfg.trainName, currentLang);
-        showToast(currentLang === 'bn'
-          ? `🎉 সফল! (${trainDisp}) শিডিউল সক্রিয় করা হয়েছে!`
-          : `🎉 Success! (${trainDisp}) Schedule Armed!`);
-
-        setTimeout(() => switchPage('schedules'), 350);
-      });
-    });
-  }
-
-  // INSTANT FAST-GRAB (LOCK) - Adds to Lists & executes grab
-  function handleInstantGrab() {
-    if (!isPopupEngineActive) {
-      showToast(currentLang === 'bn' ? '⏸️ ইঞ্জিন বন্ধ আছে। সক্রিয় করুন।' : '⏸️ Engine is paused. Activate first.');
-      return;
-    }
-    if (!isCurrentRouteValid) {
-      showToast(currentLang === 'bn' ? '⚠️ এই রুটে সরাসরি ট্রেন নেই!' : '⚠️ Route unavailable!');
-      return;
-    }
-
-    const cfg = saveCurrentConfig();
-    const instantId = `geticket_instant_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
-
-    const newBooking = {
-      id: instantId,
-      type: 'instant',
-      from: cfg.from,
-      to: cfg.to,
-      date: cfg.date,
-      passengers: cfg.passengers,
-      trainName: cfg.trainName,
-      classCode: cfg.classCode,
-      alarmTime: currentLang === 'bn' ? '⚡ লাইভ ওয়াচডগ সক্রিয় (প্রতি ২ মিনিট)' : '⚡ Live Watchdog Active (Every 2m)',
-      status: 'Instant Active',
-      priorities: cfg.priorities,
-      createdAt: new Date().toISOString()
-    };
-
-    getScheduledBookings((bookings) => {
-      const updated = [newBooking, ...bookings.filter(b => b.id !== instantId)];
-      saveScheduledBookings(updated, () => {
-        renderSchedulesList(updated);
-        playChime();
-
-        // 1. Notify background runtime
-        if (chrome?.runtime?.sendMessage) {
-          chrome.runtime.sendMessage({
-            action: 'TRIGGER_INSTANT_GRAB',
-            from: cfg.from,
-            to: cfg.to,
-            date: cfg.date,
-            passengers: cfg.passengers,
-            trainName: cfg.trainName,
-            classCode: cfg.classCode
-          }).catch(() => { });
-        }
-
-        // 2. Direct message to active railway tab
-        if (chrome?.tabs?.query) {
-          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (tabs[0]?.id) {
-              chrome.tabs.sendMessage(tabs[0].id, {
-                action: 'INSTANT_GRAB_COMMAND',
-                from: cfg.from,
-                to: cfg.to,
-                date: cfg.date,
-                passengers: cfg.passengers,
-                trainName: cfg.trainName,
-                classCode: cfg.classCode
-              }).catch(() => { });
-            }
-          });
-        }
-
-const trainDisp = getTrainDisplayName(cfg.trainName, currentLang);
-        showToast(currentLang === 'bn'
-          ? `⚡ (${trainDisp}) সিট তাৎক্ষণিক লক ও লাইভ ওয়াচডগ শুরু হয়েছে (লিস্টে যুক্ত)! `
-          : `⚡ (${trainDisp}) Instant Grab & Live Watchdog active (added to Lists)!`);
-      });
-    });
-  }
-
-  // LIVE AVAILABILITY SCANNER: Fetches live API trains and renders per-class
-  // seat availability with a Book Now action that reuses the Instant Grab flow.
-  async function handleScanLive() {
-    if (!isPopupEngineActive) {
-      showToast(currentLang === 'bn' ? '⏸️ ইঞ্জিন বন্ধ আছে। সক্রিয় করুন।' : '⏸️ Engine is paused. Activate first.');
-      return;
-    }
-    const btnScan = document.getElementById('btnScanLive');
-    const panel = document.getElementById('liveResultsPanel');
-    const listEl = document.getElementById('liveResultsList');
-    const emptyEl = document.getElementById('liveResultsEmpty');
-    const metaEl = document.getElementById('lblLiveResultsMeta');
-    if (!btnScan || !panel || !listEl) return;
-
-    btnScan.disabled = true;
-    btnScan.innerText = UI_TEXT[currentLang].scanningLive || 'Scanning...';
-    panel.style.display = 'flex';
-    listEl.innerHTML = '';
-    if (emptyEl) emptyEl.style.display = 'none';
-    if (metaEl) metaEl.innerText = '';
-
-    // Force a fresh server fetch for the current route/date, then render.
-    liveServerData = null;
-    await onRouteChanged(true);
-
-    // If API returned nothing, try DOM-scraped trains from the active railway tab
-    if (!liveServerData?.trains?.length && chrome?.storage?.local) {
-      await new Promise(resolve => {
-        chrome.storage.local.get(['liveScrapedTrains', 'liveScrapedMeta'], (res) => {
-          const meta = res.liveScrapedMeta;
-          const isRecent = meta && (Date.now() - meta.scrapedAt) < 4 * 60 * 1000;
-          if (isRecent && res.liveScrapedTrains?.length > 0) {
-            // Convert scraped format to the API shape the renderer already expects
-            liveServerData = {
-              trains: res.liveScrapedTrains.map(t => ({
-                train_name:    t.nameEn,
-                train_name_bn: t.nameBn,
-                train_model:   t.code,
-                departure_time: t.dep,
-                arrival_time:   t.arr,
-                seat_types: [] // no per-class count from DOM scrape; fare DB used instead
-              }))
-            };
-          }
-          resolve();
-        });
-      });
-    }
-
-    btnScan.disabled = false;
-    const btnScanText = document.getElementById('btnScanText');
-    if (btnScanText) {
-      btnScanText.innerText = currentLang === 'bn' ? 'লাইভ সিট স্ক্যান' : 'Scan Live Availability';
-    }
-
-    const rawFrom = document.getElementById('routeFrom')?.value || 'Dhaka';
-    const rawTo = document.getElementById('routeTo')?.value || 'Rajshahi';
-    const dateVal = document.getElementById('journeyDate')?.value || new Date().toISOString().split('T')[0];
-    const from = resolveStationValue(rawFrom);
-    const to = resolveStationValue(rawTo);
-
-    if (!liveServerData || !Array.isArray(liveServerData.trains) || liveServerData.trains.length === 0) {
-      if (metaEl) metaEl.innerText = UI_TEXT[currentLang].liveChkFailed || 'Live check failed';
-      if (emptyEl) emptyEl.style.display = 'block';
-      return;
-    }
-
-    const trains = liveServerData.trains;
-    const routeKey = `${from}-${to}`;
-    const revKey = `${to}-${from}`;
-    if (metaEl) {
-      metaEl.innerText = currentLang === 'bn'
-        ? `${trains.length} টি ট্রেন • ${dateVal}`
-        : `${trains.length} trains • ${dateVal}`;
-    }
-
-    const CLASS_LABELS = {};
-    (CLASSES_OPTS[currentLang] || CLASSES_OPTS.en).forEach(c => { CLASS_LABELS[c.value] = c.text; });
-
-    trains.forEach(train => {
-      const trainName = currentLang === 'bn'
-        ? (train.train_name_bn || train.train_name || train.name)
-        : (train.train_name || train.name);
-      const trainCode = train.train_model || train.train_id || '';
-      const dep = train.departure_time || '';
-      const arr = train.arrival_time || '';
-      const trainKey = train.train_name || train.name || '';
-
-      const card = document.createElement('div');
-      card.className = 'live-train-card';
-
-      const header = document.createElement('div');
-      header.className = 'live-train-name';
-      header.innerHTML = `<span>🚄 ${trainName || 'Train'}${trainCode ? ` (${trainCode})` : ''}</span>`;
-
-      const timeRow = document.createElement('div');
-      timeRow.className = 'live-train-time';
-      if (dep && arr) timeRow.textContent = `🕐 ${dep} ➔ ${arr}`;
-      else if (dep) timeRow.textContent = `🕐 Departs ${dep}`;
-
-      const chipsWrap = document.createElement('div');
-      chipsWrap.className = 'live-seat-chips';
-
-      const seatTypes = train.seat_types || [];
-      if (seatTypes.length === 0) {
-        const routeFares = FARE_RATES[routeKey] || FARE_RATES[revKey] || {};
-        Object.entries(routeFares).forEach(([code, fare]) => {
-          const chip = document.createElement('div');
-          chip.className = 'live-seat-chip';
-          chip.innerHTML = `
-            <div class="live-seat-chip-name">${CLASS_LABELS[code] || code}</div>
-            <div class="live-seat-chip-fare">৳${fare}</div>
-            <div class="live-seat-chip-count unknown">--</div>
-          `;
-          chipsWrap.appendChild(chip);
-        });
-      } else {
-        seatTypes.forEach(st => {
-          const code = st.type || st.class || st.seat_class || '';
-          const fare = st.fare || st.price || '';
-          const totalSeats = parseInt(st.total_seat, 10) || parseInt(st.count, 10);
-          const assignedSeats = parseInt(st.assigned_seat, 10) || parseInt(st.booked, 10);
-          const remainingFromField = parseInt(st.remaining_seat, 10) || parseInt(st.remaining, 10) || parseInt(st.available_seat, 10);
-
-          let countText = '';
-          let countClass = 'unknown';
-          if (!isNaN(remainingFromField) && remainingFromField >= 0) {
-            countText = `${remainingFromField} ${UI_TEXT[currentLang].liveAvail}`;
-            countClass = remainingFromField > 0 ? 'available' : 'sold';
-          } else if (!isNaN(totalSeats) && !isNaN(assignedSeats)) {
-            const rem = Math.max(0, totalSeats - assignedSeats);
-            countText = `${rem} ${UI_TEXT[currentLang].liveAvail}`;
-            countClass = rem > 0 ? 'available' : 'sold';
-          } else {
-            const isAvail = st.is_available;
-            const isDis = st.disable;
-            if (isDis === true || isAvail === false || isAvail === 'N' || isAvail === 0 || isAvail === 'false') {
-              countText = UI_TEXT[currentLang].liveSold;
-              countClass = 'sold';
-            } else {
-              countText = UI_TEXT[currentLang].liveAvail;
-              countClass = 'available';
-            }
-          }
-
-          const chip = document.createElement('div');
-          chip.className = 'live-seat-chip';
-          chip.title = (CLASS_LABELS[code] || code) + ' - ' + countText;
-          chip.innerHTML = `
-            <div class="live-seat-chip-name">${CLASS_LABELS[code] || code || '--'}</div>
-            <div class="live-seat-chip-fare">${fare ? `৳${fare}` : '--'}</div>
-            <div class="live-seat-chip-count ${countClass}">${countText}</div>
-          `;
-
-          // Clicking a class chip selects it as the preferred grab class.
-          chip.addEventListener('click', () => {
-            const prefClass = document.getElementById('prefClass');
-            if (prefClass && code) {
-              prefClass.value = code;
-              prefClass.dispatchEvent(new Event('change'));
-            }
-            chipsWrap.querySelectorAll('.live-seat-chip').forEach(c => c.classList.remove('live-seat-chip-selected'));
-            chip.classList.add('live-seat-chip-selected');
-          });
-
-          chipsWrap.appendChild(chip);
-        });
-      }
-
-      // Book Now: reuse the Instant Grab pipeline on the selected train/class.
-      const bookBtn = document.createElement('button');
-      bookBtn.className = 'live-train-book';
-      bookBtn.textContent = UI_TEXT[currentLang].liveBookBtn || 'Book Now';
-      bookBtn.addEventListener('click', () => {
-        const trainNameSel = document.getElementById('trainName');
-        if (trainNameSel && trainKey) {
-          trainNameSel.value = trainKey;
-        }
-        handleInstantGrab();
-      });
-
-      card.appendChild(header);
-      if (timeRow.textContent) card.appendChild(timeRow);
-      card.appendChild(chipsWrap);
-      card.appendChild(bookBtn);
-      listEl.appendChild(card);
-    });
-  }
-
-  // Action Buttons
-  const btnArm = document.getElementById('btnArmSchedule');
-  if (btnArm) btnArm.addEventListener('click', handleArmSchedule);
-
-  const btnGrab = document.getElementById('btnGrabNow');
-  if (btnGrab) btnGrab.addEventListener('click', handleInstantGrab);
-
-  const btnScan = document.getElementById('btnScanLive');
-  if (btnScan) btnScan.addEventListener('click', handleScanLive);
-
-  // Popup Power Button — gates automation & mirrors state to the railway tab content script
-  const btnPopPower = document.getElementById('btnPopPower');
-  if (btnPopPower) {
-    btnPopPower.addEventListener('click', () => {
-      isPopupEngineActive = !isPopupEngineActive;
+  document.getElementById('btnArmSchedule')?.addEventListener('click', handleArmSchedule);
+  document.getElementById('btnGrabNow')?.addEventListener('click', () => handleInstantGrab());
+  document.getElementById('btnScanLive')?.addEventListener('click', handleScanLive);
+
+  document.getElementById('btnPopPower')?.addEventListener('click', () => {
+    isPopupEngineActive = !isPopupEngineActive;
+    const btn = document.getElementById('btnPopPower');
+    if (btn) {
       if (isPopupEngineActive) {
-        btnPopPower.classList.remove('paused');
-        btnPopPower.classList.add('active');
-        btnPopPower.textContent = '🟢 Active';
-        // Restore visual state on action buttons
-        [document.getElementById('btnArmSchedule'),
-         document.getElementById('btnGrabNow'),
-         document.getElementById('btnScanLive')].forEach(btn => {
-          if (btn) btn.style.opacity = '';
-        });
+        btn.className = 'tool-btn power-btn active';
+        btn.innerText = '🟢 Active';
         showToast(currentLang === 'bn' ? '⚡ অটোমেশন ইঞ্জিন সক্রিয়' : '⚡ Automation Engine Active');
       } else {
-        btnPopPower.classList.remove('active');
-        btnPopPower.classList.add('paused');
-        btnPopPower.textContent = '🔴 Paused';
-        // Dim buttons as a visual indicator (guards inside functions block execution)
-        [document.getElementById('btnArmSchedule'),
-         document.getElementById('btnGrabNow'),
-         document.getElementById('btnScanLive')].forEach(btn => {
-          if (btn) btn.style.opacity = '0.45';
-        });
+        btn.className = 'tool-btn power-btn paused';
+        btn.innerText = '🔴 Paused';
         showToast(currentLang === 'bn' ? '⏸️ অটোমেশন ইঞ্জিন বন্ধ' : '⏸️ Automation Engine Paused');
-        // Also pause the content script running on the railway tab
         if (chrome?.tabs?.query) {
           chrome.tabs.query({ url: '*://eticket.railway.gov.bd/*' }, (tabs) => {
-            if (tabs) tabs.forEach(tab => {
-              chrome.tabs.sendMessage(tab.id, { action: 'PAUSE_ENGINE' }).catch(() => {});
-            });
+            if (tabs) tabs.forEach(t => chrome.tabs.sendMessage(t.id, { action: 'PAUSE_ENGINE' }).catch(() => {}));
           });
         }
       }
-    });
-  }
+    }
+  });
 
-  // Form Inputs Listeners
   document.getElementById('routeFrom')?.addEventListener('change', () => onRouteChanged());
   document.getElementById('routeTo')?.addEventListener('change', () => onRouteChanged());
   document.getElementById('trainName')?.addEventListener('change', updateCalculations);
   document.getElementById('passengerCount')?.addEventListener('change', updateCalculations);
   document.getElementById('journeyDate')?.addEventListener('change', () => onRouteChanged());
 
-  document.getElementById('prefClass')?.addEventListener('change', () => {
-    const val = document.getElementById('prefClass').value;
-    const p1 = document.getElementById('p1Class');
-    if (p1) p1.value = val;
-    updateCalculations();
-    saveCurrentConfig();
-  });
-
-  // Cascading Priority Interactivity & Auto-Sync
-  ['p1Class', 'p1Dir', 'p2Class', 'p2Dir', 'p3Class', 'p3Dir'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('change', () => {
-        if (id === 'p1Class') {
-          const prefEl = document.getElementById('prefClass');
-          if (prefEl && prefEl.value !== el.value) {
-            prefEl.value = el.value;
-          }
-          updateCalculations();
-        }
-        saveCurrentConfig();
-      });
-    }
-  });
-
-  // Theme & Language Buttons
   document.getElementById('btnPopTheme')?.addEventListener('click', () => {
     currentTheme = currentTheme === 'light' ? 'dark' : 'light';
     if (chrome?.storage?.local) chrome.storage.local.set({ gt_theme: currentTheme });
-    localStorage.setItem('gt_theme', currentTheme);
     applyThemeAndLang();
-    showToast(currentTheme === 'light' ? 'Light Mode (Default)' : 'Dark Mode');
   });
 
   document.getElementById('btnPopLang')?.addEventListener('click', () => {
     currentLang = currentLang === 'en' ? 'bn' : 'en';
     if (chrome?.storage?.local) chrome.storage.local.set({ gt_lang: currentLang });
-    localStorage.setItem('gt_lang', currentLang);
     applyThemeAndLang();
-    showToast(currentLang === 'en' ? 'Language: Pure English' : 'ভাষা: সম্পূর্ণ বাংলা');
   });
 
-  // Save Account Vault
   document.getElementById('btnSaveVault')?.addEventListener('click', () => {
     const phone = document.getElementById('vaultPhone')?.value?.trim() || '';
     const pass = document.getElementById('vaultPass')?.value?.trim() || '';
-
     if (chrome?.storage?.local) {
       chrome.storage.local.set({ railwayVault: { phone, pass } }, () => {
-        if (chrome?.runtime?.sendMessage) {
-          chrome.runtime.sendMessage({ action: 'START_SESSION_GUARD' }).catch(() => { });
-        }
         playChime();
         showToast(UI_TEXT[currentLang].toastVaultSaved);
       });
-    } else {
-      localStorage.setItem('railwayVault', JSON.stringify({ phone, pass }));
-      playChime();
-      showToast(UI_TEXT[currentLang].toastVaultSaved);
     }
   });
 
-  // Initialize
-  loadStoredSettings();
+  document.getElementById('btnDirectLogin')?.addEventListener('click', () => {
+    const phone = document.getElementById('vaultPhone')?.value?.trim() || '';
+    const pass = document.getElementById('vaultPass')?.value?.trim() || '';
+    if (chrome?.storage?.local) {
+      chrome.storage.local.set({ railwayVault: { phone, pass } }, () => {
+        chrome.runtime.sendMessage({ action: 'TRIGGER_AUTO_LOGIN' });
+        showToast(currentLang === 'bn' ? '🔑 লগইন পেজ খোলা হচ্ছে...' : '🔑 Opening login page...');
+      });
+    }
+  });
+
+  if (chrome?.storage?.local) {
+    chrome.storage.local.get(['gt_theme', 'gt_lang', 'geTicketConfig', 'railwayVault'], (data) => {
+      if (data.gt_theme) currentTheme = data.gt_theme;
+      if (data.gt_lang) currentLang = data.gt_lang;
+      if (data.railwayVault) {
+        if (document.getElementById('vaultPhone')) document.getElementById('vaultPhone').value = data.railwayVault.phone || '';
+        if (document.getElementById('vaultPass')) document.getElementById('vaultPass').value = data.railwayVault.pass || '';
+      }
+      applyThemeAndLang();
+      getScheduledBookings(renderSchedulesList);
+    });
+  } else {
+    applyThemeAndLang();
+  }
 });
