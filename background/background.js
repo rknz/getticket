@@ -9,17 +9,57 @@ const RAILWAY_URL = 'https://eticket.railway.gov.bd';
 // Helper: Format date into Bangladesh Railway standard DD-MMM-YYYY (e.g. 25-Sep-2026)
 function formatRailwayDate(dateStr) {
   if (!dateStr) return '';
-  // If already in DD-MMM-YYYY format
   if (/^\d{1,2}-[A-Za-z]{3}-\d{4}$/.test(dateStr)) return dateStr;
   
+  const parts = String(dateStr).split('-');
+  if (parts.length === 3 && parts[0].length === 4) {
+    const year = parts[0];
+    const monthIdx = parseInt(parts[1], 10) - 1;
+    const day = String(parseInt(parts[2], 10)).padStart(2, '0');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    if (monthIdx >= 0 && monthIdx < 12) {
+      return `${day}-${months[monthIdx]}-${year}`;
+    }
+  }
+
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
-  
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const day = String(d.getDate()).padStart(2, '0');
   const month = months[d.getMonth()];
   const year = d.getFullYear();
   return `${day}-${month}-${year}`;
+}
+
+// Clean up schedules whose journey date has passed
+function cleanExpiredSchedules(bookings) {
+  if (!Array.isArray(bookings)) return [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const monthsMap = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+
+  return bookings.filter(item => {
+    if (!item.date) return false;
+    let itemDate = null;
+    const parts = String(item.date).split('-');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        itemDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      } else if (parts[2].length === 4) {
+        const m = monthsMap[parts[1].toLowerCase()];
+        if (m !== undefined) {
+          itemDate = new Date(parseInt(parts[2], 10), m, parseInt(parts[0], 10));
+        }
+      }
+    }
+    if (!itemDate || isNaN(itemDate.getTime())) {
+      itemDate = new Date(item.date);
+    }
+    if (isNaN(itemDate.getTime())) return true;
+    itemDate.setHours(23, 59, 59, 999);
+    return itemDate.getTime() >= today.getTime();
+  });
 }
 
 // Sync badge count on the extension icon
@@ -31,18 +71,22 @@ function syncExtensionBadge(count) {
   }
 }
 
-// Initialize badge count from storage
+// Initialize badge count from storage & prune expired schedules
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(['scheduledBookings'], (data) => {
-    const bookings = data.scheduledBookings || [];
-    syncExtensionBadge(bookings.length);
+    const cleaned = cleanExpiredSchedules(data.scheduledBookings || []);
+    chrome.storage.local.set({ scheduledBookings: cleaned }, () => {
+      syncExtensionBadge(cleaned.length);
+    });
   });
 });
 
 chrome.runtime.onStartup.addListener(() => {
   chrome.storage.local.get(['scheduledBookings'], (data) => {
-    const bookings = data.scheduledBookings || [];
-    syncExtensionBadge(bookings.length);
+    const cleaned = cleanExpiredSchedules(data.scheduledBookings || []);
+    chrome.storage.local.set({ scheduledBookings: cleaned }, () => {
+      syncExtensionBadge(cleaned.length);
+    });
   });
 });
 
@@ -58,15 +102,20 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
       // Send System Notification
       if (chrome.notifications) {
-        chrome.notifications.create({
-          type: 'basic',
-          iconUrl: 'icons/icon128.png',
-          title: isBn ? '🚄 GeTicket: অগ্রিম টিকিট রিলিজ অ্যালার্ট!' : '🚄 GeTicket: Advance Ticket Release Alert!',
-          message: isBn 
-            ? `আর ১০ মিনিট পর (${routeText}) টিকিট বুকিং শুরু হবে। রেলওয়ে পোর্টাল প্রস্তুত করা হচ্ছে!` 
-            : `10 minutes until booking opens for (${routeText}). Preparing Railway Portal!`,
-          priority: 2
-        });
+        try {
+          const icon = chrome.runtime?.getURL ? chrome.runtime.getURL('icons/icon128.png') : 'icons/icon128.png';
+          chrome.notifications.create({
+            type: 'basic',
+            iconUrl: icon,
+            title: isBn ? '🚄 GeTicket: অগ্রিম টিকিট রিলিজ অ্যালার্ট!' : '🚄 GeTicket: Advance Ticket Release Alert!',
+            message: isBn 
+              ? `আর ১০ মিনিট পর (${routeText}) টিকিট বুকিং শুরু হবে। রেলওয়ে পোর্টাল প্রস্তুত করা হচ্ছে!` 
+              : `10 minutes until booking opens for (${routeText}). Preparing Railway Portal!`,
+            priority: 2
+          }, () => {
+            if (chrome.runtime?.lastError) { /* ignore */ }
+          });
+        } catch (e) { }
       }
 
       // Auto Open Railway Tab & Prepare Grab Task
@@ -109,13 +158,25 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
 
   // A. AUTH STATUS CHECK: Checks if user has a valid active token
   if (req.action === 'CHECK_AUTH_STATUS') {
-    chrome.storage.local.get(['railwaySession', 'railwayVault'], (data) => {
-      const session = data.railwaySession;
+    chrome.storage.local.get(['railwaySession', 'railwayVault'], async (data) => {
+      let session = data.railwaySession || {};
       const vault = data.railwayVault;
-      const isLoggedIn = !!(session && session.token);
+
+      // Also check cookies for eticket.railway.gov.bd
+      try {
+        if (!session.token && chrome.cookies) {
+          const cookies = await chrome.cookies.getAll({ url: 'https://eticket.railway.gov.bd' });
+          const authCookie = cookies.find(c => c.name === 'token' || c.name === 'auth_token' || c.name.includes('remember'));
+          if (authCookie && authCookie.value) {
+            session.token = authCookie.value;
+          }
+        }
+      } catch (e) { }
+
+      const isLoggedIn = !!(session && (session.token || session.userName));
       sendResponse({
         isLoggedIn,
-        user: session?.user || null,
+        user: session?.user || (session?.userName ? { name: session.userName } : null),
         token: session?.token || null,
         hasVault: !!(vault && vault.phone && vault.pass),
         updatedAt: session?.updatedAt || null
@@ -159,11 +220,34 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
 
   // C. LIVE RAILWAY API PROXY: Queries Shohoz with Bearer token & Device Headers
   if (req.action === 'FETCH_RAILWAY_LIVE_API') {
-    const { from, to, date, classCode } = req;
+    const { from, to, date, classCode, token: directToken } = req;
     const formattedDate = formatRailwayDate(date);
     
-    chrome.storage.local.get(['railwaySession'], (storageData) => {
+    chrome.storage.local.get(['railwaySession'], async (storageData) => {
       const session = storageData.railwaySession || {};
+      let activeToken = directToken || session.token;
+
+      // If token not present in storage, check all relevant cookies
+      if (!activeToken && chrome.cookies) {
+        try {
+          const cookies = await chrome.cookies.getAll({ url: 'https://eticket.railway.gov.bd' });
+          let authCookie = cookies.find(c => c.name === 'token' || c.name === 'auth_token' || c.name === '_token' || c.name.includes('token') || c.name.includes('jwt'));
+          if (authCookie) activeToken = authCookie.value;
+
+          if (!activeToken) {
+            const domainCookies = await chrome.cookies.getAll({ domain: 'railway.gov.bd' });
+            authCookie = domainCookies.find(c => c.name === 'token' || c.name === 'auth_token' || c.name === '_token' || c.name.includes('token') || c.name.includes('jwt'));
+            if (authCookie) activeToken = authCookie.value;
+          }
+
+          if (!activeToken) {
+            const shohozCookies = await chrome.cookies.getAll({ domain: 'shohoz.com' });
+            authCookie = shohozCookies.find(c => c.name === 'token' || c.name === 'auth_token' || c.name.includes('token'));
+            if (authCookie) activeToken = authCookie.value;
+          }
+        } catch (e) { }
+      }
+
       const headers = {
         'Accept': 'application/json, text/plain, */*',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -172,8 +256,8 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
         'Referer': 'https://eticket.railway.gov.bd/'
       };
 
-      if (session.token) {
-        headers['Authorization'] = session.token.startsWith('Bearer ') ? session.token : `Bearer ${session.token}`;
+      if (activeToken) {
+        headers['Authorization'] = activeToken.startsWith('Bearer ') ? activeToken : `Bearer ${activeToken}`;
       }
       headers['X-Device-Id'] = session.deviceId || 'gt_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
       if (session.deviceKey) headers['X-Device-Key'] = session.deviceKey;
@@ -186,7 +270,6 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
       })
         .then(async res => {
           if (res.status === 401) {
-            // Token expired or not given
             return { unauthorized: true, status: 401 };
           }
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -288,9 +371,11 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
   // G. GET ALL SCHEDULES
   if (req.action === 'GET_SCHEDULES') {
     chrome.storage.local.get(['scheduledBookings'], (data) => {
-      const bookings = data.scheduledBookings || [];
-      syncExtensionBadge(bookings.length);
-      sendResponse({ schedules: bookings, count: bookings.length });
+      const cleaned = cleanExpiredSchedules(data.scheduledBookings || []);
+      chrome.storage.local.set({ scheduledBookings: cleaned }, () => {
+        syncExtensionBadge(cleaned.length);
+        sendResponse({ schedules: cleaned, count: cleaned.length });
+      });
     });
     return true;
   }
@@ -306,15 +391,20 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
     chrome.storage.local.get(['gt_lang'], (data) => {
       const isBn = data.gt_lang === 'bn';
       if (chrome.notifications) {
-        chrome.notifications.create({
-          type: 'basic',
-          iconUrl: 'icons/icon128.png',
-          title: isBn ? '🎉 সিট ৫ মিনিটের জন্য লক হয়েছে!' : '🎉 Seats Locked for 5 Minutes!',
-          message: isBn 
-            ? 'বিকাশ পেমেন্ট গেটওয়ে সক্রিয় করা হয়েছে। ৫ মিনিটের মধ্যে পেমেন্ট সম্পন্ন করুন।' 
-            : 'bKash payment gateway active. Complete payment before 5-minute timeout!',
-          priority: 2
-        });
+        try {
+          const icon = chrome.runtime?.getURL ? chrome.runtime.getURL('icons/icon128.png') : 'icons/icon128.png';
+          chrome.notifications.create({
+            type: 'basic',
+            iconUrl: icon,
+            title: isBn ? '🎉 সিট ৫ মিনিটের জন্য লক হয়েছে!' : '🎉 Seats Locked for 5 Minutes!',
+            message: isBn 
+              ? 'বিকাশ পেমেন্ট গেটওয়ে সক্রিয় করা হয়েছে। ৫ মিনিটের মধ্যে পেমেন্ট সম্পন্ন করুন।' 
+              : 'bKash payment gateway active. Complete payment before 5-minute timeout!',
+            priority: 2
+          }, () => {
+            if (chrome.runtime?.lastError) { /* ignore */ }
+          });
+        } catch (e) { }
       }
     });
     sendResponse({ success: true });

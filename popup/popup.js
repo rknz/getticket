@@ -140,9 +140,11 @@ const ROUTE_TRAIN_MAP = {
     { nameEn: "Dhumketu Express", nameBn: "ধূমকেতু এক্সপ্রেস", code: "769", dep: "06:00 AM", arr: "11:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
     { nameEn: "Bonolota Express", nameBn: "বনলতা এক্সপ্রেস", code: "791", dep: "01:30 PM", arr: "06:00 PM", durationEn: "4h 30m", durationBn: "৪ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
     { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "753", dep: "02:30 PM", arr: "08:20 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
+    { nameEn: "Madhumati Express", nameBn: "মধুমতী এক্সপ্রেস", code: "755", dep: "03:00 PM", arr: "08:00 PM", durationEn: "5h 00m", durationBn: "৫ ঘণ্টা", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
     { nameEn: "Padma Express", nameBn: "পদ্মা এক্সপ্রেস", code: "759", dep: "11:00 PM", arr: "04:40 AM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" }
   ],
   "Rajshahi-Dhaka": [
+    { nameEn: "Madhumati Express", nameBn: "মধুমতী এক্সপ্রেস", code: "756", dep: "06:40 AM", arr: "11:40 AM", durationEn: "5h 00m", durationBn: "৫ ঘণ্টা", offDay: 4, offEn: "Thursday", offBn: "বৃহস্পতিবার" },
     { nameEn: "Bonolota Express", nameBn: "বনলতা এক্সপ্রেস", code: "792", dep: "07:00 AM", arr: "11:30 AM", durationEn: "4h 30m", durationBn: "৪ ঘণ্টা ৩০ মি.", offDay: 5, offEn: "Friday", offBn: "শুক্রবার" },
     { nameEn: "Silkcity Express", nameBn: "সিল্কসিটি এক্সপ্রেস", code: "754", dep: "07:40 AM", arr: "01:30 PM", durationEn: "5h 50m", durationBn: "৫ ঘণ্টা ৫০ মি.", offDay: 0, offEn: "Sunday", offBn: "রবিবার" },
     { nameEn: "Padma Express", nameBn: "পদ্মা এক্সপ্রেস", code: "760", dep: "04:00 PM", arr: "09:40 PM", durationEn: "5h 40m", durationBn: "৫ ঘণ্টা ৪০ মি.", offDay: 2, offEn: "Tuesday", offBn: "মঙ্গলবার" },
@@ -292,10 +294,87 @@ function updateBadgeCount(count) {
   }
 }
 
+// Helper: Format date into Bangladesh Railway standard DD-MMM-YYYY (e.g. 25-Sep-2026)
+function formatRailwayDate(dateStr) {
+  if (!dateStr) return '';
+  if (/^\d{1,2}-[A-Za-z]{3}-\d{4}$/.test(dateStr)) return dateStr;
+  
+  const parts = String(dateStr).split('-');
+  if (parts.length === 3 && parts[0].length === 4) {
+    const year = parts[0];
+    const monthIdx = parseInt(parts[1], 10) - 1;
+    const day = String(parseInt(parts[2], 10)).padStart(2, '0');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    if (monthIdx >= 0 && monthIdx < 12) {
+      return `${day}-${months[monthIdx]}-${year}`;
+    }
+  }
+
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
+// Helper: Convert railway date (DD-MMM-YYYY) to standard HTML date input format (YYYY-MM-DD)
+function parseRailwayDateToInputFormat(dateStr) {
+  if (!dateStr) return '';
+  const monthsMap = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
+  const parts = String(dateStr).split('-');
+  if (parts.length === 3) {
+    if (parts[0].length === 4) return dateStr; // already YYYY-MM-DD
+    const day = parts[0].padStart(2, '0');
+    const m = monthsMap[parts[1].toLowerCase()];
+    const year = parts[2];
+    if (m) return `${year}-${m}-${day}`;
+  }
+  return dateStr;
+}
+
+// Clean up schedules whose journey date has passed
+function cleanExpiredSchedules(bookings) {
+  if (!Array.isArray(bookings)) return [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const monthsMap = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+
+  return bookings.filter(item => {
+    if (!item.date) return false;
+    let itemDate = null;
+    const parts = String(item.date).split('-');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        itemDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      } else if (parts[2].length === 4) {
+        const m = monthsMap[parts[1].toLowerCase()];
+        if (m !== undefined) {
+          itemDate = new Date(parseInt(parts[2], 10), m, parseInt(parts[0], 10));
+        }
+      }
+    }
+    if (!itemDate || isNaN(itemDate.getTime())) {
+      itemDate = new Date(item.date);
+    }
+    if (isNaN(itemDate.getTime())) return true;
+    itemDate.setHours(23, 59, 59, 999);
+    return itemDate.getTime() >= today.getTime();
+  });
+}
+
 function getScheduledBookings(callback) {
   if (chrome?.storage?.local) {
     chrome.storage.local.get(['scheduledBookings'], (res) => {
-      callback(Array.isArray(res?.scheduledBookings) ? res.scheduledBookings : []);
+      const raw = Array.isArray(res?.scheduledBookings) ? res.scheduledBookings : [];
+      const cleaned = cleanExpiredSchedules(raw);
+      if (cleaned.length !== raw.length) {
+        chrome.storage.local.set({ scheduledBookings: cleaned });
+      }
+      updateBadgeCount(cleaned.length);
+      callback(cleaned);
     });
   } else {
     callback([]);
@@ -337,11 +416,14 @@ function renderSchedulesList(bookings) {
     const toStation = getStationName(item.to, currentLang);
     const trainDisplay = getTrainDisplayName(item.trainName, currentLang);
     const isInstant = item.type === 'instant';
+    const isWatchdog = item.type === 'instant_watchdog';
 
-    const statusColor = isInstant ? '#10b981' : 'var(--primary)';
-    const statusText = isInstant
-      ? (currentLang === 'bn' ? '⚡ তাৎক্ষণিক ফাস্ট-গ্র্যাব সক্রিয়' : '⚡ Instant Fast-Grab Active')
-      : (currentLang === 'bn' ? `⏰ অ্যালার্ম সক্রিয় (${item.date})` : `⏰ Alarm Armed (${item.date})`);
+    const statusColor = isWatchdog ? '#f59e0b' : (isInstant ? '#10b981' : 'var(--primary)');
+    const statusText = isWatchdog
+      ? (currentLang === 'bn' ? '🔄 ওয়াচডগ সক্রিয় (স্বয়ংক্রিয় পুনঃপরীক্ষা)' : '🔄 Watchdog Active (Auto Re-checking)')
+      : (isInstant
+        ? (currentLang === 'bn' ? '⚡ তাৎক্ষণিক ফাস্ট-গ্র্যাব সক্রিয়' : '⚡ Instant Fast-Grab Active')
+        : (currentLang === 'bn' ? `⏰ অ্যালার্ম সক্রিয় (${item.date})` : `⏰ Alarm Armed (${item.date})`));
 
     const paxCount = item.passengers || 1;
     const paxText = currentLang === 'bn' ? `${paxCount} জন যাত্রী` : `${paxCount} Pax`;
@@ -501,7 +583,7 @@ function populateDropdowns() {
   const curFrom = fromInput?.value ? resolveStationValue(fromInput.value) : "Dhaka";
   const curTo = toInput?.value ? resolveStationValue(toInput.value) : "Rajshahi";
   const curPax = paxSel?.value || "1";
-  const curPref = prefClass?.value || "S_CHAIR";
+  const curPref = prefClass?.value || "ANY";
 
   if (fromInput) {
     fromInput.innerHTML = '';
@@ -529,7 +611,8 @@ function populateDropdowns() {
 
   [prefClass, p1Class, p2Class, p3Class].forEach(sel => {
     if (!sel) return;
-    const curVal = sel.value || (sel === p2Class ? 'SNIGDHA' : sel === p3Class ? 'F_CHAIR' : curPref);
+    const defaultVal = sel === prefClass ? 'ANY' : (sel === p1Class ? 'S_CHAIR' : (sel === p2Class ? 'F_CHAIR' : 'SNIGDHA'));
+    const curVal = sel.value || defaultVal;
     sel.innerHTML = '';
     (CLASSES_OPTS[currentLang] || CLASSES_OPTS.en).forEach(c => {
       sel.appendChild(new Option(c.text, c.value));
@@ -539,7 +622,7 @@ function populateDropdowns() {
 
   [p1Dir, p2Dir, p3Dir].forEach(sel => {
     if (!sel) return;
-    const curVal = sel.value || (sel === p2Dir ? 'middle' : sel === p3Dir ? 'any' : 'straight');
+    const curVal = sel.value || 'any';
     sel.innerHTML = '';
     (DIRECTIONS_OPTS[currentLang] || DIRECTIONS_OPTS.en).forEach(d => {
       sel.appendChild(new Option(d.text, d.value));
@@ -596,13 +679,10 @@ function applyThemeAndLang() {
   if (lblPrioTitle) lblPrioTitle.innerText = currentLang === 'bn' ? '🎯 ক্যাসকেডিং প্রায়োরিটি চেইন' : '🎯 Cascading Priority Chain';
 
   const btnArmText = document.getElementById('btnArmText');
-  if (btnArmText) btnArmText.innerText = currentLang === 'bn' ? 'অগ্রিম শিডিউল ও অ্যালার্ম সক্রিয় করুন' : 'Arm Advance Schedule & Watchdog';
+  if (btnArmText) btnArmText.innerText = currentLang === 'bn' ? '১০ দিন পরের অগ্রিম টিকিট আর্ম করুন' : 'Arm Advance Schedule & Watchdog';
 
   const btnGrabText = document.getElementById('btnGrabText');
-  if (btnGrabText) btnGrabText.innerText = currentLang === 'bn' ? 'তাত্ক্ষণিক ফাস্ট-গ্র্যাব (লক)' : 'Instant Fast-Grab (Lock)';
-
-  const btnScanText = document.getElementById('btnScanText');
-  if (btnScanText) btnScanText.innerText = currentLang === 'bn' ? 'লাইভ সিট স্ক্যান' : 'Scan Live Availability';
+  if (btnGrabText) btnGrabText.innerText = currentLang === 'bn' ? 'তাৎক্ষণিক গ্র্যাব / সোল্ড-আউট ওয়াচডগ' : 'Instant Fast-Grab (Lock)';
 
   const btnSaveVaultText = document.getElementById('btnSaveVaultText');
   if (btnSaveVaultText) btnSaveVaultText.innerText = t.btnSaveVaultText;
@@ -615,10 +695,9 @@ function applyThemeAndLang() {
   checkAndDisplayAuthStatus();
 }
 
-async function onRouteChanged(forceServerSync = false) {
+function onRouteChanged() {
   const rawFrom = document.getElementById('routeFrom')?.value || 'Dhaka';
   const rawTo = document.getElementById('routeTo')?.value || 'Rajshahi';
-  const dateVal = document.getElementById('journeyDate')?.value || new Date().toISOString().split('T')[0];
 
   const from = resolveStationValue(rawFrom);
   const to = resolveStationValue(rawTo);
@@ -628,26 +707,7 @@ async function onRouteChanged(forceServerSync = false) {
   if (!trainDropdown) return;
   const curTrain = trainDropdown.value;
 
-  let trains = [];
-
-  // Attempt live server fetch
-  const liveResult = await fetchLiveTrainsFromServer(from, to, dateVal);
-  if (liveResult && liveResult.trains && liveResult.trains.length > 0) {
-    trains = liveResult.trains.map(lt => ({
-      nameEn: lt.train_name || lt.name,
-      nameBn: lt.train_name_bn || lt.train_name || lt.name,
-      code: lt.train_model || lt.train_id || "700",
-      dep: lt.departure_time || "08:00 AM",
-      arr: lt.arrival_time || "02:00 PM",
-      durationEn: lt.travel_time || "6h 00m",
-      durationBn: lt.travel_time || "৬ ঘণ্টা",
-      seatTypes: lt.seat_types || []
-    }));
-  } else {
-    // Fallback to local master database
-    trains = ROUTE_TRAIN_MAP[routeKey] || ROUTE_TRAIN_MAP[`${to}-${from}`] || [];
-  }
-
+  let trains = ROUTE_TRAIN_MAP[routeKey] || ROUTE_TRAIN_MAP[`${to}-${from}`] || [];
   trains = sortTrainsChronologically(trains);
   trainDropdown.innerHTML = '';
 
@@ -675,18 +735,18 @@ async function onRouteChanged(forceServerSync = false) {
   const anyTrainOpt = document.createElement('option');
   anyTrainOpt.value = 'ANY_TRAIN';
   anyTrainOpt.innerText = currentLang === 'bn' 
-    ? '⚡ যেকোনো উপলব্ধ ট্রেন (সবচেয়ে দ্রুত)' 
-    : '⚡ Any Available Train (Fastest Available)';
-  if (curTrain === 'ANY_TRAIN') anyTrainOpt.selected = true;
+    ? '✨ যেকোনো উপলব্ধ ট্রেন' 
+    : '✨ Any Available Train';
+  if (!curTrain || curTrain === 'ANY_TRAIN') anyTrainOpt.selected = true;
   trainDropdown.appendChild(anyTrainOpt);
 
-  trains.forEach((t, idx) => {
+  trains.forEach((t) => {
     const trainName = currentLang === 'bn' ? (t.nameBn || t.nameEn) : t.nameEn;
     const timeStr = t.arr ? `${t.dep} ➔ ${t.arr}` : t.dep;
     const opt = document.createElement('option');
     opt.value = t.nameEn;
     opt.innerText = `${trainName} (${timeStr})`;
-    if (t.nameEn === curTrain || (!curTrain && idx === 0)) opt.selected = true;
+    if (t.nameEn === curTrain) opt.selected = true;
     trainDropdown.appendChild(opt);
   });
 
@@ -737,13 +797,13 @@ function saveCurrentConfig() {
   const date = document.getElementById('journeyDate')?.value || new Date().toISOString().split('T')[0];
   const passengers = parseInt(document.getElementById('passengerCount')?.value, 10) || 1;
   const trainName = document.getElementById('trainName')?.value || 'ANY_TRAIN';
-  const classCode = document.getElementById('prefClass')?.value || 'S_CHAIR';
+  const classCode = document.getElementById('prefClass')?.value || 'ANY';
 
-  const p1C = document.getElementById('p1Class')?.value || classCode;
-  const p1D = document.getElementById('p1Dir')?.value || 'straight';
-  const p2C = document.getElementById('p2Class')?.value || 'SNIGDHA';
-  const p2D = document.getElementById('p2Dir')?.value || 'middle';
-  const p3C = document.getElementById('p3Class')?.value || 'F_CHAIR';
+  const p1C = document.getElementById('p1Class')?.value || 'S_CHAIR';
+  const p1D = document.getElementById('p1Dir')?.value || 'any';
+  const p2C = document.getElementById('p2Class')?.value || 'F_CHAIR';
+  const p2D = document.getElementById('p2Dir')?.value || 'any';
+  const p3C = document.getElementById('p3Class')?.value || 'SNIGDHA';
   const p3D = document.getElementById('p3Dir')?.value || 'any';
 
   const priorities = [
@@ -833,7 +893,7 @@ function handleArmSchedule() {
 }
 
 // Handler: Instant Fast-Grab
-function handleInstantGrab(overrideTrain, overrideClass) {
+function handleInstantGrab(overrideTrain, overrideClass, overrideDate) {
   if (!isPopupEngineActive) {
     showToast(currentLang === 'bn' ? '⏸️ ইঞ্জিন বন্ধ আছে। সক্রিয় করুন।' : '⏸️ Engine is paused. Activate first.');
     return;
@@ -846,6 +906,7 @@ function handleInstantGrab(overrideTrain, overrideClass) {
   const cfg = saveCurrentConfig();
   if (overrideTrain) cfg.trainName = overrideTrain;
   if (overrideClass) cfg.classCode = overrideClass;
+  if (overrideDate) cfg.date = overrideDate;
 
   const instantId = `geticket_instant_${Date.now()}`;
   const newBooking = {
@@ -885,138 +946,6 @@ function handleInstantGrab(overrideTrain, overrideClass) {
         ? `⚡ (${trainDisp}) সিট তাৎক্ষণিক লকিং শুরু হয়েছে!`
         : `⚡ (${trainDisp}) Instant Grab started!`);
     });
-  });
-}
-
-// Handler: Scan Live Availability
-async function handleScanLive() {
-  if (!isPopupEngineActive) {
-    showToast(currentLang === 'bn' ? '⏸️ ইঞ্জিন বন্ধ আছে। সক্রিয় করুন।' : '⏸️ Engine is paused. Activate first.');
-    return;
-  }
-
-  const btnScan = document.getElementById('btnScanLive');
-  const panel = document.getElementById('liveResultsPanel');
-  const listEl = document.getElementById('liveResultsList');
-  const emptyEl = document.getElementById('liveResultsEmpty');
-  const metaEl = document.getElementById('lblLiveResultsMeta');
-
-  if (!btnScan || !panel || !listEl) return;
-
-  btnScan.disabled = true;
-  btnScan.innerText = UI_TEXT[currentLang].scanningLive;
-  panel.style.display = 'flex';
-  listEl.innerHTML = '';
-  if (emptyEl) emptyEl.style.display = 'none';
-
-  const rawFrom = document.getElementById('routeFrom')?.value || 'Dhaka';
-  const rawTo = document.getElementById('routeTo')?.value || 'Rajshahi';
-  const dateVal = document.getElementById('journeyDate')?.value || new Date().toISOString().split('T')[0];
-  const from = resolveStationValue(rawFrom);
-  const to = resolveStationValue(rawTo);
-
-  const res = await fetchLiveTrainsFromServer(from, to, dateVal);
-
-  btnScan.disabled = false;
-  btnScan.innerText = UI_TEXT[currentLang].liveBookBtn ? (currentLang === 'bn' ? '🔍 লাইভ সিট স্ক্যান' : '🔍 Scan Live Availability') : '🔍 Scan';
-
-  if (res && res.unauthorized) {
-    if (metaEl) metaEl.innerText = UI_TEXT[currentLang].liveChkFailed;
-    if (emptyEl) {
-      emptyEl.style.display = 'block';
-      emptyEl.innerHTML = currentLang === 'bn'
-        ? '⚠️ লাইভ সিট দেখার জন্য রেলওয়েতে লগইন থাকতে হবে। উপরের <b>⚡ অটো লগইন</b> বাটনে চাপুন।'
-        : '⚠️ Active Railway login required to view live seats. Click <b>⚡ Auto Login</b> above.';
-    }
-    return;
-  }
-
-  const trains = (res && res.trains) ? res.trains : [];
-
-  if (!trains || trains.length === 0) {
-    if (metaEl) metaEl.innerText = UI_TEXT[currentLang].liveChkFailed;
-    if (emptyEl) emptyEl.style.display = 'block';
-    return;
-  }
-
-  if (metaEl) {
-    metaEl.innerText = currentLang === 'bn' ? `${trains.length} টি ট্রেন • ${dateVal}` : `${trains.length} trains • ${dateVal}`;
-  }
-
-  const CLASS_LABELS = {};
-  (CLASSES_OPTS[currentLang] || CLASSES_OPTS.en).forEach(c => { CLASS_LABELS[c.value] = c.text; });
-
-  trains.forEach(train => {
-    const trainName = currentLang === 'bn' ? (train.train_name_bn || train.train_name || train.name) : (train.train_name || train.name);
-    const trainCode = train.train_model || train.train_id || '';
-    const dep = train.departure_time || '';
-    const arr = train.arrival_time || '';
-    const trainKey = train.train_name || train.name || '';
-
-    const card = document.createElement('div');
-    card.className = 'live-train-card';
-
-    const header = document.createElement('div');
-    header.className = 'live-train-name';
-    header.innerHTML = `<span>🚄 ${trainName}${trainCode ? ` (${trainCode})` : ''}</span>`;
-
-    const timeRow = document.createElement('div');
-    timeRow.className = 'live-train-time';
-    if (dep && arr) timeRow.textContent = `🕐 ${dep} ➔ ${arr}`;
-    else if (dep) timeRow.textContent = `🕐 Departs ${dep}`;
-
-    const chipsWrap = document.createElement('div');
-    chipsWrap.className = 'live-seat-chips';
-
-    const seatTypes = train.seat_types || [];
-    seatTypes.forEach(st => {
-      const code = st.type || st.class || '';
-      const fare = st.fare || '';
-      const totalSeats = parseInt(st.total_seat, 10);
-      const assignedSeats = parseInt(st.assigned_seat, 10);
-      const remainingFromField = parseInt(st.remaining_seat, 10) || parseInt(st.available_seat, 10);
-
-      let countText = '';
-      let countClass = 'unknown';
-      if (!isNaN(remainingFromField)) {
-        countText = `${remainingFromField} ${UI_TEXT[currentLang].liveAvail}`;
-        countClass = remainingFromField > 0 ? 'available' : 'sold';
-      } else if (!isNaN(totalSeats) && !isNaN(assignedSeats)) {
-        const rem = Math.max(0, totalSeats - assignedSeats);
-        countText = `${rem} ${UI_TEXT[currentLang].liveAvail}`;
-        countClass = rem > 0 ? 'available' : 'sold';
-      } else {
-        countText = UI_TEXT[currentLang].liveSold;
-        countClass = 'sold';
-      }
-
-      const chip = document.createElement('div');
-      chip.className = 'live-seat-chip';
-      chip.innerHTML = `
-        <div class="live-seat-chip-name">${CLASS_LABELS[code] || code}</div>
-        <div class="live-seat-chip-fare">${fare ? `৳${fare}` : ''}</div>
-        <div class="live-seat-chip-count ${countClass}">${countText}</div>
-      `;
-
-      chip.addEventListener('click', () => {
-        handleInstantGrab(trainKey, code);
-      });
-
-      chipsWrap.appendChild(chip);
-    });
-
-    const bookBtn = document.createElement('button');
-    bookBtn.className = 'live-train-book';
-    bookBtn.textContent = UI_TEXT[currentLang].liveBookBtn;
-    bookBtn.addEventListener('click', () => {
-      handleInstantGrab(trainKey, 'S_CHAIR');
-    });
-
-    card.appendChild(header);
-    if (timeRow.textContent) card.appendChild(timeRow);
-    card.appendChild(chipsWrap);
-    card.appendChild(bookBtn);
-    listEl.appendChild(card);
   });
 }
 
@@ -1063,9 +992,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Synchronize inputs with active railway tab search parameters if available
+  if (chrome?.tabs?.query) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTab = tabs && tabs[0] ? tabs[0] : null;
+      if (activeTab && activeTab.url && activeTab.url.includes('/booking/train/search')) {
+        try {
+          const tabUrl = new URL(activeTab.url);
+          const doj = tabUrl.searchParams.get('doj');
+          const fromCity = tabUrl.searchParams.get('fromcity');
+          const toCity = tabUrl.searchParams.get('tocity');
+
+          if (doj) {
+            const inputDoj = parseRailwayDateToInputFormat(doj);
+            if (journeyDateEl && inputDoj) journeyDateEl.value = inputDoj;
+          }
+          if (fromCity) {
+            const fromEl = document.getElementById('routeFrom');
+            if (fromEl) fromEl.value = fromCity;
+          }
+          if (toCity) {
+            const toEl = document.getElementById('routeTo');
+            if (toEl) toEl.value = toCity;
+          }
+          onRouteChanged();
+        } catch (e) { }
+      }
+    });
+  }
+
   document.getElementById('btnArmSchedule')?.addEventListener('click', handleArmSchedule);
   document.getElementById('btnGrabNow')?.addEventListener('click', () => handleInstantGrab());
-  document.getElementById('btnScanLive')?.addEventListener('click', handleScanLive);
 
   document.getElementById('btnPopPower')?.addEventListener('click', () => {
     isPopupEngineActive = !isPopupEngineActive;
@@ -1137,9 +1094,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('vaultPass')) document.getElementById('vaultPass').value = data.railwayVault.pass || '';
       }
       applyThemeAndLang();
+      if (data.geTicketConfig) {
+        const cfg = data.geTicketConfig;
+        if (cfg.routeFrom && document.getElementById('routeFrom')) document.getElementById('routeFrom').value = cfg.routeFrom;
+        if (cfg.routeTo && document.getElementById('routeTo')) document.getElementById('routeTo').value = cfg.routeTo;
+        if (cfg.targetDate && document.getElementById('journeyDate')) document.getElementById('journeyDate').value = cfg.targetDate;
+        if (cfg.passengers && document.getElementById('passengerCount')) document.getElementById('passengerCount').value = String(cfg.passengers);
+        if (cfg.prefClass && document.getElementById('prefClass')) document.getElementById('prefClass').value = cfg.prefClass;
+        if (cfg.trainName && document.getElementById('trainName')) document.getElementById('trainName').value = cfg.trainName;
+        if (cfg.priorities && cfg.priorities.length >= 3) {
+          if (document.getElementById('p1Class')) document.getElementById('p1Class').value = cfg.priorities[0].classCode || 'S_CHAIR';
+          if (document.getElementById('p1Dir')) document.getElementById('p1Dir').value = cfg.priorities[0].dir || 'any';
+          if (document.getElementById('p2Class')) document.getElementById('p2Class').value = cfg.priorities[1].classCode || 'F_CHAIR';
+          if (document.getElementById('p2Dir')) document.getElementById('p2Dir').value = cfg.priorities[1].dir || 'any';
+          if (document.getElementById('p3Class')) document.getElementById('p3Class').value = cfg.priorities[2].classCode || 'SNIGDHA';
+          if (document.getElementById('p3Dir')) document.getElementById('p3Dir').value = cfg.priorities[2].dir || 'any';
+        }
+      }
       getScheduledBookings(renderSchedulesList);
+      checkAndDisplayAuthStatus();
     });
   } else {
     applyThemeAndLang();
+    checkAndDisplayAuthStatus();
   }
 });
+

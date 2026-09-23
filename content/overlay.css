@@ -733,3 +733,148 @@
   border-color: #ef4444 !important;
   color: #ef4444 !important;
 }
+
+/* Real-Time Auth Status Strip */
+.gt-auth-strip {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 6px 12px !important;
+  background: rgba(2, 132, 199, 0.08) !important;
+  border-bottom: 1px solid var(--gt-hud-card-border) !important;
+  font-size: 11px !important;
+  gap: 6px !important;
+}
+
+.gt-auth-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.gt-auth-text {
+  font-weight: 700 !important;
+  font-size: 11px !important;
+}
+
+.gt-btn-auth {
+  background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.15s !important;
+}
+
+.gt-btn-auth:hover {
+  opacity: 0.9 !important;
+  transform: scale(1.03) !important;
+}
+
+/* Live Scanner Results Section */
+.gt-live-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  background: var(--gt-hud-card-bg) !important;
+  border: 1px solid var(--gt-hud-card-border) !important;
+  border-radius: 12px !important;
+  padding: 10px !important;
+  margin-top: 4px !important;
+}
+
+.gt-live-head {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--gt-accent) !important;
+}
+
+.gt-live-train-card {
+  background: var(--gt-hud-bg) !important;
+  border: 1px solid var(--gt-hud-card-border) !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.gt-live-train-name {
+  font-weight: 800 !important;
+  font-size: 12px !important;
+  color: var(--gt-hud-text) !important;
+}
+
+.gt-live-train-time {
+  font-size: 10.5px !important;
+  color: var(--gt-hud-muted) !important;
+}
+
+.gt-live-seat-chips {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)) !important;
+  gap: 4px !important;
+}
+
+.gt-live-seat-chip {
+  background: var(--gt-hud-card-bg) !important;
+  border: 1px solid var(--gt-hud-card-border) !important;
+  border-radius: 6px !important;
+  padding: 4px 6px !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  transition: all 0.15s !important;
+}
+
+.gt-live-seat-chip:hover {
+  border-color: var(--gt-accent) !important;
+  background: rgba(2, 132, 199, 0.08) !important;
+}
+
+.gt-seat-chip-name {
+  font-weight: 700 !important;
+  font-size: 10px !important;
+  color: var(--gt-hud-text) !important;
+}
+
+.gt-seat-chip-count {
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  margin-top: 2px !important;
+}
+
+.gt-seat-chip-count.available {
+  color: #10b981 !important;
+}
+
+.gt-seat-chip-count.sold {
+  color: #ef4444 !important;
+}
+
+.gt-live-book-btn {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 6px !important;
+  font-weight: 800 !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  transition: all 0.15s !important;
+}
+
+.gt-live-book-btn:hover {
+  opacity: 0.9 !important;
+}
+
